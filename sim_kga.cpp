@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[])
 {
-  const double initial_T = 1;
+  double initial_T = 1;
 
   const uint type = 0;
   const uint sublattice = strtol(argv[1], NULL, 10);
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
   const double G0 = sin(phi*pi);
   const double K0 = cos(phi*pi);
-  
+
   const double Gp = strtod(argv[10], NULL);
 
   Parameters p(

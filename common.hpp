@@ -5,6 +5,7 @@
 #ifndef COMMON_HPP
 #define COMMON_HPP
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -13,6 +14,7 @@
 #include <iomanip>
 #include <iostream>
 #include <random>
+#include <sstream>
 #include <vector>
 
 using std::cout; using std::endl; using std::vector;

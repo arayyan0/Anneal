@@ -1,0 +1,15 @@
+# Compiled source
+*.o
+sim
+
+# Libraries
+Eigen/
+
+# Output Files
+out/
+*.sh
+*.lst
+*.out
+
+# Mac
+.DS_Store

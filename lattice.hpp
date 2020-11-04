@@ -26,10 +26,11 @@ public:
   Lattice(const uint& type, const uint& l1, const uint& l2, const uint& number_of_sublattices);
   void InitializeRandomSpins();
   void InitializeFMSpins(const double& theta, const double& phi);
+  void InitializeFromFile(const std::vector<std::string>& file_lines);
   void CalculateClusterEnergy(const Parameters& p);
   void PrintConfiguration(std::ostream &out);
   void SimulatedAnnealing(const Parameters& p, const uint& max_sweeps,
-                          const double& initial_T, double& final_T);
+                          double& initial_T, double& final_T);
   void DeterministicSweeps(const Parameters& p, const uint& max_sweeps);
 
 private:

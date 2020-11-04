@@ -16,7 +16,7 @@ NumSites(l1*l2*number_of_sublattices)
   }
   //selecting which cluster to create
   if (Type == 0){
-    if (NumSublattices == 2) CreateRhombicCluster2();
+    if (NumSublattices == 2) CreateRhombicCluster1();
     else if (NumSublattices == 4) CreateRectangularCluster2();
   }
   else if (Type == 1){
@@ -281,6 +281,29 @@ void Lattice::InitializeFMSpins(const double& theta, const double& phi)
   }
 }
 
+void Lattice::InitializeFromFile(const std::vector<std::string>& file_lines)
+{
+  uint nx, ny, s;
+  double sx, sy, sz;
+  for (uint i = 32; i < 32+NumSites; i++){
+    std::stringstream line_ss(file_lines[i]);
+    std::vector<double> line_double;
+    double number;
+    while (line_ss >> number)
+      line_double.push_back(number);
+    nx = std::round(line_double[0]);
+    ny = std::round(line_double[1]);
+    s = std::round(line_double[2]);
+    sx = line_double[3];
+    sy = line_double[4];
+    sz = line_double[5];
+
+    Eigen::Vector3d vector(sx, sy, sz);
+    Spin spin(vector);
+    Cluster[nx][ny][s].OnsiteSpin = spin;
+  }
+}
+
 void Lattice::CalculateLocalEnergy(const Site& site, const Parameters& p, double& energy)
 {
   double e = 0;
@@ -359,19 +382,22 @@ void Lattice::MetropolisSweep(const Parameters& p, const double& temperature)
 }
 
 void Lattice::SimulatedAnnealing(const Parameters& p, const uint& max_sweeps,
-                                 const double& initial_T, double& final_T)
+                                 double& initial_T, double& final_T)
 {
+  double scale = 0.9;
   double temp_T = initial_T;
   while(temp_T >= final_T){
+    CalculateClusterEnergy(p);
+    cout << temp_T << " " << std::setprecision(14) << ClusterEnergy/NumSites << endl;
     uint sweep = 0;
     while (sweep < max_sweeps){
       MetropolisSweep(p, temp_T);
       ++sweep;
     }
-    temp_T = 0.9*temp_T;
+    temp_T = scale*temp_T;
   }
-  final_T = temp_T/0.9;
-  FinalT = temp_T/0.9;
+  final_T = temp_T/scale;
+  FinalT = temp_T/scale;
 }
 
 void Lattice::DeterministicSweeps(const Parameters& p, const uint& max_sweeps)
@@ -414,13 +440,14 @@ void Lattice::DeterministicSweeps(const Parameters& p, const uint& max_sweeps)
     sweep++;
   }
   ActualDetFlips = sweep;
+  // cout << "final: " << std::setprecision(14) << ClusterEnergy/NumSites << endl;
 }
 
 void Lattice::PrintConfiguration(std::ostream &out)
 {
   out << "--------------------------------Results--------------------------------\n";
   out << "Energy per site\n";
-  out << std::setprecision(abs(floor(log10(abs(FinalT))))) << ClusterEnergy/NumSites << "\n";
+  out << std::setprecision(14) << ClusterEnergy/NumSites << "\n";
   out << "Spin configuration\n";
   for (uint y=0; y<L2; ++y){
     for (uint x=0; x<L1; ++x){
