@@ -4,7 +4,7 @@
 #brief  classical Monte Carlo make file
 CXX = g++
 CXXFLAGS = -std=c++17 -O3 -c
-SIM = sim_test
+SIM = sim_kga
 
 all: sim
 

@@ -69,9 +69,9 @@ int main(int argc, char *argv[])
   honeycomb.DeterministicSweeps(p, max_det_sweeps);
   honeycomb.CalculateClusterEnergy(p);
 
-  // cout << std::fixed << std::setprecision(14);
-  // PrintSimulationData(cout, type, l1, l2, sublattice, initial_T, final_T, honeycomb.NumSites*max_metro_sweeps, honeycomb.ActualDetFlips);
-  // p.PrintParameters(cout);
-  // honeycomb.PrintConfiguration(cout);
+  cout << std::fixed << std::setprecision(15);
+  PrintSimulationData(cout, type, l1, l2, sublattice, initial_T, final_T, honeycomb.NumSites*max_metro_sweeps, honeycomb.ActualDetFlips);
+  p.PrintParameters(cout);
+  honeycomb.PrintConfiguration(cout);
   return 0;
 }

@@ -384,11 +384,11 @@ void Lattice::MetropolisSweep(const Parameters& p, const double& temperature)
 void Lattice::SimulatedAnnealing(const Parameters& p, const uint& max_sweeps,
                                  double& initial_T, double& final_T)
 {
-  double scale = 0.9;
+  double scale = 0.95;
   double temp_T = initial_T;
   while(temp_T >= final_T){
     CalculateClusterEnergy(p);
-    cout << temp_T << " " << std::setprecision(14) << ClusterEnergy/NumSites << endl;
+    //std::cerr << temp_T << " " << std::setprecision(15) << ClusterEnergy/NumSites << endl;
     uint sweep = 0;
     while (sweep < max_sweeps){
       MetropolisSweep(p, temp_T);
