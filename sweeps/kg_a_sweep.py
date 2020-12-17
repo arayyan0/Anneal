@@ -10,7 +10,7 @@ import os
 args = sys.argv
 hc_or_kek, type, sub, l1, l2, Tf_pow, MS_pow, DS_pow, versions = [int(x) for x in args[1:10]]
 run=int(args[10])
-command = f"./sim {hc_or_kek} {type} {sub} {l1} {l2} {Tf_pow} {MS_pow} {DS_pow}"
+command = f"./sim {type} {sub} {l1} {l2} {Tf_pow} {MS_pow} {DS_pow}"
 
 # g = 0.5
 # a = float(args[9])
