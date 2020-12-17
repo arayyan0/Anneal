@@ -59,8 +59,8 @@ command = f"./sim {hc_or_kek} {type} {sub} {l1} {l2} {Tf_pow} {MS_pow} {DS_pow}"
 p = float(args[11])
 print(f"p: {p}")
 g = 0.5
-alst = np.linspace(-0.4, 0, 80+1)
-# alst = np.linspace(0.005, 0.805, 80+1)
+# alst = np.linspace(-0.4, 0, 80+1)
+alst = np.linspace(0.005, 0.805, 80+1)
 print("a:")
 print(alst)
 
