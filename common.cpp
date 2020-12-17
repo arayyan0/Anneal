@@ -11,15 +11,16 @@ namespace MyRandom
   std::uniform_real_distribution<double> unit_interval(0,1);
 }
 
-void PrintSimulationData(std::ostream &out, const uint& type, const uint& l1, const uint& l2,
-                         const uint& sublattice, const double& T_i, double& T_f,
-                         const uint& max_mflips, const uint& max_daligns)
+void PrintSimulationData(std::ostream &out, const uint& hc_or_kek, const uint& type,
+                         const uint& sublattice, const uint& l1, const uint& l2,
+                         const double& T_i, double& T_f, const uint& max_mflips,
+                         const uint& max_daligns)
 {
   out << "-------------------------Simulation Parameters-------------------------\n";
-  out << "Type of lattice\n";
-  out << type << "\n";
-  out << "Number of Sublattices/Unit Cells (l1, l2, s)\n";
-  out << l1 << " " << l2 << " " << sublattice << "\n";
+  out << "Honeycomb/Kekule? Which cluster type?\n";
+  out << hc_or_kek << " " << type << "\n";
+  out << "Number of Sublattices/Unit Cells (s, l1, l2)\n";
+  out << sublattice << " " << l1 << " " << l2 << " " << "\n";
   out << "Initial Temperature\n";
   out << T_i << "\n";
   out << "Final Temperature\n";

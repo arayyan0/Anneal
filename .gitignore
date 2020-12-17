@@ -6,7 +6,7 @@ sim
 Eigen/
 
 # Output Files
-out/
+out*/
 *.sh
 *.lst
 *.out

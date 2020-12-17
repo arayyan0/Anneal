@@ -18,17 +18,17 @@ Gp(gammap), J1(heisenberg), h(hstrength), hTheta(htheta), hPhi(hphi)
 
 void Parameters::Anisotropy(const double& scale, const double& g, const double& a,
                               const bool& kitaev_or_gamma, const int& sign)
-// recall that 0 is false, 1 is true                              
+// recall that 0 is false, 1 is true
 // kitaev_or_gamma == 0 -> kitaev, kitaev_or_gamma == 1 -> gamma
 {
   if (kitaev_or_gamma){
-    Gx = sign*scale*(2*(1-a)*(1-g)/3.0);
-    Gy = sign*scale*(2*(1-a)*g/3.0);
-    Gz = sign*scale*(1+2*a)/3.0;
+    Gx = sign*scale*(2*(1-a)*(1-g));
+    Gy = sign*scale*(2*(1-a)*g);
+    Gz = sign*scale*(1+2*a);
   } else{
-    Kx = sign*scale*(2*(1-a)*(1-g)/3.0);
-    Ky = sign*scale*(2*(1-a)*g/3.0);
-    Kz = sign*scale*(1+2*a)/3.0;
+    Kx = sign*scale*(2*(1-a)*(1-g));
+    Ky = sign*scale*(2*(1-a)*g);
+    Kz = sign*scale*(1+2*a);
   }
 }
 

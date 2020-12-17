@@ -20,10 +20,13 @@ class Lattice
 public:
   const uint NumSites;
   std::vector<std::vector<std::vector<Site> > > Cluster;
+  //std::vector<Site> ClusterList;
   double ClusterEnergy;
   long ActualDetFlips;
 
-  Lattice(const uint& type, const uint& l1, const uint& l2, const uint& number_of_sublattices);
+  Lattice(const uint& hc_or_kek, const uint& type, const uint& number_of_sublattices,
+          const uint& l1, const uint& l2);
+
   void InitializeRandomSpins();
   void InitializeFMSpins(const double& theta, const double& phi);
   void InitializeFromFile(const std::vector<std::string>& file_lines);
@@ -34,7 +37,7 @@ public:
   void DeterministicSweeps(const Parameters& p, const uint& max_sweeps);
 
 private:
-  const uint L1, L2, NumSublattices, NumUnitCells, Type;
+  const uint L1, L2, NumSublattices, NumUnitCells, HcOrKekule, ClusterType;
   double FinalT;
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;

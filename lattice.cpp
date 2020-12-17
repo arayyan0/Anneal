@@ -4,9 +4,10 @@
 ///  @brief    constructing the lattice + simulated annealing algorithm
 #include "lattice.hpp"
 
-Lattice::Lattice(const uint& type, const uint& l1, const uint& l2, const uint& number_of_sublattices):
-Type(type), L1(l1), L2(l2), NumSublattices(number_of_sublattices), NumUnitCells(l1*l2),
-NumSites(l1*l2*number_of_sublattices)
+Lattice::Lattice(const uint& hc_or_kek, const uint& type, const uint& number_of_sublattices,
+                 const uint& l1, const uint& l2):
+HcOrKekule(hc_or_kek), ClusterType(type), NumSublattices(number_of_sublattices), L1(l1), L2(l2),
+NumUnitCells(l1*l2), NumSites(l1*l2*number_of_sublattices)
 {
   //changing size of Cluster to L1*L2*NumSublattices
   Cluster.resize(L1);
@@ -15,21 +16,25 @@ NumSites(l1*l2*number_of_sublattices)
       for (uint j = 0; j < L2; ++j) Cluster[i][j].resize(NumSublattices);
   }
   //selecting which cluster to create
-  if (Type == 0){
-    if (NumSublattices == 2) CreateRhombicCluster1();
-    else if (NumSublattices == 4) CreateRectangularCluster2();
+  if (HcOrKekule == 0){
+    if      (NumSublattices == 2 && ClusterType == 1) CreateRhombicCluster1();
+    else if (NumSublattices == 2 && ClusterType == 2) CreateRhombicCluster2();
+    else if (NumSublattices == 4 && ClusterType == 1) CreateRectangularCluster1();
+    else if (NumSublattices == 4 && ClusterType == 2) CreateRectangularCluster2();
   }
-  else if (Type == 1){
+  else if (HcOrKekule == 1){//will need to add ClusterType functionality if I wish to use it
     if (NumSublattices == 6) CreateKekuleCluster();
   }
 
   std::uniform_int_distribution<uint> l1d(0, l1-1);
   std::uniform_int_distribution<uint> l2d(0, l2-1);
   std::uniform_int_distribution<uint> sd(0, number_of_sublattices-1);
+  // std::uniform_int_distribution<uint> n(0, NumSites-1);
 
   L1Dist = l1d;
   L2Dist = l2d;
   SubDist = sd;
+  // NDist = n;
 }
 
 void Lattice::CreateRhombicCluster1()

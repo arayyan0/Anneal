@@ -37,8 +37,9 @@ namespace MyRandom
   extern std::uniform_real_distribution<double> unit_interval;
 }
 
-void PrintSimulationData(std::ostream &out, const uint& type, const uint& l1, const uint& l2,
-                         const uint& sublattice, const double& T_i, double& T_f,
-                         const uint& max_mflips, const uint& max_daligns);
+void PrintSimulationData(std::ostream &out, const uint& hc_or_kek, const uint& type,
+                         const uint& sublattice, const uint& l1, const uint& l2,
+                         const double& T_i, double& T_f, const uint& max_mflips,
+                         const uint& max_daligns);
 
 #endif // COMMON_HPP
