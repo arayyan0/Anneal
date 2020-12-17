@@ -74,7 +74,7 @@ F.write(f"type: {type}\n")
 F.write(f"(s, l1, l2) = ({sub}, {l1}, {l2})\n")
 F.write(f"Tf = {(0.9)**Tf_pow:.20f}\n")
 F.write(f"Metropolis sweeps = {(10)**MS_pow}\n")
-F.write(f"Deterministic sweeps = {(10)**DS_pow}}\n")
+F.write(f"Deterministic sweeps = {(10)**DS_pow}\n")
 F.close()
 
 F = open(f'p_{p:.3f}_r_{run}.lst','w+')
