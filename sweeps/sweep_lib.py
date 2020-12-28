@@ -78,22 +78,22 @@ class SweepPhaseDiagramJobs:
         return x_array, y_array
 
 class KGammaAnisotropyJobs(SweepPhaseDiagramJobs):
-    def __init__(self, which_swept, p_list, a_list, cluster_list, param_list, run):
+    def __init__(self, which_swept, p_list, a_list, cluster_list, param_list, run, versions):
         if which_swept == 'p':
             super().__init__(p_list, a_list, cluster_list, param_list, run)
             self.pArray, self.aArray = self.XArray, self.YArray
         elif which_swept == 'a':
             super().__init__(a_list, p_list, cluster_list, param_list, run)
             self.aArray, self.pArray = self.XArray, self.YArray
-        self.WriteLSTFile()
+        self.WriteLSTFile(versions)
 
-    def WriteLSTFile(self):
+    def WriteLSTFile(self, versions):
         command = f"./sim {self.ClusterType} {self.S} {self.L1} {self.L2} " +\
                      f"{self.Tf_Pow} {self.MS_Pow} {self.DS_Pow}"
 
         product = list(it.product(list(self.pArray), list(self.aArray)))
         File = open(f'{self.JobTitle}.lst','w+')
-        for v in range(1, 7+1):
+        for v in range(1, versions+1):
             if not os.path.exists(self.OutputPath+f'/v_{v}'):
                 os.makedirs(self.OutputPath+f'/v_{v}')
             for prod in product:
