@@ -1,8 +1,8 @@
 from sweep_lib import KGammaAnisotropyJobs
 
 # min, max, spacing
-p_val_list.append('p') = [0.25, 0.50, 0.01, "p"]
-a_val_list.append('a') = [0.00, 0.00, 1, "a"]
+p_val_list = [0.25, 0.50, 0.01, "p"]
+a_val_list = [0.00, 0.00, 1, "a"]
 
 # hc_or_kek, type, s, l1, l2
 cluster_list = [0, 2, 2, 3, 3]
