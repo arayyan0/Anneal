@@ -23,6 +23,7 @@ class SweepPhaseDiagramJobs:
         self.Tf_Pow, self.MS_Pow, self.DS_Pow = param_list
 
         self.JobTitle = f"jobrun_{run}"
+        print(self.JobTitle)
         self.OutputPath = f"out/{self.JobTitle}"
         if not os.path.exists(self.OutputPath):
             os.makedirs(self.OutputPath)
