@@ -71,8 +71,8 @@ class SweepPhaseDiagramJobs:
         '''
         x_min, x_max, dx = x_val_list
         y_min, y_max, dy = y_val_list
-        N_x  = int(1 + (x_max-x_min)/dx)
-        N_y  = int(1 + (y_max-y_min)/dy)
+        N_x  = round(1 + (x_max-x_min)/dx)
+        N_y  = round(1 + (y_max-y_min)/dy)
         x_array = np.linspace(x_min, x_max, N_x)
         y_array = np.linspace(y_min, y_max, N_y)
         return x_array, y_array
