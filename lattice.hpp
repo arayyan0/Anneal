@@ -48,6 +48,7 @@ private:
   void CreateRhombicCluster2();
   void CreateRectangularCluster1();
   void CreateRectangularCluster2();
+  void CreateC3Cluster();
   void CreateKekuleCluster();
   void CalculateLocalEnergy(const Site& site, const Parameters& p, double& energy);
   void MolecularField(const Site& site, const Parameters& p, Eigen::Vector3d& molec);

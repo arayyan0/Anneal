@@ -27,8 +27,8 @@ int main(int argc, char *argv[])
   const double K0 = cos(phi*pi);
 
   Parameters p(
-    0, 0, 0,  //Kitaev
-    0, 0, 0,  //Gamma
+    0,0,0,  //Kitaev
+    0,0,0,  //Gamma
     0,        //Gamma'
     0,        //Heisenberg
     0,        //Field strength

@@ -21,6 +21,7 @@ NumUnitCells(l1*l2), NumSites(l1*l2*number_of_sublattices)
     else if (NumSublattices == 2 && ClusterType == 2) CreateRhombicCluster2();
     else if (NumSublattices == 4 && ClusterType == 1) CreateRectangularCluster1();
     else if (NumSublattices == 4 && ClusterType == 2) CreateRectangularCluster2();
+    else if (NumSublattices == 6) CreateC3Cluster();
   }
   else if (HcOrKekule == 1){//will need to add ClusterType functionality if I wish to use it
     if (NumSublattices == 6) CreateKekuleCluster();
@@ -201,6 +202,65 @@ void Lattice::CreateRectangularCluster2()
                            std::make_tuple(lower_x,        y, 2, 0)},
                           some_spin
                          };
+    }
+  }
+}
+
+void Lattice::CreateC3Cluster()
+// T1 = 2a1-a2, T2 = 2a2-a1
+{
+  Spin some_spin;
+  int higher_x, higher_y, lower_x, lower_y;
+  for (int y=0; y<L2; ++y)
+  {
+    for (int x=0; x<L1; ++x)
+    {
+      higher_x = (x+1)%L1;
+      higher_y = (y+1)%L2;
+      //if index becomes -1, wrap it around to l-1
+      lower_x = (x-1);
+      lower_y = (y-1);
+      if (lower_x >= 0){lower_x = lower_x%L1;}
+      else if (lower_x < 0){lower_x = L1-1;}
+      if (lower_y >= 0){lower_y = lower_y%L2;}
+      else if (lower_y < 0){lower_y = L2-1;}
+      //see pg 2 of "Monte Carlo Kekule Cluster rules"
+      Cluster[x][y][0] = {
+                          {std::make_tuple(lower_x,  y, 5, 0),
+                           std::make_tuple(x,        y, 1, 1),
+                           std::make_tuple(x,        y, 3, 2)},
+                          some_spin
+                         };
+      Cluster[x][y][1] = {
+                          {std::make_tuple(x,       y, 2, 0),
+                           std::make_tuple(x,       y, 0, 1),
+                           std::make_tuple(lower_x,   lower_y, 4, 2)},
+                          some_spin
+                         };
+      Cluster[x][y][2] = {
+                          {std::make_tuple(      x,       y, 1, 0),
+                           std::make_tuple(      x, lower_y, 3, 1),
+                           std::make_tuple(      x,       y, 5, 2)},
+                          some_spin
+                         };
+      Cluster[x][y][3] = {
+                          {std::make_tuple(      x, y, 4, 0),
+                           std::make_tuple(  x, higher_y, 2, 1),
+                           std::make_tuple(      x, y, 0, 2)},
+                          some_spin
+                         };
+      Cluster[x][y][4] = {
+                          {std::make_tuple(x,        y, 3, 0),
+                           std::make_tuple(x,        y, 5, 1),
+                           std::make_tuple(higher_x, higher_y, 1, 2)},
+                          some_spin
+                          };
+      Cluster[x][y][5] = {
+                          {std::make_tuple(higher_x,        y, 0, 0),
+                           std::make_tuple(       x,        y, 4, 1),
+                           std::make_tuple(       x,        y, 2, 2)},
+                          some_spin
+                          };
     }
   }
 }
