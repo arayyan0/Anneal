@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
   Parameters p(
     0,0,0,  //Kitaev
     0,0,0,  //Gamma
-    0,        //Gamma'
+    -0.03,        //Gamma'
     0,        //Heisenberg
     0,        //Field strength
     0,        //Field theta in ABC coordinate basis
