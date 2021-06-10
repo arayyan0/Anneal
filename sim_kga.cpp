@@ -1,9 +1,9 @@
 ///  @file     sim.cpp
 ///  @author   Ahmed Rayyan
 ///  @date     December 2, 2019
-///  @brief    main simulated annealing file
+///  @brief    main simulated annealing file for KG-a phase diagram
 #include "common.hpp"
-#include "lattice.hpp"
+#include "honeycomb.hpp"
 #include "hamiltonian.hpp"
 
 int main(int argc, char *argv[])
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
   Parameters p(
     0,0,0,  //Kitaev
     0,0,0,  //Gamma
-    -0.03,        //Gamma'
+    0,        //Gamma'
     0,        //Heisenberg
     0,        //Field strength
     0,        //Field theta in ABC coordinate basis
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
   p.Anisotropy(K0, g, a, 0, -1);
   p.Anisotropy(G0, g, a, 1, +1);
 
-  Lattice honeycomb(hc_or_kek, cluster_type, sublattice, l1, l2);
+  HoneycombLattice honeycomb(hc_or_kek, cluster_type, sublattice, l1, l2);
   honeycomb.InitializeRandomSpins();
   honeycomb.SimulatedAnnealing(p, max_metro_sweeps, initial_T, final_T);
   honeycomb.DeterministicSweeps(p, max_det_sweeps);

@@ -4,18 +4,19 @@
 #brief  classical Monte Carlo make file
 CXX = g++
 CXXFLAGS = -std=c++17 -O3 -c
-SIM = sim_kga
+SIM = multipole
+LATTICE = triangular
 
 all: sim
 
-sim: ${SIM}.o lattice.o hamiltonian.o spin.o common.o
-	${CXX} ${SIM}.o lattice.o hamiltonian.o spin.o common.o -o sim
+sim: sim_${SIM}.o ${LATTICE}.o hamiltonian.o spin.o common.o
+	${CXX} sim_${SIM}.o ${LATTICE}.o hamiltonian.o spin.o common.o -o sim
 
-${SIM}.o: ${SIM}.cpp lattice.hpp hamiltonian.hpp
-	${CXX} ${CXXFLAGS} ${SIM}.cpp
+sim_${SIM}.o: sim_${SIM}.cpp ${LATTICE}.hpp hamiltonian.hpp
+	${CXX} ${CXXFLAGS} sim_${SIM}.cpp
 
-lattice.o: lattice.cpp lattice.hpp hamiltonian.hpp common.hpp
-	${CXX} ${CXXFLAGS} lattice.cpp
+${LATTICE}.o: ${LATTICE}.cpp ${LATTICE}.hpp hamiltonian.hpp common.hpp
+	${CXX} ${CXXFLAGS} ${LATTICE}.cpp
 
 hamiltonian.o: hamiltonian.cpp hamiltonian.hpp spin.hpp common.hpp
 	${CXX} ${CXXFLAGS} hamiltonian.cpp

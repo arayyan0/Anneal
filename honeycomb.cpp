@@ -1,10 +1,10 @@
-///  @file     lattice.cpp
+///  @file     honeycomb.cpp
 ///  @author   Ahmed Rayyan
 ///  @date     December 2, 2019
-///  @brief    constructing the lattice + simulated annealing algorithm
-#include "lattice.hpp"
+///  @brief    constructing the honeycomb lattice + simulated annealing algorithm
+#include "honeycomb.hpp"
 
-Lattice::Lattice(const uint& hc_or_kek, const uint& type, const uint& number_of_sublattices,
+HoneycombLattice::HoneycombLattice(const uint& hc_or_kek, const uint& type, const uint& number_of_sublattices,
                  const uint& l1, const uint& l2):
 HcOrKekule(hc_or_kek), ClusterType(type), NumSublattices(number_of_sublattices), L1(l1), L2(l2),
 NumUnitCells(l1*l2), NumSites(l1*l2*number_of_sublattices)
@@ -38,7 +38,7 @@ NumUnitCells(l1*l2), NumSites(l1*l2*number_of_sublattices)
   // NDist = n;
 }
 
-void Lattice::CreateRhombicCluster1()
+void HoneycombLattice::CreateRhombicCluster1()
 // T1 = a1, T2 = a2
 {
   Spin some_spin;
@@ -75,7 +75,7 @@ void Lattice::CreateRhombicCluster1()
   }
 }
 
-void Lattice::CreateRhombicCluster2()
+void HoneycombLattice::CreateRhombicCluster2()
 // T1 = a1-a2, T2 = a1
 {
   Spin some_spin;
@@ -112,7 +112,7 @@ void Lattice::CreateRhombicCluster2()
   }
 }
 
-void Lattice::CreateRectangularCluster1()
+void HoneycombLattice::CreateRectangularCluster1()
 // T1 = a1, T2 = 2a2-a1
 {
   Spin some_spin;
@@ -159,7 +159,7 @@ void Lattice::CreateRectangularCluster1()
   }
 }
 
-void Lattice::CreateRectangularCluster2()
+void HoneycombLattice::CreateRectangularCluster2()
 // T1 = a1-a2, T2 = a1+a2
 {
   Spin some_spin;
@@ -206,7 +206,7 @@ void Lattice::CreateRectangularCluster2()
   }
 }
 
-void Lattice::CreateC3Cluster()
+void HoneycombLattice::CreateC3Cluster()
 // T1 = 2a1-a2, T2 = 2a2-a1
 {
   Spin some_spin;
@@ -265,7 +265,7 @@ void Lattice::CreateC3Cluster()
   }
 }
 
-void Lattice::CreateKekuleCluster()
+void HoneycombLattice::CreateKekuleCluster()
 {
   Spin some_spin;
   int higher_x, higher_y, lower_x, lower_y;
@@ -323,7 +323,7 @@ void Lattice::CreateKekuleCluster()
   }
 }
 
-void Lattice::InitializeRandomSpins()
+void HoneycombLattice::InitializeRandomSpins()
 {
   for (uint x=0; x<L1; ++x){
     for (uint y=0; y<L2; ++y){
@@ -334,7 +334,7 @@ void Lattice::InitializeRandomSpins()
   }
 }
 
-void Lattice::InitializeFMSpins(const double& theta, const double& phi)
+void HoneycombLattice::InitializeFMSpins(const double& theta, const double& phi)
 {
   Spin spin(theta, phi);
   for (uint x=0; x<L1; ++x){
@@ -346,7 +346,7 @@ void Lattice::InitializeFMSpins(const double& theta, const double& phi)
   }
 }
 
-void Lattice::InitializeFromFile(const std::vector<std::string>& file_lines)
+void HoneycombLattice::InitializeFromFile(const std::vector<std::string>& file_lines)
 {
   uint nx, ny, s;
   double sx, sy, sz;
@@ -369,7 +369,7 @@ void Lattice::InitializeFromFile(const std::vector<std::string>& file_lines)
   }
 }
 
-void Lattice::CalculateLocalEnergy(const Site& site, const Parameters& p, double& energy)
+void HoneycombLattice::CalculateLocalEnergy(const Site& site, const Parameters& p, double& energy)
 {
   double e = 0;
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
@@ -382,7 +382,7 @@ void Lattice::CalculateLocalEnergy(const Site& site, const Parameters& p, double
   energy = e;
 }
 
-void Lattice::MolecularField(const Site& site, const Parameters& p, Eigen::Vector3d& molec)
+void HoneycombLattice::MolecularField(const Site& site, const Parameters& p, Eigen::Vector3d& molec)
 {
   Eigen::Vector3d v = Eigen::Vector3d::Zero();
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
@@ -395,7 +395,7 @@ void Lattice::MolecularField(const Site& site, const Parameters& p, Eigen::Vecto
   molec = v;
 }
 
-void Lattice::CalculateClusterEnergy(const Parameters& p)
+void HoneycombLattice::CalculateClusterEnergy(const Parameters& p)
 {
   double e=0;
   double local_energy;
@@ -410,7 +410,7 @@ void Lattice::CalculateClusterEnergy(const Parameters& p)
   ClusterEnergy = e/2.0;
 }
 
-void Lattice::MetropolisSweep(const Parameters& p, const double& temperature)
+void HoneycombLattice::MetropolisSweep(const Parameters& p, const double& temperature)
 {
   uint uc_x, uc_y, sublattice;
   Spin old_spin_at_chosen_site;
@@ -446,7 +446,7 @@ void Lattice::MetropolisSweep(const Parameters& p, const double& temperature)
   // cout << "..." << endl;
 }
 
-void Lattice::SimulatedAnnealing(const Parameters& p, const uint& max_sweeps,
+void HoneycombLattice::SimulatedAnnealing(const Parameters& p, const uint& max_sweeps,
                                  double& initial_T, double& final_T)
 {
   double scale = 0.95;
@@ -465,7 +465,7 @@ void Lattice::SimulatedAnnealing(const Parameters& p, const uint& max_sweeps,
   FinalT = temp_T/scale;
 }
 
-void Lattice::DeterministicSweeps(const Parameters& p, const uint& max_sweeps)
+void HoneycombLattice::DeterministicSweeps(const Parameters& p, const uint& max_sweeps)
 {
   uint sweep = 0;
   uint align;
@@ -508,7 +508,7 @@ void Lattice::DeterministicSweeps(const Parameters& p, const uint& max_sweeps)
   // cout << "final: " << std::setprecision(14) << ClusterEnergy/NumSites << endl;
 }
 
-void Lattice::PrintConfiguration(std::ostream &out)
+void HoneycombLattice::PrintConfiguration(std::ostream &out)
 {
   out << "--------------------------------Results--------------------------------\n";
   out << "Energy per site\n";

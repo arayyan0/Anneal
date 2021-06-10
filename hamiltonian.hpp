@@ -19,7 +19,7 @@ public:
              const double& gx, const double& gy, const double& gz,
              const double& gammap, const double& heisenberg,
              const double& hstrength, const double& htheta, const double& hphi);
-  void Anisotropy(const double& scale, const double& g, const double& a, 
+  void Anisotropy(const double& scale, const double& g, const double& a,
                     const bool& kitaev_or_gamma, const int& sign);
   void PrintParameters(std::ostream &out);
 

@@ -1,9 +1,9 @@
-///  @file     lattice.hpp
+///  @file     honeycomb.hpp
 ///  @author   Ahmed Rayyan
 ///  @date     December 2, 2019
-///  @brief    defining the Lattice class
-#ifndef LATTICE_HPP
-#define LATTICE_HPP
+///  @brief    defining the honeycomb Lattice class
+#ifndef HONEYCOMB_HPP
+#define HONEYCOMB_HPP
 
 #include "common.hpp"
 #include "spin.hpp"
@@ -15,7 +15,7 @@ struct Site
   Spin OnsiteSpin;
 };
 
-class Lattice
+class HoneycombLattice
 {
 public:
   const uint NumSites;
@@ -24,7 +24,7 @@ public:
   double ClusterEnergy;
   long ActualDetFlips;
 
-  Lattice(const uint& hc_or_kek, const uint& type, const uint& number_of_sublattices,
+  HoneycombLattice(const uint& hc_or_kek, const uint& type, const uint& number_of_sublattices,
           const uint& l1, const uint& l2);
 
   void InitializeRandomSpins();
