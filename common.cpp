@@ -30,3 +30,23 @@ void PrintSimulationData(std::ostream &out, const uint& hc_or_kek, const uint& t
   out << "Number of Deterministic Aligns\n";
   out << max_daligns << "\n";
 }
+
+void PrintTriangularSimulationData(std::ostream &out, const uint& type,
+                         const uint& sublattice, const uint& l1, const uint& l2,
+                         const double& T_i, double& T_f, const uint& max_mflips,
+                         const uint& max_daligns)
+{
+  out << "-------------------------Simulation Parameters-------------------------\n";
+  out << "Which cluster type?\n";
+  out << type << "\n";
+  out << "Number of Sublattices/Unit Cells (s, l1, l2)\n";
+  out << sublattice << " " << l1 << " " << l2 << " " << "\n";
+  out << "Initial Temperature\n";
+  out << T_i << "\n";
+  out << "Final Temperature\n";
+  out << T_f << "\n";
+  out << "Number of Metropolis Flips\n";
+  out << max_mflips << "\n";
+  out << "Number of Deterministic Aligns\n";
+  out << max_daligns << "\n";
+}

@@ -5,8 +5,14 @@
 #include "triangular.hpp"
 
 TriangularLattice::TriangularLattice(const uint& l1, const uint& l2,
-                                     const double& jtau, const double& lambda):
-L1(l1), L2(l2), NumSites(l1*l2), JTau(jtau), Lambda(lambda)
+                                     const double& jtau, const double& lambda,
+                                     const double& ising_y,
+                                     const double& defect,
+                                     const double& h,
+                                     Eigen::Vector3d& hdir):
+L1(l1), L2(l2), NumSites(l1*l2), PoisonedX(l1/2), PoisonedY(l2/2),
+JTau(jtau), Lambda(lambda), IsingY(ising_y), Defect(defect),
+HField(h), HDirection(hdir)
 {
   //changing size of Cluster to L1*L2
   Cluster.resize(L1);
@@ -14,8 +20,15 @@ L1(l1), L2(l2), NumSites(l1*l2), JTau(jtau), Lambda(lambda)
       Cluster[i].resize(L2);
   }
 
+  CreateClusterPBC();
+  InitializeRandomSpins();
+
   // defining the bond Hamiltonians
-  FixMPHamiltonians(jtau, lambda);
+  FixMPHamiltonians();
+  Hdefect << 0,      0, 0,
+             0, Defect, 0,
+             0,      0, 0;
+  Hdefect=JTau*Hdefect;
 
   std::uniform_int_distribution<uint> l1d(0, L1-1);
   std::uniform_int_distribution<uint> l2d(0, L2-1);
@@ -57,28 +70,38 @@ void TriangularLattice::CreateClusterPBC()
   }
 }
 
-Eigen::Matrix3d TriangularLattice::ReturnMPHamiltonian(const double& angle,
-                                                       const double& lambda)
+Eigen::Matrix3d TriangularLattice::ReturnMPHamiltonian(const double& angle)
 //Eqn 17 of arXiv:2105.09334v1
 {
+  Eigen::Matrix3d matrix1, matrix2, matrix3;
+  //bond-independent: lambda term + Ising in y direction
+  matrix1  <<  -Lambda,      0,       0,
+                     0, Lambda,       0,
+                     0,      0, -Lambda;
+
+  matrix2  <<             0,      0, 0,
+                          0, IsingY, 0,
+                          0,      0, 0;
+
+  //bond-dependent: tau term
   double c = cos(angle);
   double s = sin(angle);
-  Eigen::Matrix3d matrix;
-  matrix  <<  1-c-lambda,      0,          -s,
-                       0, lambda,           0,
-                      -s,      0,  1+c-lambda;
-  return matrix;
+  matrix3  <<  1-c, 0,  -s,
+                 0, 0,   0,
+                -s, 0, 1+c;
+
+  return matrix1/2.0+matrix2+matrix3/2.0;
 }
 
-void TriangularLattice::FixMPHamiltonians(const double& jtau, const double& lambda)
+void TriangularLattice::FixMPHamiltonians()
 {
   double pz = 0;
   double px = 2*pi/3.0;
   double py = 4*pi/3.0;
 
-  Hz = ReturnMPHamiltonian(pz, lambda)*jtau/2.0;
-  Hx = ReturnMPHamiltonian(px, lambda)*jtau/2.0;
-  Hy = ReturnMPHamiltonian(py, lambda)*jtau/2.0;
+  Hz = ReturnMPHamiltonian(pz)*JTau;
+  Hx = ReturnMPHamiltonian(px)*JTau;
+  Hy = ReturnMPHamiltonian(py)*JTau;
 }
 
 void TriangularLattice::InitializeFMSpins(const double& theta, const double& phi)
@@ -100,21 +123,59 @@ void TriangularLattice::InitializeRandomSpins()
   }
 }
 
+bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly)
+{
+
+  if ( lx == PoisonedX && ly == PoisonedY ){
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void TriangularLattice::CalculateLocalEnergy(const Site& site, double& energy)
 {
   double e = 0;
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
-  for (auto nn_info : site.NearestNeighbours){
-    auto [nn_x, nn_y, bond_type] = nn_info;
-    spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-    // Bond bond(spin_i, spin_j, bond_type, jtau);
-    // e += bond.BondEnergy;
-    if (bond_type == 0){
-      e += spin_i.VectorXYZ.transpose().dot(Hx*spin_j.VectorXYZ);
-    } else if (bond_type == 1){
-      e += spin_i.VectorXYZ.transpose().dot(Hy*spin_j.VectorXYZ);
-    } else if (bond_type == 2){
-      e += spin_i.VectorXYZ.transpose().dot(Hz*spin_j.VectorXYZ);
+
+  //first checks if I selected poisoned site or not
+  if ( PoisonedSite_Flag == false ){
+    //selected site is not poisoned
+    //check each neighbour to see if that one IS poisoned
+    double value;
+    bool poisoned_neighbour;
+    for (auto nn_info : site.NearestNeighbours){
+      auto [nn_x, nn_y, bond_type] = nn_info;
+      //check if neighbour is poisoned
+      poisoned_neighbour = CheckIfPoisoned(nn_x, nn_y);
+      //if neighbour is poisoned,
+      double value = poisoned_neighbour ? 1.0 : 0.0;
+      spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
+      if (bond_type == 0){
+        Ham = Hx + value*Hdefect;
+      } else if (bond_type == 1){
+        Ham = Hy + value*Hdefect;
+      } else if (bond_type == 2){
+        Ham = Hz + value*Hdefect;
+      }
+      e += spin_i.VectorXYZ.transpose().dot(Ham*spin_j.VectorXYZ)
+          - JTau*HField*HDirection.transpose().dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
+    }
+  } else{
+    //selected site IS poisoned
+    //add defect to all neighbouring sites
+    for (auto nn_info : site.NearestNeighbours){
+      auto [nn_x, nn_y, bond_type] = nn_info;
+      spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
+      if (bond_type == 0){
+        Ham = Hx + Hdefect;
+      } else if (bond_type == 1){
+        Ham = Hy + Hdefect;
+      } else if (bond_type == 2){
+        Ham = Hz + Hdefect;
+      }
+      e += spin_i.VectorXYZ.transpose().dot(Ham*spin_j.VectorXYZ)
+          - JTau*HField*HDirection.transpose().dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
     }
   }
   energy = e;
@@ -125,17 +186,37 @@ void TriangularLattice::MolecularField(const Site& site, Eigen::Vector3d& molec)
 {
   Eigen::Vector3d v = Eigen::Vector3d::Zero();
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
-  for (auto i : site.NearestNeighbours){
-    auto [nn_x, nn_y, bond_type] = i;
-    spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-    // Bond bond(spin_i, spin_j, bond_type, p);
-    // v += bond.MolecFieldContribution;
-    if (bond_type == 0){
-      v += -Hx*spin_j.VectorXYZ;
-    } else if (bond_type == 1){
-      v += -Hy*spin_j.VectorXYZ;
-    } else if (bond_type == 2){
-      v += -Hz*spin_j.VectorXYZ;
+  if (PoisonedSite_Flag == false) {
+    double value;
+    bool poisoned_neighbour;
+    for (auto i : site.NearestNeighbours){
+      auto [nn_x, nn_y, bond_type] = i;
+      //check if neighbour is poisoned
+      poisoned_neighbour = CheckIfPoisoned(nn_x, nn_y);
+      //if neighbour is poisoned, return one. otherwise, return 0.
+      double value = poisoned_neighbour ? 1.0 : 0.0;
+      spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
+      if (bond_type == 0){
+        Ham = Hx+value*Hdefect;
+      } else if (bond_type == 1){
+        Ham = Hy+value*Hdefect;
+      } else if (bond_type == 2){
+        Ham = Hz+value*Hdefect;
+      }
+      v += -Ham*spin_j.VectorXYZ + JTau*HField*HDirection/6.0;
+    }
+  }else{
+    for (auto i : site.NearestNeighbours){
+      auto [nn_x, nn_y, bond_type] = i;
+      spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
+      if (bond_type == 0){
+        Ham = Hx+Hdefect;
+      } else if (bond_type == 1){
+        Ham = Hy+Hdefect;
+      } else if (bond_type == 2){
+        Ham = Hz+Hdefect;
+      }
+      v += -Ham*spin_j.VectorXYZ+ JTau*HField*HDirection/6.0;
     }
   }
   molec = v;
@@ -147,11 +228,46 @@ void TriangularLattice::CalculateClusterEnergy()
   double local_energy;
   for (uint x=0; x<L1; ++x){
     for (uint y=0; y<L2; ++y){
+      PoisonedSite_Flag = CheckIfPoisoned(x, y);
       CalculateLocalEnergy(Cluster[x][y], local_energy);
       e += local_energy;
+      PoisonedSite_Flag = false;
     }
   }
   ClusterEnergy = e/2.0;
+}
+
+void TriangularLattice::MetropolisFlip(
+  uint& uc_x, uint& uc_y,
+  Spin&  old_spin_at_chosen_site,
+  double &old_local_energy, double &new_local_energy, double &energy_diff, double &r,
+  double &pd,
+  const double& temperature
+)
+{
+  Site *chosen_site_ptr;
+  uc_x = L1Dist(MyRandom::RNG);
+  uc_y = L2Dist(MyRandom::RNG);
+
+  PoisonedSite_Flag = CheckIfPoisoned(uc_x, uc_y);
+
+  chosen_site_ptr = &Cluster[uc_x][uc_y];
+
+  CalculateLocalEnergy(*chosen_site_ptr, old_local_energy);
+  old_spin_at_chosen_site = chosen_site_ptr->OnsiteSpin;
+
+  SpherePointPicker(chosen_site_ptr->OnsiteSpin);
+
+  CalculateLocalEnergy(*chosen_site_ptr, new_local_energy);
+  energy_diff = new_local_energy - old_local_energy;
+  if (energy_diff < 0){}
+  else{
+    r = MyRandom::unit_interval(MyRandom::RNG);
+    pd = exp(-energy_diff/temperature);
+    if (r < pd){}
+    else chosen_site_ptr->OnsiteSpin = old_spin_at_chosen_site;
+  }
+  PoisonedSite_Flag = false;
 }
 
 void TriangularLattice::MetropolisSweep(const double& temperature)
@@ -162,37 +278,23 @@ void TriangularLattice::MetropolisSweep(const double& temperature)
   Site *chosen_site_ptr;
 
   uint flip = 0;
-  double counter = 0;
+
   while (flip < NumSites){
-    uc_x = L1Dist(MyRandom::RNG);
-    uc_y = L2Dist(MyRandom::RNG);
-
-    chosen_site_ptr = &Cluster[uc_x][uc_y];
-
-    CalculateLocalEnergy(*chosen_site_ptr, old_local_energy);
-    old_spin_at_chosen_site = chosen_site_ptr->OnsiteSpin;
-
-    SpherePointPicker(chosen_site_ptr->OnsiteSpin);
-
-    CalculateLocalEnergy(*chosen_site_ptr, new_local_energy);
-    energy_diff = new_local_energy - old_local_energy;
-    if (energy_diff < 0){++counter;}
-    else{
-      r = MyRandom::unit_interval(MyRandom::RNG);
-      pd = exp(-energy_diff/temperature);
-      if (r < pd){++counter;}
-      else chosen_site_ptr->OnsiteSpin = old_spin_at_chosen_site;
-    }
+    MetropolisFlip(
+      uc_x, uc_y,
+      old_spin_at_chosen_site,
+      old_local_energy, new_local_energy, energy_diff, r,
+      pd,
+      temperature
+    );
     ++flip;
   }
-  // cout << temperature << " " << counter/(double)NumSites << endl;
-  // cout << "..." << endl;
 }
 
-void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps, double& initial_T,
+void TriangularLattice::SimulatedAnnealing1(const uint& max_sweeps, double& initial_T,
                                           double& final_T)
 {
-  double scale = 0.95;
+  double scale = 0.9;
   double temp_T = initial_T;
   while(temp_T >= final_T){
     CalculateClusterEnergy();
@@ -206,6 +308,25 @@ void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps, double& initi
   }
   final_T = temp_T/scale;
   FinalT = temp_T/scale;
+}
+
+void TriangularLattice::SimulatedAnnealing2(const uint& max_sweeps,
+                                          double& initial_T, double& final_T, double& rate)
+{
+  double scale = rate;
+  double temp_T = initial_T;
+  while(temp_T >= final_T){
+    // CalculateClusterEnergy();
+    // std::cout << "temp " << temp_T << endl;
+    uint sweep = 0;
+    while (sweep < max_sweeps){
+      // std::cout << "sweep " << sweep << endl;
+      MetropolisSweep(temp_T);
+      ++sweep;
+    }
+    temp_T = scale*temp_T;
+  }
+  FinalT = temp_T;
 }
 
 void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
@@ -227,6 +348,8 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
         uc_x = L1Dist(MyRandom::RNG);
         uc_y = L2Dist(MyRandom::RNG);
 
+        PoisonedSite_Flag = CheckIfPoisoned(uc_x, uc_y);
+
         chosen_site_ptr = &Cluster[uc_x][uc_y];
         old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
 
@@ -237,6 +360,7 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
         norm = (new_spin.VectorXYZ - old_spin_vec).norm();
         if (norm > x){x = norm;}
         else{}
+        PoisonedSite_Flag = false;
         align++;
     }
     // if (x > eps){}
@@ -258,7 +382,34 @@ void TriangularLattice::PrintConfiguration(std::ostream &out)
   out << "Spin configuration\n";
   for (uint y=0; y<L2; ++y){
     for (uint x=0; x<L1; ++x){
-      out << std::setprecision(14) << x << " " << y << " " << " " << Cluster[x][y].OnsiteSpin.VectorXYZ.transpose() << "\n";
+      out << std::setprecision(14) << x << " " << y << " " << 0 << " " << Cluster[x][y].OnsiteSpin.VectorXYZ.transpose() << "\n";
     }
   }
+}
+
+void TriangularLattice::ThermalizeAtTemperature(double& temp, const uint& max_flips)
+{
+    cout << temp << " " << temp << endl;
+
+    uint uc_x, uc_y;
+    Spin old_spin_at_chosen_site;
+    double old_local_energy, new_local_energy, energy_diff, r, pd;
+    Site *chosen_site_ptr;
+
+    uint flip = 0;
+
+    while (flip < max_flips){
+      MetropolisFlip(
+        uc_x, uc_y,
+        old_spin_at_chosen_site,
+        old_local_energy, new_local_energy, energy_diff, r,
+        pd,
+        temp
+      );
+      if (flip%1000 == 0) {
+        CalculateClusterEnergy();
+        cout << flip << " " << ClusterEnergy/(double)NumSites << endl;
+      }
+      ++flip;
+    }
 }
