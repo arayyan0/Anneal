@@ -43,8 +43,9 @@ void PrintSimulationData(std::ostream &out, const uint& hc_or_kek, const uint& t
                          const uint& max_daligns);
 
 void PrintTriangularSimulationData(std::ostream &out, const uint& type,
-                         const uint& sublattice, const uint& l1, const uint& l2,
-                         const double& T_i, double& T_f, const uint& max_mflips,
-                         const uint& max_daligns);
+                        const uint& sublattice, const uint& l1, const uint& l2,
+                        const double& T_i, double& T_f, const uint& max_sa_sweeps,
+                        const uint& max_thermal_sweeps, const uint& max_measuring_sweeps,
+                        const uint& max_daligns);
 
 #endif // COMMON_HPP

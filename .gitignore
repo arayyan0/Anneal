@@ -7,9 +7,11 @@ Eigen/
 
 # Output Files
 out*/
-*.sh
-*.lst
+jobrun*.sh
+jobrun*.lst
 *.out
+*.pdf
 
 # Mac
 .DS_Store
+*pycache*

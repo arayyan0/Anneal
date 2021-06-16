@@ -101,3 +101,64 @@ class KGammaAnisotropyJobs(SweepPhaseDiagramJobs):
                 File.write(command+f' {prod[0]:.3f} 0.5 {prod[1]:.3f}' + ' > ' +
                         self.OutputPath+f'/v_{v}/p_{prod[0]:.3f}_a_{prod[1]:.3f}_.out\n')
         File.close()
+
+class SweepTemperatureJobs:
+    def __init__(self, temp_list, cluster_list, ham_list, run, versions):
+        x_min, x_max, dx = temp_list[:3]
+        N_x = round(1+ (x_max-x_min)/dx)
+        self.XArray = np.linspace(x_min, x_max, N_x)
+        self.XLabel = temp_list[3]
+
+        print(f"{self.XLabel}:\n{self.XArray}")
+
+        self.L1, self.L2 = cluster_list
+
+        self.IsingY, self.Defect = ham_list
+
+        self.JobTitle = f"jobrun_{run}"
+        print(self.JobTitle)
+        self.OutputPath = f"out/{self.JobTitle}"
+        if not os.path.exists(self.OutputPath):
+            os.makedirs(self.OutputPath)
+
+        self.WriteJobDescription()
+        print("Writing .sh file...")
+        print("Please ensure that you changed the number of nodes and time from the default!")
+        self.WriteSHFile()
+
+        self.WriteLSTFile(versions)
+
+    def WriteJobDescription(self):
+        F = open(self.OutputPath+"/global_param.lst", 'w+')
+        F.write(f"{self.XLabel}-array: {self.XArray}\n")
+        F.write("all files in this folder have the following global parameters.\n")
+        F.write(f"(l1, l2) = ({self.L1}, {self.L2})\n")
+        F.write(f"Ising_y, defect = {self.IsingY, self.Defect}\n")
+        F.close()
+
+    def WriteSHFile(self):
+        F = open(f'{self.JobTitle}.sh','w+')
+        F.write(f'#!/bin/bash'+'\n'+'\n')
+        F.write(f'#SBATCH --nodes=1'+'\n')
+        F.write(f'#SBATCH --cpus-per-task=80'+'\n')
+        F.write(f'#SBATCH --time=00:30:00'+'\n')
+        F.write(f'#SBATCH --job-name={self.JobTitle}'+'\n'+'\n')
+        F.write(f'cd $SLURM_SUBMIT_DIR'+'\n'+'\n')
+        F.write(f'module purge'+'\n')
+        F.write(f'module load gcc'+'\n')
+        F.write(f'module load gnu-parallel'+'\n')
+        F.write(f'parallel --jobs 80 --joblog {self.OutputPath}/{self.JobTitle}.out'+
+                  f' < {self.JobTitle}.lst\n')
+        F.close()
+
+    def WriteLSTFile(self, versions):
+        command = f"./sim {self.L1} {self.L2} {self.IsingY} {self.Defect}"
+
+        File = open(f'{self.JobTitle}.lst','w+')
+        for v in range(1, versions+1):
+            if not os.path.exists(self.OutputPath+f'/v_{v}'):
+                os.makedirs(self.OutputPath+f'/v_{v}')
+            for x in self.XArray:
+                File.write(command+f' {x:.3f}' + ' > ' +
+                        self.OutputPath+f'/v_{v}/{self.XLabel}_{x:.3f}_.out\n')
+        File.close()

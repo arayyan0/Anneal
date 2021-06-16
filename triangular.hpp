@@ -28,7 +28,7 @@ public:
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
   std::uniform_int_distribution<uint> L1Dist, L2Dist;
-  double ClusterEnergy;
+  double ClusterEnergy, SpecificHeat;
   long ActualDetFlips;
 
   bool PoisonedSite_Flag;
@@ -54,7 +54,8 @@ public:
   void SimulatedAnnealing2(const uint& max_sweeps,
                                             double& initial_T, double& final_T, double& rate);
 
-  void ThermalizeAtTemperature(double& temp, const uint& max_flips);
+  void ThermalizeConfiguration(double& temp, const uint& max_flips);
+  void SampleConfiguration(double& temp, const uint& max_sweeps);
 
   void MetropolisFlip(
     uint& uc_x, uint& uc_y,

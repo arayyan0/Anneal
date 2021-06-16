@@ -15,42 +15,46 @@ int main(int argc, char *argv[])
 
   double jtau = 1;
   const double lambda = 0;
-  const double ising_y = 0;
-  const double defect = 0;
+  const double ising_y = strtod(argv[3], NULL);
+  const double defect = strtod(argv[4], NULL);
   const double h_field = 0.000;
   Eigen::Vector3d hdir = Eigen::Vector3d(0,0,1).normalized();
   TriangularLattice triangular(l1, l2, jtau, lambda, ising_y, defect, h_field, hdir);
 
   const uint num_sweeps_SA = 1e4;
-  const uint num_SA_steps = 20;
+  const uint num_SA_steps = 30;
   double cooling_rate = 0.9;
-  double final_T = 0.1*abs(jtau);
+  double final_T = strtod(argv[5], NULL)*abs(jtau);
   double initial_T = final_T/pow(cooling_rate,num_SA_steps-1);
   triangular.SimulatedAnnealing2(num_sweeps_SA, initial_T, final_T,cooling_rate);
 
-  const uint num_thermal = 1e4*l1*l2;
-  triangular.ThermalizeAtTemperature(final_T, num_thermal);
+  const uint num_sweeps_thermal = 1e4;
+  triangular.ThermalizeConfiguration(final_T, num_sweeps_thermal);
 
-  // triangular.CalculateClusterEnergy();
-  // double actual_det_flips=0;
-  // cout << std::fixed << std::setprecision(14);
-  // PrintTriangularSimulationData(cout, type, sublattice, l1, l2,
-  //                                          initial_T, final_T, triangular.NumSites*num_sweeps_SA,
-  //                                          actual_det_flips);
-  // cout << "------------------------Hamiltonian Parameters------------------------\n";
-  // cout << "J_Tau\n";
-  // cout << jtau << "\n";
-  // cout << "Lambda\n";
-  // cout << lambda << "\n";
-  // cout << "IsingY\n";
-  // cout << ising_y << "\n";
-  // cout << "defect\n";
-  // cout << defect << "\n";
-  // cout << "HField\n";
-  // cout << h_field << "\n";
-  // cout << "HDirection\n";
-  // cout << hdir.transpose() << "\n";
-  // triangular.PrintConfiguration(cout);
+  const uint num_sweeps_measurement = 1e6;
+  triangular.SampleConfiguration(final_T, num_sweeps_measurement);
+
+  triangular.CalculateClusterEnergy();
+  double actual_det_flips=0;
+  cout << std::fixed << std::setprecision(14);
+  PrintTriangularSimulationData(cout, type, sublattice, l1, l2,
+                                           initial_T, final_T, num_sweeps_SA,
+                                           num_sweeps_thermal,num_sweeps_measurement,
+                                           actual_det_flips);
+  cout << "------------------------Hamiltonian Parameters------------------------\n";
+  cout << "J_Tau\n";
+  cout << jtau << "\n";
+  cout << "Lambda\n";
+  cout << lambda << "\n";
+  cout << "IsingY\n";
+  cout << ising_y << "\n";
+  cout << "defect\n";
+  cout << defect << "\n";
+  cout << "HField\n";
+  cout << h_field << "\n";
+  cout << "HDirection\n";
+  cout << hdir.transpose() << "\n";
+  triangular.PrintConfiguration(cout);
 
 
   // prints nearest neighbours of each site

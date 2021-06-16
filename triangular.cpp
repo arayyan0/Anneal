@@ -90,7 +90,7 @@ Eigen::Matrix3d TriangularLattice::ReturnMPHamiltonian(const double& angle)
                  0, 0,   0,
                 -s, 0, 1+c;
 
-  return matrix1/2.0+matrix2+matrix3/2.0;
+  return matrix1/2.0+matrix2+0*matrix3/2.0;
 }
 
 void TriangularLattice::FixMPHamiltonians()
@@ -316,7 +316,6 @@ void TriangularLattice::SimulatedAnnealing2(const uint& max_sweeps,
   double scale = rate;
   double temp_T = initial_T;
   while(temp_T >= final_T){
-    // CalculateClusterEnergy();
     // std::cout << "temp " << temp_T << endl;
     uint sweep = 0;
     while (sweep < max_sweeps){
@@ -377,9 +376,11 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
 void TriangularLattice::PrintConfiguration(std::ostream &out)
 {
   out << "--------------------------------Results--------------------------------\n";
+  out << "Specific heat\n";
+  out << std::setprecision(14) << SpecificHeat << "\n";
   out << "Energy per site\n";
   out << std::setprecision(14) << ClusterEnergy/NumSites << "\n";
-  out << "Spin configuration\n";
+  out << "Final spin configuration\n";
   for (uint y=0; y<L2; ++y){
     for (uint x=0; x<L1; ++x){
       out << std::setprecision(14) << x << " " << y << " " << 0 << " " << Cluster[x][y].OnsiteSpin.VectorXYZ.transpose() << "\n";
@@ -387,29 +388,41 @@ void TriangularLattice::PrintConfiguration(std::ostream &out)
   }
 }
 
-void TriangularLattice::ThermalizeAtTemperature(double& temp, const uint& max_flips)
+void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sweeps)
 {
-    cout << temp << " " << temp << endl;
+    // cout << temp << " " << temp << endl;
 
-    uint uc_x, uc_y;
-    Spin old_spin_at_chosen_site;
-    double old_local_energy, new_local_energy, energy_diff, r, pd;
-    Site *chosen_site_ptr;
+    uint sweep = 0;
+    while (sweep < max_sweeps){
+      MetropolisSweep(temp);
 
-    uint flip = 0;
+      // CalculateClusterEnergy();
+      // cout << sweep << " " << ClusterEnergy/(double)NumSites  << endl;
 
-    while (flip < max_flips){
-      MetropolisFlip(
-        uc_x, uc_y,
-        old_spin_at_chosen_site,
-        old_local_energy, new_local_energy, energy_diff, r,
-        pd,
-        temp
-      );
-      if (flip%1000 == 0) {
-        CalculateClusterEnergy();
-        cout << flip << " " << ClusterEnergy/(double)NumSites << endl;
-      }
-      ++flip;
+      ++sweep;
     }
+}
+
+void TriangularLattice::SampleConfiguration(double& temp, const uint& max_sweeps)
+{
+    // cout << temp << " " << temp << endl;
+    double e = 0;
+    double e2 = 0;
+
+    double ebar, e2bar, specificheat;
+
+    uint sweep = 0;
+    while (sweep < max_sweeps){
+      MetropolisSweep(temp);
+
+      CalculateClusterEnergy();
+      e += ClusterEnergy;
+      e2 += pow(ClusterEnergy,2);
+
+      // cout << "sweep " << sweep << " e " << e/(double)max_sweeps/(double)NumSites << " e2 " << e2/(double)max_sweeps/pow((double)NumSites,2) << endl;
+      ++sweep;
+    }
+    ebar = e/(double)max_sweeps;
+    e2bar = e2/(double)max_sweeps;
+    SpecificHeat = (e2bar - pow(ebar,2))/(double)NumSites/pow(temp,2);
 }
