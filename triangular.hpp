@@ -23,7 +23,8 @@ public:
   const double JTau, Lambda, IsingY, Defect, HField;
   vector<vector<Site> > Cluster;
   Eigen::Matrix3d Hx, Hy, Hz, Hdefect, Ham;
-  Eigen::Vector3d HDirection;
+  Eigen::Vector3d HDirection,ClusterFMOP;
+  Eigen::Vector2d ClusterStripyOP;
   double FinalT;
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
@@ -32,6 +33,13 @@ public:
   long ActualDetFlips;
 
   bool PoisonedSite_Flag;
+
+  Eigen::ArrayXXd StripySignsX, StripySignsY, StripySignsZ;
+
+  double FMOPbar, StripyOPxbar, StripyOPybar, StripyOPzbar;
+  double FMOPPerpbar, StripyOPxPerpbar, StripyOPyPerpbar, StripyOPzPerpbar;
+  double FMOPParbar, StripyOPxParbar, StripyOPyParbar, StripyOPzParbar;
+
 
   TriangularLattice(const uint& l1, const uint& l2, const double& jtau, const double& lambda,
                     const double& ising_y, const double& defect, const double& h,
@@ -45,13 +53,11 @@ public:
   bool CheckIfPoisoned(uint lx, uint ly);
   void CalculateLocalEnergy(const Site& site, double& energy);
   void MolecularField(const Site& site, Eigen::Vector3d& molec);
-  void CalculateClusterEnergy();
   void MetropolisSweep(const double& temperature);
-  void SimulatedAnnealing1(const uint& max_sweeps, double& initial_T, double& final_T);
   void DeterministicSweeps(const uint& max_sweeps);
-  void PrintConfiguration(std::ostream &out);
+  void PrintConfiguration(std::ostream &out,const uint &which);
 
-  void SimulatedAnnealing2(const uint& max_sweeps,
+  void SimulatedAnnealing(const uint& max_sweeps,
                                             double& initial_T, double& final_T, double& rate);
 
   void ThermalizeConfiguration(double& temp, const uint& max_flips);
@@ -64,6 +70,11 @@ public:
     double &pd,
     const double& temperature
   );
+  void CreateStripySignMatrices();
+
+  void CalculateClusterEnergyandOP();
+  void CalculateClusterEnergy();
+  void CalculateClusterOP();
 
   //private:
   //
