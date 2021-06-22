@@ -8,7 +8,6 @@
 
 int main(int argc, char *argv[])
 {
-  const uint groundstate_or_thermal = 0; //0 is groundstate, 1 is thermal
 
   const uint type = 2; //v1 or v2
   const uint sublattice = 1; //1 is rhombic
@@ -33,6 +32,7 @@ int main(int argc, char *argv[])
 
   const uint max_det_sweeps = pow(10,strtol(argv[7], NULL, 10));
   triangular.DeterministicSweeps(max_det_sweeps);
+
   const uint num_sweeps_thermal = 0;
   const uint num_sweeps_measurement = 0;
   triangular.CalculateClusterEnergyandOP();
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
   cout << "HDirection\n";
   cout << hdir.transpose() << "\n";
 
-  triangular.PrintConfiguration(cout, groundstate_or_thermal);
+  triangular.PrintConfiguration(cout);
 
 
   // prints nearest neighbours of each site
@@ -72,3 +72,4 @@ int main(int argc, char *argv[])
   // }
   return 0;
 }
+7/*-8+9

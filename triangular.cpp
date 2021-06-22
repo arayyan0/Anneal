@@ -245,8 +245,7 @@ void TriangularLattice::CalculateClusterOP(){
       }
     }
   Eigen::MatrixXd::Index index[1];
-  cout << StripyOP.rowwise().norm().maxCoeff(&index[0]) << endl;
-  cout << StripyOP.row(index[0]) << endl;
+  double max = StripyOP.rowwise().norm().maxCoeff(&index[0]);
 
   ClusterFMOP = FMOP;
   ClusterStripyOP = StripyOP.row(index[0]);
@@ -300,8 +299,7 @@ void TriangularLattice::CalculateClusterEnergyandOP()
 
   ClusterEnergy = e/2.0;
   Eigen::MatrixXd::Index index[1];
-  cout << StripyOP.rowwise().norm().maxCoeff(&index[0]) << endl;
-  cout << StripyOP.row(index[0]) << endl;
+  double max = StripyOP.rowwise().norm().maxCoeff(&index[0]);
 
   ClusterFMOP = FMOP;
   ClusterStripyOP = StripyOP.row(index[0]);
@@ -425,7 +423,7 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
   // cout << "final: " << std::setprecision(14) << ClusterEnergy/NumSites << endl;
 }
 
-void TriangularLattice::PrintConfiguration(std::ostream &out, const uint &which)
+void TriangularLattice::PrintConfiguration(std::ostream &out)
 {
   out << "--------------------------------Final Configuration--------------------------------\n";
   out << "Energy per site\n";
@@ -436,22 +434,19 @@ void TriangularLattice::PrintConfiguration(std::ostream &out, const uint &which)
       out << std::setprecision(14) << x << " " << y << " " << 0 << " " << Cluster[x][y].OnsiteSpin.VectorXYZ.transpose() << "\n";
     }
   }
+  out << "-------------------------------Final configuration observables--------------------------------\n";
+  out << "Order parameters (R1: (FM_x, FM_y, FM_z), R2: (stripy_x, stripy_z)\n";
+  out << std::setprecision(14) << ClusterFMOP.transpose()/(double)NumSites << "\n";
+  out << std::setprecision(14) << ClusterStripyOP.transpose()/(double)NumSites << "\n";
   //which=0 is ground state, which=1 is thermal
-  if (which == 1) {
-    out << "-------------------------------Thermal-averaged observables-----------------------------\n";
-    out << "Order parameters: (R: FM, stripy_x, stripy_y, stripy_z) (C: x, y, z)\n";
-    out << std::setprecision(14) << FMOPbar      << " " << FMOPParbar      << " " << FMOPPerpbar      << "\n";
-    out << std::setprecision(14) << StripyOPxbar << " " << StripyOPxParbar << " " << StripyOPxPerpbar <<  "\n";
-    out << std::setprecision(14) << StripyOPybar << " " << StripyOPyParbar << " " << StripyOPyPerpbar <<  "\n";
-    out << std::setprecision(14) << StripyOPzbar << " " << StripyOPzParbar << " " << StripyOPzPerpbar <<  "\n";
-    out << "Specific heat\n";
-    out << std::setprecision(14) << SpecificHeat << "\n";
-  } else if (which == 0){
-    out << "-------------------------------Ground state observables--------------------------------\n";
-    out << "Order parameters (R1: (FM_x, FM_y, FM_z), R2: (stripy_x, stripy_z)\n";
-    out << std::setprecision(14) << ClusterFMOP.transpose()/(double)NumSites << "\n";
-    out << std::setprecision(14) << ClusterStripyOP.transpose()/(double)NumSites << "\n";
-  }
+}
+
+void TriangularLattice::PrintThermalObservables(std::ostream &out){
+  out << "-------------------------------Thermal-averaged observables-----------------------------\n";
+  out << "Specific heat\n";
+  out << std::setprecision(14) << SpecificHeat << "\n";
+  out << "Order parameters: (C: FM norm, Perp norm, Par norm)\n";
+  out << std::setprecision(14) << FMNorm << " " << PerpNorm << " " << ParNorm << "\n";
 }
 
 void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sweeps)
@@ -469,80 +464,42 @@ void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sw
     }
 }
 
-// void TriangularLattice::SampleConfiguration(double &)
+void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps, const uint& sampling_time){
+      // cout << temp << " " << temp << endl;
+      double e = 0;
+      double e2 = 0;
+      double ebar, e2bar, specificheat;
 
-// void TriangularLattice::SampleConfiguration(double& temp, const uint& max_sweeps)
-// {
-//     // cout << temp << " " << temp << endl;
-//     double e = 0;
-//     double e2 = 0;
-//
-//     double fmopbar=0;
-//     double stripyopxbar=0;
-//     double stripyopybar=0;
-//     double stripyopzbar=0;
-//
-//     double fmopperpbar=0;
-//     double stripyopxperpbar=0;
-//     double stripyopyperpbar=0;
-//     double stripyopzperpbar=0;
-//
-//     double fmopparbar=0;
-//     double stripyopxparbar=0;
-//     double stripyopyparbar=0;
-//     double stripyopzparbar=0;
-//
-//     double ebar, e2bar, specificheat;
-//
-//     uint sweep = 0;
-//     while (sweep < max_sweeps){
-//       MetropolisSweep(temp);
-//
-//       CalculateClusterEnergyandOP();
-//       e += ClusterEnergy;
-//       e2 += pow(ClusterEnergy,2);
-//
-//       // <m>
-//       fmopbar += ClusterFMOP.norm();
-//       stripyopxbar += ClusterStripyOP.row(0).norm();
-//       stripyopybar += ClusterStripyOP.row(1).norm();
-//       stripyopzbar += ClusterStripyOP.row(2).norm();
-//
-//       // <mpar>
-//       fmopparbar += abs(ClusterFMOP(1));
-//       stripyopxparbar += abs(ClusterStripyOP(0,1));
-//       stripyopyparbar += abs(ClusterStripyOP(1,1));
-//       stripyopzparbar += abs(ClusterStripyOP(2,1));
-//
-//       // <mperp>
-//       fmopperpbar += sqrt(pow(ClusterFMOP(0),2)+pow(ClusterFMOP(2),2));
-//       stripyopxperpbar += sqrt(pow(ClusterStripyOP(0,0),2)+pow(ClusterStripyOP(0,2),2));
-//       stripyopyperpbar += sqrt(pow(ClusterStripyOP(1,0),2)+pow(ClusterStripyOP(1,2),2));
-//       stripyopzperpbar += sqrt(pow(ClusterStripyOP(2,0),2)+pow(ClusterStripyOP(2,2),2));
-//
-//       // cout << "sweep " << sweep << " e " << e/(double)max_sweeps/(double)NumSites << " e2 " << e2/(double)max_sweeps/pow((double)NumSites,2) << endl;
-//       ++sweep;
-//     }
-//     FMOPbar = fmopbar/(double)NumSites/(double)max_sweeps;
-//     StripyOPxbar = stripyopxbar /(double)NumSites/(double)max_sweeps;
-//     StripyOPybar = stripyopybar /(double)NumSites/(double)max_sweeps;
-//     StripyOPzbar = stripyopzbar /(double)NumSites/(double)max_sweeps;
-//
-//     FMOPPerpbar = fmopperpbar/(double)NumSites/(double)max_sweeps;
-//     StripyOPxPerpbar = stripyopxperpbar /(double)NumSites/(double)max_sweeps;
-//     StripyOPyPerpbar = stripyopyperpbar /(double)NumSites/(double)max_sweeps;
-//     StripyOPzPerpbar = stripyopzperpbar /(double)NumSites/(double)max_sweeps;
-//
-//     FMOPParbar = fmopparbar/(double)NumSites/(double)max_sweeps;
-//     StripyOPxParbar = stripyopxparbar /(double)NumSites/(double)max_sweeps;
-//     StripyOPyParbar = stripyopyparbar /(double)NumSites/(double)max_sweeps;
-//     StripyOPzParbar = stripyopzparbar /(double)NumSites/(double)max_sweeps;
-//
-//     ebar = e/(double)max_sweeps;
-//     e2bar = e2/(double)max_sweeps;
-//
-//     SpecificHeat = (e2bar - pow(ebar,2))/(double)NumSites/pow(temp,2);
-// }
+      double m_fm_norm =0;
+      double m_perp_norm =0;
+      double m_par_norm =0;
+
+
+      uint sweep = 0;
+      uint samples = 0;
+      while (sweep < max_sweeps){
+        MetropolisSweep(temp);
+        if (sweep%sampling_time == 0){
+          // cout << "sweep " << sweep << endl;
+          CalculateClusterEnergyandOP();
+          e += ClusterEnergy;
+          e2 += pow(ClusterEnergy,2);
+
+          m_fm_norm += ClusterFMOP.norm();
+          m_perp_norm += ClusterStripyOP.norm();
+          m_par_norm += abs(ClusterFMOP(1));
+          ++samples;
+        }
+        ++sweep;
+      }
+      ebar = e/((double)samples);
+      e2bar = e2/((double)samples);
+      SpecificHeat = (e2bar - pow(ebar,2))/(double)NumSites/pow(temp,2);
+
+      FMNorm = m_fm_norm/((double)samples)/(double)NumSites;
+      PerpNorm = m_perp_norm/((double)samples)/(double)NumSites;
+      ParNorm = m_par_norm/((double)samples)/(double)NumSites;
+}
 
 void TriangularLattice::CreateStripySignMatrices()
 {

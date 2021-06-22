@@ -23,7 +23,7 @@ public:
   const double JTau, Lambda, IsingY, Defect, HField;
   vector<vector<Site> > Cluster;
   Eigen::Matrix3d Hx, Hy, Hz, Hdefect, Ham;
-  Eigen::Vector3d HDirection,ClusterFMOP;
+  Eigen::Vector3d HDirection, ClusterFMOP;
   Eigen::Vector2d ClusterStripyOP;
   double FinalT;
   std::mt19937 RNG;
@@ -36,9 +36,7 @@ public:
 
   Eigen::ArrayXXd StripySignsX, StripySignsY, StripySignsZ;
 
-  double FMOPbar, StripyOPxbar, StripyOPybar, StripyOPzbar;
-  double FMOPPerpbar, StripyOPxPerpbar, StripyOPyPerpbar, StripyOPzPerpbar;
-  double FMOPParbar, StripyOPxParbar, StripyOPyParbar, StripyOPzParbar;
+  double FMNorm, PerpNorm, ParNorm;
 
 
   TriangularLattice(const uint& l1, const uint& l2, const double& jtau, const double& lambda,
@@ -55,13 +53,13 @@ public:
   void MolecularField(const Site& site, Eigen::Vector3d& molec);
   void MetropolisSweep(const double& temperature);
   void DeterministicSweeps(const uint& max_sweeps);
-  void PrintConfiguration(std::ostream &out,const uint &which);
+  void PrintConfiguration(std::ostream &out);
 
   void SimulatedAnnealing(const uint& max_sweeps,
                                             double& initial_T, double& final_T, double& rate);
 
   void ThermalizeConfiguration(double& temp, const uint& max_flips);
-  void SampleConfiguration(double& temp, const uint& max_sweeps);
+  void SampleConfiguration(double& temp, const uint& max_sweeps, const uint& sampling_time);
 
   void MetropolisFlip(
     uint& uc_x, uint& uc_y,
@@ -75,6 +73,7 @@ public:
   void CalculateClusterEnergyandOP();
   void CalculateClusterEnergy();
   void CalculateClusterOP();
+  void PrintThermalObservables(std::ostream &out);
 
   //private:
   //
