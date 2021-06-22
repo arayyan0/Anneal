@@ -164,6 +164,6 @@ class SweepTemperatureJobs:
             if not os.path.exists(self.OutputPath+f'/v_{v}'):
                 os.makedirs(self.OutputPath+f'/v_{v}')
             for x in self.XArray:
-                File.write(command+f' {x:.3f}' + ' > ' +
+                File.write(command+f' {x:.6f}' + ' > ' +
                         self.OutputPath+f'/v_{v}/{self.XLabel}_{x:.3f}_.out\n')
         File.close()
