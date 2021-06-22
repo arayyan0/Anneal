@@ -1,8 +1,20 @@
 from sweep_lib import SweepTemperatureJobs
 
+
 #temperature array
+T_min = 0.05
+T_max = 0.6
+
+#specifying step size
+#dT = 0.05
+
+#specifying number of steps
+Nsteps = 80
+dT = (T_max-T_min)/(Nsteps-1) 
+
 #T_min, #T_max, dT, label, spacing ('ari' or 'geo')
-temp_list = [0.05, 0.6, 0.05, 'Temp', 'geo']
+temp_list = [T_min, T_max, dT, 'Temp', 'geo']
+
 
 #l1, l2
 cluster_list = [36, 36]
