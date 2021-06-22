@@ -136,9 +136,9 @@ bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly)
   }
 }
 
-void TriangularLattice::CalculateLocalEnergy(const Site& site, double& energy)
+void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& energy)
 {
-  double e = 0;
+  long double e = 0;
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
 
   //first checks if I selected poisoned site or not
@@ -253,8 +253,8 @@ void TriangularLattice::CalculateClusterOP(){
 
 void TriangularLattice::CalculateClusterEnergy()
 {
-  double e=0;
-  double local_energy;
+  long double e=0;
+  long double local_energy;
 
   for (uint n1=0; n1<L1; ++n1){
     for (uint n2=0; n2<L2; ++n2){
@@ -270,8 +270,8 @@ void TriangularLattice::CalculateClusterEnergy()
 
 void TriangularLattice::CalculateClusterEnergyandOP()
 {
-  double e=0;
-  double local_energy;
+  long double e=0;
+  long double local_energy;
 
   Eigen::Vector3d spin, FMOP;
   Eigen::Matrix<double, 3, 2> StripyOP;
@@ -299,7 +299,7 @@ void TriangularLattice::CalculateClusterEnergyandOP()
 
   ClusterEnergy = e/2.0;
   Eigen::MatrixXd::Index index[1];
-  double max = StripyOP.rowwise().norm().maxCoeff(&index[0]);
+  long double max = StripyOP.rowwise().norm().maxCoeff(&index[0]);
 
   ClusterFMOP = FMOP;
   ClusterStripyOP = StripyOP.row(index[0]);
@@ -309,7 +309,7 @@ void TriangularLattice::CalculateClusterEnergyandOP()
 void TriangularLattice::MetropolisFlip(
   uint& uc_x, uint& uc_y,
   Spin&  old_spin_at_chosen_site,
-  double &old_local_energy, double &new_local_energy, double &energy_diff, double &r,
+  long double &old_local_energy, long double &new_local_energy, long double &energy_diff, double &r,
   double &pd,
   const double& temperature
 )
@@ -343,7 +343,8 @@ void TriangularLattice::MetropolisSweep(const double& temperature)
 {
   uint uc_x, uc_y;
   Spin old_spin_at_chosen_site;
-  double old_local_energy, new_local_energy, energy_diff, r, pd;
+  long double old_local_energy, new_local_energy, energy_diff;
+  double r, pd;
   Site *chosen_site_ptr;
 
   uint flip = 0;
@@ -466,13 +467,13 @@ void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sw
 
 void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps, const uint& sampling_time){
       // cout << temp << " " << temp << endl;
-      double e = 0;
-      double e2 = 0;
-      double ebar, e2bar, specificheat;
+      long double e = 0;
+      long double e2 = 0;
+      long double ebar, e2bar, specificheat;
 
-      double m_fm_norm =0;
-      double m_perp_norm =0;
-      double m_par_norm =0;
+      long double m_fm_norm =0;
+      long double m_perp_norm =0;
+      long double m_par_norm =0;
 
 
       uint sweep = 0;
@@ -480,10 +481,10 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
       while (sweep < max_sweeps){
         MetropolisSweep(temp);
         if (sweep%sampling_time == 0){
-          // cout << "sweep " << sweep << endl;
           CalculateClusterEnergyandOP();
           e += ClusterEnergy;
           e2 += pow(ClusterEnergy,2);
+          // cout << std::setprecision(14) << " " << samples << " " << ClusterEnergy  << " " << pow(ClusterEnergy,2)<< endl;
 
           m_fm_norm += ClusterFMOP.norm();
           m_perp_norm += ClusterStripyOP.norm();
@@ -494,6 +495,7 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
       }
       ebar = e/((double)samples);
       e2bar = e2/((double)samples);
+      // cout << std::setprecision(14) << 0  << " " << ebar << " " << e2bar << endl;
       SpecificHeat = (e2bar - pow(ebar,2))/(double)NumSites/pow(temp,2);
 
       FMNorm = m_fm_norm/((double)samples)/(double)NumSites;

@@ -11,6 +11,6 @@ cluster_list = [36, 36]
 ham_list = [-0.0, -0.0]
 
 run = 1
-versions = 1
+versions = 3
 
 SweepTemperatureJobs(temp_list, cluster_list, ham_list, run, versions)

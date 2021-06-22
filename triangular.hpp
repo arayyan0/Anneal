@@ -29,14 +29,14 @@ public:
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
   std::uniform_int_distribution<uint> L1Dist, L2Dist;
-  double ClusterEnergy, SpecificHeat;
+  long double ClusterEnergy, SpecificHeat;
   long ActualDetFlips;
 
   bool PoisonedSite_Flag;
 
   Eigen::ArrayXXd StripySignsX, StripySignsY, StripySignsZ;
 
-  double FMNorm, PerpNorm, ParNorm;
+  long double FMNorm, PerpNorm, ParNorm;
 
 
   TriangularLattice(const uint& l1, const uint& l2, const double& jtau, const double& lambda,
@@ -49,7 +49,7 @@ public:
   void InitializeFMSpins(const double& theta, const double& phi);
   void InitializeRandomSpins();
   bool CheckIfPoisoned(uint lx, uint ly);
-  void CalculateLocalEnergy(const Site& site, double& energy);
+  void CalculateLocalEnergy(const Site& site, long double& energy);
   void MolecularField(const Site& site, Eigen::Vector3d& molec);
   void MetropolisSweep(const double& temperature);
   void DeterministicSweeps(const uint& max_sweeps);
@@ -64,7 +64,7 @@ public:
   void MetropolisFlip(
     uint& uc_x, uint& uc_y,
     Spin&  old_spin_at_chosen_site,
-    double &old_local_energy, double &new_local_energy, double &energy_diff, double &r,
+    long double &old_local_energy, long double &new_local_energy, long double &energy_diff, double &r,
     double &pd,
     const double& temperature
   );

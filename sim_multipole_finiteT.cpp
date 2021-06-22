@@ -34,34 +34,36 @@ int main(int argc, char *argv[])
   triangular.ThermalizeConfiguration(final_T, num_sweeps_thermal);
 
   triangular.CalculateClusterEnergyandOP();
-  const uint num_sweeps_measurement = 1e6;
-  const uint sampling_time = 1e1;
 
+  const uint sampling_time = 1e2;
+  const uint num_sweeps_measurement = (1e4)*sampling_time;
   triangular.SampleConfiguration(final_T, num_sweeps_measurement, sampling_time);
 
   triangular.CalculateClusterEnergyandOP();
   double actual_det_flips=0;
-  cout << std::fixed << std::setprecision(14);
-  PrintTriangularSimulationData(cout, type, sublattice, l1, l2,
+
+  std::ostream &which = std::cout;
+  which << std::fixed << std::setprecision(14);
+  PrintTriangularSimulationData(which, type, sublattice, l1, l2,
                                            initial_T, final_T, num_sweeps_SA,
                                            num_sweeps_thermal,num_sweeps_measurement,
                                            actual_det_flips);
-  cout << "------------------------Hamiltonian Parameters------------------------\n";
-  cout << "J_Tau\n";
-  cout << jtau << "\n";
-  cout << "Lambda\n";
-  cout << lambda << "\n";
-  cout << "IsingY\n";
-  cout << ising_y << "\n";
-  cout << "defect\n";
-  cout << defect << "\n";
-  cout << "HField\n";
-  cout << h_field << "\n";
-  cout << "HDirection\n";
-  cout << hdir.transpose() << "\n";
-  triangular.PrintConfiguration(cout);
+  which << "------------------------Hamiltonian Parameters------------------------\n";
+  which << "J_Tau\n";
+  which << jtau << "\n";
+  which << "Lambda\n";
+  which << lambda << "\n";
+  which << "IsingY\n";
+  which << ising_y << "\n";
+  which << "defect\n";
+  which << defect << "\n";
+  which << "HField\n";
+  which << h_field << "\n";
+  which << "HDirection\n";
+  which << hdir.transpose() << "\n";
+  triangular.PrintConfiguration(which);
 
-  triangular.PrintThermalObservables(cout);
+  triangular.PrintThermalObservables(which);
 
 
   // prints nearest neighbours of each site
