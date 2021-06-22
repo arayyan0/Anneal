@@ -106,8 +106,13 @@ class SweepTemperatureJobs:
     def __init__(self, temp_list, cluster_list, ham_list, run, versions):
         x_min, x_max, dx = temp_list[:3]
         N_x = round(1+ (x_max-x_min)/dx)
-        self.XArray = np.linspace(x_min, x_max, N_x)
         self.XLabel = temp_list[3]
+        spacing = temp_list[4]
+
+        if spacing == 'ari':
+            self.XArray = np.linspace(x_min, x_max, N_x)
+        elif spacing == 'geo':
+            self.XArray = (x_max+x_min) - np.geomspace(x_min, x_max, N_x)
 
         print(f"{self.XLabel}:\n{self.XArray}")
 

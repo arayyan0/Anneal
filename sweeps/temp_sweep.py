@@ -1,15 +1,16 @@
 from sweep_lib import SweepTemperatureJobs
 
 #temperature array
-temp_list = [2, 6, 0.25, 'Temp']
+#T_min, #T_max, dT, label, spacing ('ari' or 'geo')
+temp_list = [0.05, 0.6, 0.05, 'Temp', 'geo']
 
 #l1, l2
-cluster_list = [18, 18]
+cluster_list = [36, 36]
 
 #ising_y, defect
-ham_list = [-1, 0]
+ham_list = [-0.0, -0.0]
 
-run = 3
-versions = 5
+run = 1
+versions = 1
 
 SweepTemperatureJobs(temp_list, cluster_list, ham_list, run, versions)
