@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
   PrintTriangularSimulationData(which, type, sublattice, l1, l2,
                                            initial_T, final_T, num_sweeps_SA,
                                            num_sweeps_thermal,num_sweeps_measurement,
-                                           actual_det_flips);
+                                           sampling_time, actual_det_flips);
   which << "------------------------Hamiltonian Parameters------------------------\n";
   which << "J_Tau\n";
   which << jtau << "\n";

@@ -444,10 +444,12 @@ void TriangularLattice::PrintConfiguration(std::ostream &out)
 
 void TriangularLattice::PrintThermalObservables(std::ostream &out){
   out << "-------------------------------Thermal-averaged observables-----------------------------\n";
-  out << "Specific heat\n";
-  out << std::setprecision(14) << SpecificHeat << "\n";
-  out << "Order parameters: (C: FM norm, Perp norm, Par norm)\n";
-  out << std::setprecision(14) << FMNorm << " " << PerpNorm << " " << ParNorm << "\n";
+  out << "Energy cumulants (C: E, E2, E3, E4) \n";
+  out << std::setprecision(14) << EBar << " " << E2Bar << " " << E3Bar << " " << E4Bar << "\n";
+  out << "Order parameter cumulants (R: FM, Perp norm, Par norm), (C: |m|, |m|2, |m|4)\n";
+  out << std::setprecision(14) << FMNorm << " " << FMNorm2 << " " << FMNorm4 << "\n";
+  out << std::setprecision(14) << PerpNorm << " " << PerpNorm2 << " " <<  PerpNorm4 << "\n";
+  out << std::setprecision(14) << ParNorm << " " << ParNorm2 << " " << ParNorm4 << "\n";
 }
 
 void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sweeps)
@@ -469,38 +471,71 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
       // cout << temp << " " << temp << endl;
       long double e = 0;
       long double e2 = 0;
-      long double ebar, e2bar, specificheat;
+      long double e3 = 0;
+      long double e4 = 0;
 
       long double m_fm_norm =0;
       long double m_perp_norm =0;
       long double m_par_norm =0;
 
+      long double m_fm_norm2 =0;
+      long double m_perp_norm2 =0;
+      long double m_par_norm2 =0;
 
+      long double m_fm_norm4 =0;
+      long double m_perp_norm4 =0;
+      long double m_par_norm4 =0;
+
+      long double energydensity, fm_norm, perp_norm, par_norm;
       uint sweep = 0;
       uint samples = 0;
       while (sweep < max_sweeps){
         MetropolisSweep(temp);
         if (sweep%sampling_time == 0){
           CalculateClusterEnergyandOP();
-          e += ClusterEnergy;
-          e2 += pow(ClusterEnergy,2);
-          // cout << std::setprecision(14) << " " << samples << " " << ClusterEnergy  << " " << pow(ClusterEnergy,2)<< endl;
+          energydensity = ClusterEnergy/(double)NumSites;
 
-          m_fm_norm += ClusterFMOP.norm();
-          m_perp_norm += ClusterStripyOP.norm();
-          m_par_norm += abs(ClusterFMOP(1));
+          e  += energydensity;
+          e2 += pow(energydensity,2);
+          e3 += pow(energydensity,3);
+          e4 += pow(energydensity,4);
+          // cout << std::setprecision(14) << " " << samples << " " << pow(energydensity,3)  << " " << pow(energydensity,4)<< endl;
+
+          fm_norm   = ClusterFMOP.norm()/(double)NumSites;
+          perp_norm = ClusterStripyOP.norm()/(double)NumSites;
+          par_norm  = abs(ClusterFMOP(1))/(double)NumSites;
+
+          m_fm_norm    += fm_norm;
+          m_perp_norm  += perp_norm;
+          m_par_norm   += par_norm;
+          m_fm_norm2   += pow(fm_norm,2);
+          m_perp_norm2 += pow(perp_norm,2);
+          m_par_norm2  += pow(par_norm,2);
+          m_fm_norm4   += pow(fm_norm,4);
+          m_perp_norm4 += pow(perp_norm,4);
+          m_par_norm4  += pow(par_norm,4);
           ++samples;
         }
         ++sweep;
       }
-      ebar = e/((double)samples);
-      e2bar = e2/((double)samples);
-      // cout << std::setprecision(14) << 0  << " " << ebar << " " << e2bar << endl;
-      SpecificHeat = (e2bar - pow(ebar,2))/(double)NumSites/pow(temp,2);
 
-      FMNorm = m_fm_norm/((double)samples)/(double)NumSites;
-      PerpNorm = m_perp_norm/((double)samples)/(double)NumSites;
-      ParNorm = m_par_norm/((double)samples)/(double)NumSites;
+      EBar  = e/((double)samples);
+      E2Bar = e2/((double)samples);
+      E3Bar = e3/((double)samples);
+      E4Bar = e4/((double)samples);
+      // cout << std::setprecision(14) << 0  << " " << ebar << " " << e2bar << endl;
+
+      FMNorm = m_fm_norm/((double)samples);
+      PerpNorm = m_perp_norm/((double)samples);
+      ParNorm = m_par_norm/((double)samples);
+
+      FMNorm2 = m_fm_norm2/((double)samples);
+      PerpNorm2 = m_perp_norm2/((double)samples);
+      ParNorm2 = m_par_norm2/((double)samples);
+
+      FMNorm4 = m_fm_norm4/((double)samples);
+      PerpNorm4 = m_perp_norm4/((double)samples);
+      ParNorm4 = m_par_norm4/((double)samples);
 }
 
 void TriangularLattice::CreateStripySignMatrices()

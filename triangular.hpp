@@ -29,7 +29,8 @@ public:
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
   std::uniform_int_distribution<uint> L1Dist, L2Dist;
-  long double ClusterEnergy, SpecificHeat;
+  long double ClusterEnergy;
+  long double EBar, E2Bar, E3Bar, E4Bar;
   long ActualDetFlips;
 
   bool PoisonedSite_Flag;
@@ -37,6 +38,8 @@ public:
   Eigen::ArrayXXd StripySignsX, StripySignsY, StripySignsZ;
 
   long double FMNorm, PerpNorm, ParNorm;
+  long double FMNorm2, PerpNorm2, ParNorm2;
+  long double FMNorm4, PerpNorm4, ParNorm4;
 
 
   TriangularLattice(const uint& l1, const uint& l2, const double& jtau, const double& lambda,

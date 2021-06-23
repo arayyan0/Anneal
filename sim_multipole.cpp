@@ -35,12 +35,13 @@ int main(int argc, char *argv[])
 
   const uint num_sweeps_thermal = 0;
   const uint num_sweeps_measurement = 0;
+  const uint sampling_time = 0;
   triangular.CalculateClusterEnergyandOP();
   cout << std::fixed << std::setprecision(14);
   PrintTriangularSimulationData(cout, type, sublattice, l1, l2,
                                            initial_T, final_T, num_sweeps_SA,
                                            num_sweeps_thermal, num_sweeps_measurement,
-                                           triangular.ActualDetFlips);
+                                           sampling_time, triangular.ActualDetFlips);
   cout << "------------------------Hamiltonian Parameters------------------------\n";
   cout << "J_Tau\n";
   cout << jtau << "\n";
@@ -72,4 +73,3 @@ int main(int argc, char *argv[])
   // }
   return 0;
 }
-7/*-8+9

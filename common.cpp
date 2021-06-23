@@ -35,7 +35,7 @@ void PrintTriangularSimulationData(std::ostream &out, const uint& type,
                          const uint& sublattice, const uint& l1, const uint& l2,
                          const double& T_i, double& T_f, const uint& max_sa_sweeps,
                          const uint& max_thermal_sweeps, const uint& max_measuring_sweeps,
-                         const uint& max_daligns)
+                         const uint& sampling_time, const uint& max_daligns)
 {
   out << "-------------------------Simulation Parameters-------------------------\n";
   out << "Which cluster type?\n";
@@ -46,8 +46,8 @@ void PrintTriangularSimulationData(std::ostream &out, const uint& type,
   out << T_i << "\n";
   out << "Final Temperature\n";
   out << T_f << "\n";
-  out << "Number of Metropolis sweeps (SA, thermal, measuring)\n";
-  out << max_sa_sweeps << " " << max_thermal_sweeps << " " << max_measuring_sweeps << "\n";
+  out << "Number of Metropolis sweeps (SA, thermal, measuring/sampling time)\n";
+  out << max_sa_sweeps << " " << max_thermal_sweeps << " " << max_measuring_sweeps << "/" << sampling_time << "\n";
   out << "Number of Deterministic Aligns\n";
   out << max_daligns << "\n";
 }
