@@ -1,1 +1,1 @@
-rm -rf out jobrun_*
+rm -rf out jobrun_* slurm* 
