@@ -165,5 +165,5 @@ class SweepTemperatureJobs:
                 os.makedirs(self.OutputPath+f'/v_{v}')
             for x in self.XArray:
                 File.write(command+f' {x:.6f}' + ' > ' +
-                        self.OutputPath+f'/v_{v}/{self.XLabel}_{x:.3f}_.out\n')
+                        self.OutputPath+f'/v_{v}/{self.XLabel}_{x:.6f}_.out\n')
         File.close()
