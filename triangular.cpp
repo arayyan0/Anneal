@@ -96,8 +96,11 @@ void TriangularLattice::CreateDefectPositions(){
 
 bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly){
   bool truth = false;
+  if (lx!=ly){
+    return truth;
+  }
   for (auto defectposition:Defects){
-    if ((defectposition[0]==lx)&&(defectposition[1]==ly)) {
+    if (defectposition[0]==lx) {
       truth = true;
       return truth;
     }
