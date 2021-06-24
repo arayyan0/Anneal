@@ -103,7 +103,7 @@ bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly){
       return true;
     }
   }
-  return true;
+  return false;
 }
 
 Eigen::Matrix3d TriangularLattice::ReturnMPHamiltonian(const double& angle)
