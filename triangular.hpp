@@ -19,9 +19,10 @@ struct Site
 class TriangularLattice
 {
 public:
-  const uint L1, L2, NumSites, PoisonedX, PoisonedY;
+  const uint L1, L2, NumSites, NumDefects;
   const double JTau, Lambda, IsingY, Defect, HField;
   vector<vector<Site> > Cluster;
+  vector<vector<uint> > Defects;
   Eigen::Matrix3d Hx, Hy, Hz, Hdefect, Ham;
   Eigen::Vector3d HDirection, ClusterFMOP;
   Eigen::Vector2d ClusterStripyOP;
@@ -42,7 +43,8 @@ public:
   long double FMNorm4, PerpNorm4, ParNorm4;
 
 
-  TriangularLattice(const uint& l1, const uint& l2, const double& jtau, const double& lambda,
+  TriangularLattice(const uint& l1, const uint& l2, const uint& num_defects,
+                    const double& jtau, const double& lambda,
                     const double& ising_y, const double& defect, const double& h,
                     Eigen::Vector3d& hdir);
 
@@ -77,6 +79,8 @@ public:
   void CalculateClusterEnergy();
   void CalculateClusterOP();
   void PrintThermalObservables(std::ostream &out);
+
+  void CreateDefectPositions();
 
   //private:
   //

@@ -4,16 +4,17 @@
 ///  @brief    defining the triangular Lattice class
 #include "triangular.hpp"
 
-TriangularLattice::TriangularLattice(const uint& l1, const uint& l2,
+TriangularLattice::TriangularLattice(const uint& l1, const uint& l2, const uint& num_defects,
                                      const double& jtau, const double& lambda,
                                      const double& ising_y,
                                      const double& defect,
                                      const double& h,
                                      Eigen::Vector3d& hdir):
-L1(l1), L2(l2), NumSites(l1*l2), PoisonedX(l1/2), PoisonedY(l2/2),
+L1(l1), L2(l2), NumSites(l1*l2), NumDefects(num_defects),
 JTau(jtau), Lambda(lambda), IsingY(ising_y), Defect(defect),
 HField(h), HDirection(hdir)
 {
+
   //changing size of Cluster to L1*L2
   Cluster.resize(L1);
   for(uint i = 0; i < L1; ++i){
@@ -21,6 +22,13 @@ HField(h), HDirection(hdir)
   }
 
   CreateClusterPBC();
+
+  Defects.resize(NumDefects);
+  for(uint i = 0; i < NumDefects; ++i){
+      Defects[i].resize(2);
+  }
+  CreateDefectPositions();
+
   InitializeRandomSpins();
 
   // defining the bond Hamiltonians
@@ -70,6 +78,31 @@ void TriangularLattice::CreateClusterPBC()
                       };
     }
   }
+}
+
+void TriangularLattice::CreateDefectPositions(){
+  double pos;
+  //only to be trusted when L1=L2=L
+
+  for (uint d=0; d<NumDefects; ++d){
+    pos = d*L1/(double)NumDefects + L1/2.0/(double)NumDefects;
+    Defects[d] = {(uint)pos,(uint)pos};
+  }
+
+  // for (auto i:Defects){
+  //   cout << i[0] << endl;
+  // }
+}
+
+bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly){
+  bool truth = false;
+  for (auto defectposition:Defects){
+    if ((defectposition[0]==lx)&&(defectposition[1]==ly)) {
+      truth = true;
+      return truth;
+    }
+  }
+  return truth;
 }
 
 Eigen::Matrix3d TriangularLattice::ReturnMPHamiltonian(const double& angle)
@@ -123,16 +156,6 @@ void TriangularLattice::InitializeRandomSpins()
     for (uint y=0; y<L2; ++y){
       SpherePointPicker(Cluster[x][y].OnsiteSpin);
     }
-  }
-}
-
-bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly)
-{
-
-  if ( lx == PoisonedX && ly == PoisonedY ){
-    return true;
-  } else {
-    return false;
   }
 }
 
