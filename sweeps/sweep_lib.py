@@ -118,7 +118,7 @@ class SweepTemperatureJobs:
 
         self.L1, self.L2 = cluster_list
 
-        self.IsingY, self.Defect = ham_list
+        self.IsingY, self.Defect, self.NumDefects = ham_list
 
         self.JobTitle = f"jobrun_{run}"
         print(self.JobTitle)
@@ -138,7 +138,7 @@ class SweepTemperatureJobs:
         F.write(f"{self.XLabel}-array: {self.XArray}\n")
         F.write("all files in this folder have the following global parameters.\n")
         F.write(f"(l1, l2) = ({self.L1}, {self.L2})\n")
-        F.write(f"Ising_y, defect = {self.IsingY, self.Defect}\n")
+        F.write(f"Ising_y, defect, number of defects = {self.IsingY, self.Defect, self.NumDefects}\n")
         F.close()
 
     def WriteSHFile(self):
@@ -157,7 +157,7 @@ class SweepTemperatureJobs:
         F.close()
 
     def WriteLSTFile(self, versions):
-        command = f"./sim {self.L1} {self.L2} {self.IsingY} {self.Defect}"
+        command = f"./sim {self.L1} {self.L2} {self.NumDefects} {self.IsingY} {self.Defect}"
 
         File = open(f'{self.JobTitle}.lst','w+')
         for v in range(1, versions+1):
