@@ -95,17 +95,15 @@ void TriangularLattice::CreateDefectPositions(){
 }
 
 bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly){
-  bool truth = false;
   if (lx!=ly){
-    return truth;
+    return false;
   }
   for (auto defectposition:Defects){
     if (defectposition[0]==lx) {
-      truth = true;
-      return truth;
+      return true;
     }
   }
-  return truth;
+  return true;
 }
 
 Eigen::Matrix3d TriangularLattice::ReturnMPHamiltonian(const double& angle)
