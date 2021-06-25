@@ -24,7 +24,7 @@ public:
   vector<vector<Site> > Cluster;
   vector<vector<uint> > Defects;
   Eigen::Matrix3d Hx, Hy, Hz, Hdefect, Ham;
-  Eigen::Vector3d HDirection, ClusterFMOP;
+  Eigen::Vector3d HDirection, ClusterFMOP,ClusterCombinedOP;
   Eigen::Vector2d ClusterStripyOP;
   double FinalT;
   std::mt19937 RNG;
@@ -38,9 +38,9 @@ public:
 
   Eigen::ArrayXXd StripySignsX, StripySignsY, StripySignsZ;
 
-  long double FMNorm, PerpNorm, ParNorm;
-  long double FMNorm2, PerpNorm2, ParNorm2;
-  long double FMNorm4, PerpNorm4, ParNorm4;
+  long double FMNorm, PerpNorm, ParNorm, CombinedNorm;
+  long double FMNorm2, PerpNorm2, ParNorm2, CombinedNorm2;
+  long double FMNorm4, PerpNorm4, ParNorm4, CombinedNorm4;
 
 
   TriangularLattice(const uint& l1, const uint& l2, const uint& num_defects,

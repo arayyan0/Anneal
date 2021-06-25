@@ -250,8 +250,9 @@ void TriangularLattice::MolecularField(const Site& site, Eigen::Vector3d& molec)
 }
 
 void TriangularLattice::CalculateClusterOP(){
-  Eigen::Vector3d spin, FMOP;
+  Eigen::Vector3d spin, FMOP, CombinedOP;
   Eigen::Matrix<double, 3, 2> StripyOP;
+
   FMOP << 0,0,0;
   StripyOP << 0, 0,
               0, 0,
@@ -261,18 +262,20 @@ void TriangularLattice::CalculateClusterOP(){
     for (uint n2=0; n2<L2; ++n2){
       //calculate three stripy OPs
       spin = Cluster[n1][n2].OnsiteSpin.VectorXYZ;
-
       FMOP += spin;
       StripyOP(0,0) += StripySignsX(n1,n2)*spin(0); StripyOP(0,1) +=  StripySignsX(n1,n2)*spin(2);
       StripyOP(1,0) += StripySignsY(n1,n2)*spin(0); StripyOP(1,1) +=  StripySignsY(n1,n2)*spin(2);
       StripyOP(2,0) += StripySignsZ(n1,n2)*spin(0); StripyOP(2,1) +=  StripySignsZ(n1,n2)*spin(2);
-      }
     }
-  Eigen::MatrixXd::Index index[1];
-  double max = StripyOP.rowwise().norm().maxCoeff(&index[0]);
-
+  }
   ClusterFMOP = FMOP;
-  ClusterStripyOP = StripyOP.row(index[0]);
+
+  Eigen::MatrixXd::Index indices[1];
+  long double stripymax = StripyOP.rowwise().norm().maxCoeff(&indices[0]);
+
+  ClusterStripyOP = StripyOP.row(indices[0]);
+  CombinedOP << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
+  ClusterCombinedOP = CombinedOP;
 }
 
 void TriangularLattice::CalculateClusterEnergy()
@@ -297,12 +300,13 @@ void TriangularLattice::CalculateClusterEnergyandOP()
   long double e=0;
   long double local_energy;
 
-  Eigen::Vector3d spin, FMOP;
+  Eigen::Vector3d spin, FMOP, CombinedOP;
   Eigen::Matrix<double, 3, 2> StripyOP;
   FMOP << 0,0,0;
   StripyOP << 0, 0,
               0, 0,
               0, 0;
+  CombinedOP << 0,0,0;
 
   for (uint n1=0; n1<L1; ++n1){
     for (uint n2=0; n2<L2; ++n2){
@@ -315,18 +319,23 @@ void TriangularLattice::CalculateClusterEnergyandOP()
       spin = Cluster[n1][n2].OnsiteSpin.VectorXYZ;
 
       FMOP += spin;
-      StripyOP(0,0) += StripySignsX(n1,n2)*spin(0); StripyOP(0,1) +=  StripySignsX(n1,n2)*spin(2);
-      StripyOP(1,0) += StripySignsY(n1,n2)*spin(0); StripyOP(1,1) +=  StripySignsY(n1,n2)*spin(2);
-      StripyOP(2,0) += StripySignsZ(n1,n2)*spin(0); StripyOP(2,1) +=  StripySignsZ(n1,n2)*spin(2);
+
+      StripyOP(0,0) += StripySignsX(n1,n2)*spin(0); StripyOP(0,1) += StripySignsX(n1,n2)*spin(2);
+      StripyOP(1,0) += StripySignsY(n1,n2)*spin(0); StripyOP(1,1) += StripySignsY(n1,n2)*spin(2);
+      StripyOP(2,0) += StripySignsZ(n1,n2)*spin(0); StripyOP(2,1) += StripySignsZ(n1,n2)*spin(2);
       }
     }
 
-  ClusterEnergy = e/2.0;
-  Eigen::MatrixXd::Index index[1];
-  long double max = StripyOP.rowwise().norm().maxCoeff(&index[0]);
+    ClusterEnergy = e/2.0;
 
-  ClusterFMOP = FMOP;
-  ClusterStripyOP = StripyOP.row(index[0]);
+    ClusterFMOP = FMOP;
+
+    Eigen::MatrixXd::Index indices[1];
+    long double stripymax = StripyOP.rowwise().norm().maxCoeff(&indices[0]);
+
+    ClusterStripyOP = StripyOP.row(indices[0]);
+    CombinedOP << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
+    ClusterCombinedOP = CombinedOP;
 }
 
 
@@ -460,9 +469,10 @@ void TriangularLattice::PrintConfiguration(std::ostream &out)
     }
   }
   out << "-------------------------------Final configuration observables--------------------------------\n";
-  out << "Order parameters (R1: (FM_x, FM_y, FM_z), R2: (stripy_x, stripy_z)\n";
+  out << "Order parameters. R1: (FM_x, FM_y, FM_z), R2: (stripy_x, stripy_z),  R3: (stripy_x, FM_y, stripy_z)\n";
   out << std::setprecision(14) << ClusterFMOP.transpose()/(double)NumSites << "\n";
   out << std::setprecision(14) << ClusterStripyOP.transpose()/(double)NumSites << "\n";
+  out << std::setprecision(14) << ClusterCombinedOP.transpose()/(double)NumSites << "\n";
   //which=0 is ground state, which=1 is thermal
 }
 
@@ -470,10 +480,11 @@ void TriangularLattice::PrintThermalObservables(std::ostream &out){
   out << "-------------------------------Thermal-averaged observables-----------------------------\n";
   out << "Energy cumulants (C: E, E2, E3, E4) \n";
   out << std::setprecision(14) << EBar << " " << E2Bar << " " << E3Bar << " " << E4Bar << "\n";
-  out << "Order parameter cumulants (R: FM, Perp norm, Par norm), (C: |m|, |m|2, |m|4)\n";
+  out << "Order parameter cumulants (R: FM, Perp, Par, Combined), (C: |m|, |m|2, |m|4)\n";
   out << std::setprecision(14) << FMNorm << " " << FMNorm2 << " " << FMNorm4 << "\n";
   out << std::setprecision(14) << PerpNorm << " " << PerpNorm2 << " " <<  PerpNorm4 << "\n";
   out << std::setprecision(14) << ParNorm << " " << ParNorm2 << " " << ParNorm4 << "\n";
+  out << std::setprecision(14) << CombinedNorm << " " << CombinedNorm2 << " " << CombinedNorm4 << "\n";
 }
 
 void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sweeps)
@@ -501,16 +512,19 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
       long double m_fm_norm =0;
       long double m_perp_norm =0;
       long double m_par_norm =0;
+      long double m_combined_norm =0;
 
       long double m_fm_norm2 =0;
       long double m_perp_norm2 =0;
       long double m_par_norm2 =0;
+      long double m_combined_norm2 =0;
 
       long double m_fm_norm4 =0;
       long double m_perp_norm4 =0;
       long double m_par_norm4 =0;
+      long double m_combined_norm4 =0;
 
-      long double energydensity, fm_norm, perp_norm, par_norm;
+      long double energydensity, fm_norm, perp_norm, par_norm, combined_norm;
       uint sweep = 0;
       uint samples = 0;
       while (sweep < max_sweeps){
@@ -528,16 +542,22 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
           fm_norm   = ClusterFMOP.norm()/(double)NumSites;
           perp_norm = ClusterStripyOP.norm()/(double)NumSites;
           par_norm  = abs(ClusterFMOP(1))/(double)NumSites;
+          combined_norm = ClusterCombinedOP.norm()/(double)NumSites;
 
           m_fm_norm    += fm_norm;
           m_perp_norm  += perp_norm;
           m_par_norm   += par_norm;
+          m_combined_norm += combined_norm;
+
           m_fm_norm2   += pow(fm_norm,2);
           m_perp_norm2 += pow(perp_norm,2);
           m_par_norm2  += pow(par_norm,2);
+          m_combined_norm2  += pow(combined_norm,2);
+
           m_fm_norm4   += pow(fm_norm,4);
           m_perp_norm4 += pow(perp_norm,4);
           m_par_norm4  += pow(par_norm,4);
+          m_combined_norm4  += pow(combined_norm,4);
           ++samples;
         }
         ++sweep;
@@ -552,14 +572,17 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
       FMNorm = m_fm_norm/((double)samples);
       PerpNorm = m_perp_norm/((double)samples);
       ParNorm = m_par_norm/((double)samples);
+      CombinedNorm = m_combined_norm/((double)samples);
 
       FMNorm2 = m_fm_norm2/((double)samples);
       PerpNorm2 = m_perp_norm2/((double)samples);
       ParNorm2 = m_par_norm2/((double)samples);
+      CombinedNorm2 = m_combined_norm2/((double)samples);
 
       FMNorm4 = m_fm_norm4/((double)samples);
       PerpNorm4 = m_perp_norm4/((double)samples);
       ParNorm4 = m_par_norm4/((double)samples);
+      CombinedNorm4 = m_combined_norm4/((double)samples);
 }
 
 void TriangularLattice::CreateStripySignMatrices()
