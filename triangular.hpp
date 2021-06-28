@@ -11,8 +11,8 @@
 
 struct Site
 {
-  //nn_1, nn_2, bond_type
-  vector<std::tuple<int, int, int>> NearestNeighbours;
+  //nn_1, nn_2, bond-dep Hamiltonian
+  vector<std::tuple<int, int, Eigen::Matrix3d>> NearestNeighbours;
   Spin OnsiteSpin;
 };
 

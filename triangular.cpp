@@ -14,13 +14,20 @@ L1(l1), L2(l2), NumSites(l1*l2), NumDefects(num_defects),
 JTau(jtau), Lambda(lambda), IsingY(ising_y), Defect(defect),
 HField(h), HDirection(hdir)
 {
+  // defining the bond Hamiltonians
+  // cout << "outchea" << endl;
+  FixMPHamiltonians();
+  Hdefect << 0,      0, 0,
+             0, Defect, 0,
+             0,      0, 0;
+  Hdefect=JTau*Hdefect;
+  // cout << "outchea" << endl;
 
   //changing size of Cluster to L1*L2
   Cluster.resize(L1);
   for(uint i = 0; i < L1; ++i){
       Cluster[i].resize(L2);
   }
-
   CreateClusterPBC();
 
   Defects.resize(NumDefects);
@@ -29,14 +36,10 @@ HField(h), HDirection(hdir)
   }
   CreateDefectPositions();
 
-  InitializeRandomSpins();
+  // NNHamiltonians
+  // AssignHamiltonians();
 
-  // defining the bond Hamiltonians
-  FixMPHamiltonians();
-  Hdefect << 0,      0, 0,
-             0, Defect, 0,
-             0,      0, 0;
-  Hdefect=JTau*Hdefect;
+  InitializeRandomSpins();
 
   std::uniform_int_distribution<uint> l1d(0, L1-1);
   std::uniform_int_distribution<uint> l2d(0, L2-1);
@@ -52,6 +55,7 @@ void TriangularLattice::CreateClusterPBC()
 {
   Spin some_spin;
   int higher_x, higher_y, lower_x, lower_y;
+  Eigen::Matrix3d hamiltonian = Eigen::Matrix3d::Zero();
   for (int y=0; y<L2; ++y)
   {
     for (int x=0; x<L1; ++x)
@@ -68,12 +72,12 @@ void TriangularLattice::CreateClusterPBC()
       else if (lower_y < 0){lower_y = L2-1;}
       // cout << lower_x << " " << lower_y << endl;
       Cluster[x][y] = {
-                        {std::make_tuple(higher_x,        y, 2),
-                         std::make_tuple(       x, higher_y, 1),
-                         std::make_tuple( lower_x, higher_y, 0),
-                         std::make_tuple( lower_x,        y, 2),
-                         std::make_tuple(       x,  lower_y, 1),
-                         std::make_tuple(higher_x,  lower_y, 0)},
+                        {std::make_tuple(higher_x,        y, Hz),
+                         std::make_tuple(       x, higher_y, Hy),
+                         std::make_tuple( lower_x, higher_y, Hx),
+                         std::make_tuple( lower_x,        y, Hz),
+                         std::make_tuple(       x,  lower_y, Hy),
+                         std::make_tuple(higher_x,  lower_y, Hx)},
                          some_spin
                       };
     }
@@ -187,6 +191,7 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
 {
   long double e = 0;
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
+  Eigen::Matrix3d hamiltonian;
 
   //first checks if I selected poisoned site or not
   if ( PoisonedSite_Flag == false ){
@@ -195,19 +200,21 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
     double value;
     bool poisoned_neighbour;
     for (auto nn_info : site.NearestNeighbours){
-      auto [nn_x, nn_y, bond_type] = nn_info;
+      auto [nn_x, nn_y, hamiltonian] = nn_info;
       //check if neighbour is poisoned
       poisoned_neighbour = CheckIfPoisoned(nn_x, nn_y);
       //if neighbour is poisoned,
       double value = poisoned_neighbour ? 1.0 : 0.0;
       spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-      if (bond_type == 0){
-        Ham = Hx + value*Hdefect;
-      } else if (bond_type == 1){
-        Ham = Hy + value*Hdefect;
-      } else if (bond_type == 2){
-        Ham = Hz + value*Hdefect;
-      }
+
+      Ham = hamiltonian +value*Hdefect;
+      // if (bond_type == 0){
+      //   Ham = Hx + value*Hdefect;
+      // } else if (bond_type == 1){
+      //   Ham = Hy + value*Hdefect;
+      // } else if (bond_type == 2){
+      //   Ham = Hz + value*Hdefect;
+      // }
       e += spin_i.VectorXYZ.transpose().dot(Ham*spin_j.VectorXYZ)
           - JTau*HField*HDirection.transpose().dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
     }
@@ -215,15 +222,9 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
     //selected site IS poisoned
     //add defect hamiltonian to all neighbouring sites
     for (auto nn_info : site.NearestNeighbours){
-      auto [nn_x, nn_y, bond_type] = nn_info;
+      auto [nn_x, nn_y, hamiltonian] = nn_info;
       spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-      if (bond_type == 0){
-        Ham = Hx + Hdefect;
-      } else if (bond_type == 1){
-        Ham = Hy + Hdefect;
-      } else if (bond_type == 2){
-        Ham = Hz + Hdefect;
-      }
+      Ham = hamiltonian+Hdefect;
       e += spin_i.VectorXYZ.transpose().dot(Ham*spin_j.VectorXYZ)
           - JTau*HField*HDirection.transpose().dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
     }
@@ -235,37 +236,26 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
 void TriangularLattice::MolecularField(const Site& site, Eigen::Vector3d& molec)
 {
   Eigen::Vector3d v = Eigen::Vector3d::Zero();
+  Eigen::Matrix3d hamiltonian;
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
   if (PoisonedSite_Flag == false) {
     double value;
     bool poisoned_neighbour;
     for (auto i : site.NearestNeighbours){
-      auto [nn_x, nn_y, bond_type] = i;
+      auto [nn_x, nn_y, hamiltonian] = i;
       //check if neighbour is poisoned
       poisoned_neighbour = CheckIfPoisoned(nn_x, nn_y);
       //if neighbour is poisoned, return one. otherwise, return 0.
       double value = poisoned_neighbour ? 1.0 : 0.0;
       spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-      if (bond_type == 0){
-        Ham = Hx+value*Hdefect;
-      } else if (bond_type == 1){
-        Ham = Hy+value*Hdefect;
-      } else if (bond_type == 2){
-        Ham = Hz+value*Hdefect;
-      }
+      Ham = hamiltonian+value*Hdefect;
       v += -Ham*spin_j.VectorXYZ + JTau*HField*HDirection/6.0;
     }
   }else{
     for (auto i : site.NearestNeighbours){
-      auto [nn_x, nn_y, bond_type] = i;
+      auto [nn_x, nn_y, hamiltonian] = i;
       spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-      if (bond_type == 0){
-        Ham = Hx+Hdefect;
-      } else if (bond_type == 1){
-        Ham = Hy+Hdefect;
-      } else if (bond_type == 2){
-        Ham = Hz+Hdefect;
-      }
+      Ham = hamiltonian + Hdefect;
       v += -Ham*spin_j.VectorXYZ+ JTau*HField*HDirection/6.0;
     }
   }
