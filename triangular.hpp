@@ -81,6 +81,7 @@ public:
   void PrintThermalObservables(std::ostream &out);
 
   void CreateDefectPositions();
+  void OverrelaxationFlip();
 
   //private:
   //

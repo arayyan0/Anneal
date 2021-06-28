@@ -11,21 +11,15 @@ int main(int argc, char *argv[])
 
   const uint type = 2; //v1 or v2
   const uint sublattice = 1; //1 is rhombic
-
   const uint l1 = strtol(argv[1], NULL, 10);
   const uint l2 = strtol(argv[2], NULL, 10);
   if (l1!=l2){
     cout << "CAUTION: L1 != L2" << endl;
     cout << "In principle this is OK if you are not including defects." << endl;
-    cout << "In this case, ensure that defect=0." << endl;
+    cout << "If so, ensure that defect strength=0." << endl;
   }
 
-  const uint num_defects = strtol(argv[3], NULL, 10);
-  if (l1%(2*num_defects)!=0){
-    cout << "Your lattice is not commensurate with the number of defects!" << endl;
-    cout << "If there are no defects, just set num_defects=1 and defect=0." << endl;
-    return 0;
-  }
+  const uint num_defects = strtol(argv[3], NULL, 10); //should only be 1,3,9
 
   double jtau = 1;
   const double lambda = 0;

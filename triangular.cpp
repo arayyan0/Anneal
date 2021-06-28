@@ -81,25 +81,48 @@ void TriangularLattice::CreateClusterPBC()
 }
 
 void TriangularLattice::CreateDefectPositions(){
-  double pos;
-  //only to be trusted when L1=L2=L
+  // only to be trusted for l1 = l2= 6*n!!
+  // only to be trusted for NumDefects = 1,3,9 only!
 
-  for (uint d=0; d<NumDefects; ++d){
-    pos = d*L1/(double)NumDefects + L1/2.0/(double)NumDefects;
-    Defects[d] = {(uint)pos,(uint)pos};
+  double pos = (double)L1/6.0;
+  if (NumDefects >= 1){
+    Defects[0] = {3*(uint)pos,3*(uint)pos};
+  }
+  if (NumDefects >= 3){
+    Defects[1] = {(uint)pos,(uint)pos};
+    Defects[2] = {5*(uint)pos,5*(uint)pos};
+  }
+  if (NumDefects == 9){
+    Defects[3] = {3*(uint)pos,(uint)pos};
+    Defects[4] = {5*(uint)pos,(uint)pos};
+    Defects[5] = {(uint)pos,3*(uint)pos};
+    Defects[6] = {5*(uint)pos,3*(uint)pos};
+    Defects[7] = {(uint)pos,5*(uint)pos};
+    Defects[8] = {3*(uint)pos,5*(uint)pos};
   }
 
+  // cout << "...Defects list..." << endl;
   // for (auto i:Defects){
-  //   cout << i[0] << endl;
+  //   cout << i[0] << " " << i[1] << endl;
   // }
 }
 
 bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly){
-  if (lx!=ly){
+  // only to be trusted for l1 = l2= 6*n!!
+  // only to be trusted for NumDefects = 1,3,9 only!
+  uint mult_six = (uint)((double)L1/6.0);
+  //the 6 above comes from the location of defects in CreateDefectPositions
+
+  if ((lx%mult_six!=0) or (ly%mult_six!=0)) {
     return false;
   }
+  if ( (lx%(2*mult_six)==0) or (ly%(2*mult_six)==0) ) {
+    return false;
+  }
+  // cout << lx << " " << ly<< endl;
   for (auto defectposition:Defects){
-    if (defectposition[0]==lx) {
+    if ((defectposition[0]==lx) and (defectposition[1]==ly)) {
+      // cout << lx << " " << ly << endl;
       return true;
     }
   }
@@ -190,7 +213,7 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
     }
   } else{
     //selected site IS poisoned
-    //add defect to all neighbouring sites
+    //add defect hamiltonian to all neighbouring sites
     for (auto nn_info : site.NearestNeighbours){
       auto [nn_x, nn_y, bond_type] = nn_info;
       spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
@@ -338,6 +361,26 @@ void TriangularLattice::CalculateClusterEnergyandOP()
     ClusterCombinedOP = CombinedOP;
 }
 
+void TriangularLattice::OverrelaxationFlip(){
+  uint uc_x, uc_y;
+  Site *chosen_site_ptr;
+  Eigen::Vector3d old_spin_vec,molec_field,normalized_field;
+
+  uc_x = L1Dist(MyRandom::RNG);
+  uc_y = L2Dist(MyRandom::RNG);
+  PoisonedSite_Flag = CheckIfPoisoned(uc_x, uc_y);
+
+  chosen_site_ptr = &Cluster[uc_x][uc_y];
+  old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
+
+  MolecularField(*chosen_site_ptr, molec_field);
+
+  normalized_field = molec_field.normalized();
+
+  // Spin new_spin(2*()*-old_spin_vec);
+
+  PoisonedSite_Flag = false;
+}
 
 void TriangularLattice::MetropolisFlip(
   uint& uc_x, uint& uc_y,
