@@ -3,13 +3,13 @@ from sweep_lib import SweepTemperatureJobs
 
 #temperature array
 T_min = 0.05
-T_max = 0.6
+T_max = 0.5
 
 #specifying step size
 #dT = 0.05
 
 #specifying number of steps
-Nsteps = 24
+Nsteps = 12
 dT = (T_max-T_min)/(Nsteps-1) 
 
 #T_min, #T_max, dT, label, spacing ('ari' or 'geo')
@@ -20,7 +20,7 @@ temp_list = [T_min, T_max, dT, 'Temp', 'geo']
 cluster_list = [12, 12]
 
 #ising_y, defect, number of defects
-ham_list = [-0.0, -0.0, 1]
+ham_list = [-0.2, 0, 1]
 
 run = 1
 versions = 1
