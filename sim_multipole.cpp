@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
   const double h_field = 0.000;
   Eigen::Vector3d hdir = Eigen::Vector3d(0,0,1).normalized();
   TriangularLattice triangular(l1, l2, num_defects, jtau, lambda, ising_y, defect, h_field, hdir);
-  //
+
   const uint num_SA_steps = strtol(argv[6], NULL, 10);
   const uint num_sweeps_SA = pow(10, strtol(argv[7], NULL, 10));
   double cooling_rate = 0.9;
@@ -65,17 +65,18 @@ int main(int argc, char *argv[])
 
   triangular.PrintConfiguration(which);
 
-  // for (int y=0; y<l2; ++y){
-  //   for (int x=0; x<l1; ++x){
+
+  // prints nearest neighbours of each site
+  // for (int y=0; y<l2; ++y)
+  // {
+  //   for (int x=0; x<l1; ++x)
+  //   {
   //     cout << "(x,y)= (" << x << "," << y << ")" << endl;
   //     for (auto i : triangular.Cluster[x][y].NearestNeighbours){
-  //       cout << "(nn_x,nn_y)= (" << std::get<0>(i) << "," << std::get<1>(i) << ")" << endl;
-  //       cout <<  "ham" << endl;
-  //       cout << std::get<2>(i)<< endl;
+  //     cout << "(nn_x,nn_y)= (" << std::get<0>(i) << "," << std::get<1>(i) << "); type: " << std::get<2>(i)<< endl;
   //     }
   //     cout << "........." << endl;
   //   }
   // }
-
   return 0;
 }

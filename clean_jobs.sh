@@ -1,1 +1,1 @@
-rm -rf out jobrun_* slurm* *.out *.pdf *.png
+rm -rf out jobrun_* slurm* *.out *.pdf 
