@@ -15,13 +15,7 @@ JTau(jtau), Lambda(lambda), IsingY(ising_y), Defect(defect),
 HField(h), HDirection(hdir)
 {
   // defining the bond Hamiltonians
-  // cout << "outchea" << endl;
   FixMPHamiltonians();
-  Hdefect << 0,      0, 0,
-             0, Defect, 0,
-             0,      0, 0;
-  Hdefect=JTau*Hdefect;
-  // cout << "outchea" << endl;
 
   //changing size of Cluster to L1*L2
   Cluster.resize(L1);
@@ -35,9 +29,11 @@ HField(h), HDirection(hdir)
       Defects[i].resize(2);
   }
   CreateDefectPositions();
-
-  // NNHamiltonians
-  // AssignHamiltonians();
+  Hdefect << 0,      0, 0,
+             0, Defect, 0,
+             0,      0, 0;
+  Hdefect=JTau*Hdefect;
+  AddDefectHamiltonia();
 
   InitializeRandomSpins();
 
@@ -133,6 +129,32 @@ bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly){
   return false;
 }
 
+void TriangularLattice::AddDefectHamiltonia()
+{
+  bool poisoned_site, poisoned_neighbour;
+  Site current_site;
+  // Eigen::Matrix3d old_hamiltonian = Eigen::Matrix3d::Zero();
+
+  for (int y=0; y<L2; ++y){
+    for (int x=0; x<L1; ++x){
+      poisoned_site = CheckIfPoisoned(x, y);
+      if (poisoned_site == true){
+        for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
+          auto [nn_x, nn_y, old_hamiltonian] = nn_info;
+          std::get<2>(nn_info) = old_hamiltonian+Hdefect;
+        }
+      } else {
+        for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
+          auto [nn_x, nn_y, old_hamiltonian] = nn_info;
+          poisoned_neighbour = CheckIfPoisoned(nn_x, nn_y);
+          double value = poisoned_neighbour ? 1.0 : 0.0;
+          std::get<2>(nn_info) = old_hamiltonian+value*Hdefect;
+        }
+      }
+    }
+  }
+}
+
 Eigen::Matrix3d TriangularLattice::ReturnMPHamiltonian(const double& angle)
 //Eqn 17 of arXiv:2105.09334v1
 {
@@ -191,73 +213,23 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
 {
   long double e = 0;
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
-  Eigen::Matrix3d hamiltonian;
-
-  //first checks if I selected poisoned site or not
-  if ( PoisonedSite_Flag == false ){
-    //selected site is not poisoned
-    //check each neighbour to see if that one IS poisoned
-    double value;
-    bool poisoned_neighbour;
-    for (auto nn_info : site.NearestNeighbours){
-      auto [nn_x, nn_y, hamiltonian] = nn_info;
-      //check if neighbour is poisoned
-      poisoned_neighbour = CheckIfPoisoned(nn_x, nn_y);
-      //if neighbour is poisoned,
-      double value = poisoned_neighbour ? 1.0 : 0.0;
-      spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-
-      Ham = hamiltonian +value*Hdefect;
-      // if (bond_type == 0){
-      //   Ham = Hx + value*Hdefect;
-      // } else if (bond_type == 1){
-      //   Ham = Hy + value*Hdefect;
-      // } else if (bond_type == 2){
-      //   Ham = Hz + value*Hdefect;
-      // }
-      e += spin_i.VectorXYZ.transpose().dot(Ham*spin_j.VectorXYZ)
-          - JTau*HField*HDirection.transpose().dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
-    }
-  } else{
-    //selected site IS poisoned
-    //add defect hamiltonian to all neighbouring sites
-    for (auto nn_info : site.NearestNeighbours){
-      auto [nn_x, nn_y, hamiltonian] = nn_info;
-      spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-      Ham = hamiltonian+Hdefect;
-      e += spin_i.VectorXYZ.transpose().dot(Ham*spin_j.VectorXYZ)
-          - JTau*HField*HDirection.transpose().dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
-    }
+  for (auto nn_info : site.NearestNeighbours){
+    auto [nn_x, nn_y, Ham] = nn_info;
+    spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
+    e += spin_i.VectorXYZ.transpose().dot(Ham*spin_j.VectorXYZ)
+        - JTau*HField*HDirection.transpose().dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
   }
   energy = e;
 }
 
-
 void TriangularLattice::MolecularField(const Site& site, Eigen::Vector3d& molec)
 {
   Eigen::Vector3d v = Eigen::Vector3d::Zero();
-  Eigen::Matrix3d hamiltonian;
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
-  if (PoisonedSite_Flag == false) {
-    double value;
-    bool poisoned_neighbour;
-    for (auto i : site.NearestNeighbours){
-      auto [nn_x, nn_y, hamiltonian] = i;
-      //check if neighbour is poisoned
-      poisoned_neighbour = CheckIfPoisoned(nn_x, nn_y);
-      //if neighbour is poisoned, return one. otherwise, return 0.
-      double value = poisoned_neighbour ? 1.0 : 0.0;
-      spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-      Ham = hamiltonian+value*Hdefect;
-      v += -Ham*spin_j.VectorXYZ + JTau*HField*HDirection/6.0;
-    }
-  }else{
-    for (auto i : site.NearestNeighbours){
-      auto [nn_x, nn_y, hamiltonian] = i;
-      spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-      Ham = hamiltonian + Hdefect;
-      v += -Ham*spin_j.VectorXYZ+ JTau*HField*HDirection/6.0;
-    }
+  for (auto i : site.NearestNeighbours){
+    auto [nn_x, nn_y, Ham] = i;
+    spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
+    v += -Ham*spin_j.VectorXYZ+ JTau*HField*HDirection/6.0;
   }
   molec = v;
 }
@@ -299,10 +271,8 @@ void TriangularLattice::CalculateClusterEnergy()
   for (uint n1=0; n1<L1; ++n1){
     for (uint n2=0; n2<L2; ++n2){
       //calculate energy
-      PoisonedSite_Flag = CheckIfPoisoned(n1, n2);
       CalculateLocalEnergy(Cluster[n1][n2], local_energy);
       e += local_energy;
-      PoisonedSite_Flag = false;
     }
   }
   ClusterEnergy = e/2.0;
@@ -324,10 +294,8 @@ void TriangularLattice::CalculateClusterEnergyandOP()
   for (uint n1=0; n1<L1; ++n1){
     for (uint n2=0; n2<L2; ++n2){
       //calculate energy
-      PoisonedSite_Flag = CheckIfPoisoned(n1, n2);
       CalculateLocalEnergy(Cluster[n1][n2], local_energy);
       e += local_energy;
-      PoisonedSite_Flag = false;
       //calculate three stripy OPs
       spin = Cluster[n1][n2].OnsiteSpin.VectorXYZ;
 
@@ -358,7 +326,6 @@ void TriangularLattice::OverrelaxationFlip(){
 
   uc_x = L1Dist(MyRandom::RNG);
   uc_y = L2Dist(MyRandom::RNG);
-  PoisonedSite_Flag = CheckIfPoisoned(uc_x, uc_y);
 
   chosen_site_ptr = &Cluster[uc_x][uc_y];
   old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
@@ -369,7 +336,6 @@ void TriangularLattice::OverrelaxationFlip(){
 
   // Spin new_spin(2*()*-old_spin_vec);
 
-  PoisonedSite_Flag = false;
 }
 
 void TriangularLattice::MetropolisFlip(
@@ -383,8 +349,6 @@ void TriangularLattice::MetropolisFlip(
   Site *chosen_site_ptr;
   uc_x = L1Dist(MyRandom::RNG);
   uc_y = L2Dist(MyRandom::RNG);
-
-  PoisonedSite_Flag = CheckIfPoisoned(uc_x, uc_y);
 
   chosen_site_ptr = &Cluster[uc_x][uc_y];
 
@@ -402,7 +366,6 @@ void TriangularLattice::MetropolisFlip(
     if (r < pd){}
     else chosen_site_ptr->OnsiteSpin = old_spin_at_chosen_site;
   }
-  PoisonedSite_Flag = false;
 }
 
 void TriangularLattice::MetropolisSweep(const double& temperature)
@@ -464,8 +427,6 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
         uc_x = L1Dist(MyRandom::RNG);
         uc_y = L2Dist(MyRandom::RNG);
 
-        PoisonedSite_Flag = CheckIfPoisoned(uc_x, uc_y);
-
         chosen_site_ptr = &Cluster[uc_x][uc_y];
         old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
 
@@ -476,7 +437,6 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
         norm = (new_spin.VectorXYZ - old_spin_vec).norm();
         if (norm > x){x = norm;}
         else{}
-        PoisonedSite_Flag = false;
         align++;
     }
     // if (x > eps){}

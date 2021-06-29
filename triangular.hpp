@@ -34,8 +34,6 @@ public:
   long double EBar, E2Bar, E3Bar, E4Bar;
   long ActualDetFlips;
 
-  bool PoisonedSite_Flag;
-
   Eigen::ArrayXXd StripySignsX, StripySignsY, StripySignsZ;
 
   long double FMNorm, PerpNorm, ParNorm, CombinedNorm;
@@ -51,6 +49,7 @@ public:
   void CreateClusterPBC();
   Eigen::Matrix3d ReturnMPHamiltonian(const double& angle);
   void FixMPHamiltonians();
+  void AddDefectHamiltonia();
   void InitializeFMSpins(const double& theta, const double& phi);
   void InitializeRandomSpins();
   bool CheckIfPoisoned(uint lx, uint ly);
