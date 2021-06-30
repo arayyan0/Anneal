@@ -15,3 +15,6 @@ jobrun*.lst
 # Mac
 .DS_Store
 *pycache*
+
+# Other
+util/

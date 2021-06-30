@@ -4,8 +4,8 @@
 #brief  classical Monte Carlo make file
 CXX = g++
 CXXFLAGS = -std=c++17 -O3 -c
-#SIM = multipole_finiteT
-SIM = multipole
+SIM = multipole_finiteT
+#SIM = multipole
 LATTICE = triangular
 
 all: sim
