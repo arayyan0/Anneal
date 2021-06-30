@@ -138,16 +138,22 @@ void TriangularLattice::AddDefectHamiltonia()
     for (int x=0; x<L1; ++x){
       poisoned_site = CheckIfPoisoned(x, y);
       if (poisoned_site == true){
+        //add Hdefect to each of the nearest neighbour Hamiltonia
         for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
           auto [nn_x, nn_y, old_hamiltonian] = nn_info;
           std::get<2>(nn_info) = old_hamiltonian+Hdefect;
         }
       } else {
+        //check if the nearest neighbour is poisoned or not
         for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
           auto [nn_x, nn_y, old_hamiltonian] = nn_info;
           poisoned_neighbour = CheckIfPoisoned(nn_x, nn_y);
-          long double value = poisoned_neighbour ? 1.0 : 0.0;
-          std::get<2>(nn_info) = old_hamiltonian+value*Hdefect;
+          if (poisoned_neighbour == true){
+            //adds Hdefect to the Hamiltonian
+            std::get<2>(nn_info) = old_hamiltonian+Hdefect;
+          } else {
+            //checks if second
+          }
         }
       }
     }
