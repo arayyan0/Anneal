@@ -23,7 +23,7 @@ public:
   const long double JTau, Lambda, IsingY, Defect, HField;
   vector<vector<Site> > Cluster;
   vector<vector<uint> > Defects;
-  Matrix3LD Hx, Hy, Hz, Hdefect;
+  Matrix3LD Hx, Hy, Hz, Hdefect1, Hdefect2;
   Vector3LD HDirection, ClusterFMOP,ClusterCombinedOP;
   Vector2LD ClusterStripyOP;
   double FinalT;

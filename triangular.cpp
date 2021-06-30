@@ -29,10 +29,12 @@ HField(h), HDirection(hdir)
       Defects[i].resize(2);
   }
   CreateDefectPositions();
-  Hdefect << 0,      0, 0,
+  Hdefect1 << 0,      0, 0,
              0, Defect, 0,
              0,      0, 0;
-  Hdefect=JTau*Hdefect;
+  Hdefect1=JTau*Hdefect1;
+
+  Hdefect2 = 0.5*Hdefect1;
   AddDefectHamiltonia();
 
   InitializeRandomSpins();
@@ -137,26 +139,43 @@ void TriangularLattice::AddDefectHamiltonia()
   for (int y=0; y<L2; ++y){
     for (int x=0; x<L1; ++x){
       poisoned_site = CheckIfPoisoned(x, y);
-      for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
-        auto [nn_x, nn_y, old_hamiltonian] = nn_info;
-
-
+      for (uint i=0; i<6; ++i){
+        auto [nn_x, nn_y, old_hamiltonian] = Cluster[x][y].NearestNeighbours[i];
 
         if (poisoned_site == true){
-          std::get<2>(nn_info) = old_hamiltonian+Hdefect;
+          std::get<2>(Cluster[x][y].NearestNeighbours[i]) = old_hamiltonian+Hdefect1;
         } else {
           poisoned_neighbour = CheckIfPoisoned(nn_x,nn_y);
           if (poisoned_neighbour == true){
-              std::get<2>(nn_info) = old_hamiltonian+Hdefect;
-              //refer to the adjacent hamiltonian add +0.5 Hdefect!
-          } else {}
+            std::get<2>(Cluster[x][y].NearestNeighbours[i]) = old_hamiltonian+Hdefect1;
+            uint ibefore = (i-1)%6;
+            uint iafter = (i+1)%6;
+            std::get<2>(Cluster[x][y].NearestNeighbours[ibefore]) = old_hamiltonian+Hdefect2;
+            std::get<2>(Cluster[x][y].NearestNeighbours[iafter]) = old_hamiltonian+Hdefect2;
+          }
         }
 
-
-
-
-
       }
+      // for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
+      //   auto [nn_x, nn_y, old_hamiltonian] = nn_info;
+      //
+      //
+      //
+      //   if (poisoned_site == true){
+      //     std::get<2>(nn_info) = old_hamiltonian+Hdefect;
+      //   } else {
+      //     poisoned_neighbour = CheckIfPoisoned(nn_x,nn_y);
+      //     if (poisoned_neighbour == true){
+      //         std::get<2>(nn_info) = old_hamiltonian+Hdefect;
+      //         //refer to the adjacent hamiltonian add +0.5 Hdefect!
+      //     } else {}
+      //   }
+      //
+      //
+      //
+      //
+      //
+      // }
     }
   }
 
