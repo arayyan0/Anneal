@@ -137,27 +137,29 @@ void TriangularLattice::AddDefectHamiltonia()
   for (int y=0; y<L2; ++y){
     for (int x=0; x<L1; ++x){
       poisoned_site = CheckIfPoisoned(x, y);
-      if (poisoned_site == true){
-        //add Hdefect to each of the nearest neighbour Hamiltonia
-        for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
-          auto [nn_x, nn_y, old_hamiltonian] = nn_info;
+      for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
+        auto [nn_x, nn_y, old_hamiltonian] = nn_info;
+
+
+
+        if (poisoned_site == true){
           std::get<2>(nn_info) = old_hamiltonian+Hdefect;
-        }
-      } else {
-        //check if the nearest neighbour is poisoned or not
-        for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
-          auto [nn_x, nn_y, old_hamiltonian] = nn_info;
-          poisoned_neighbour = CheckIfPoisoned(nn_x, nn_y);
+        } else {
+          poisoned_neighbour = CheckIfPoisoned(nn_x,nn_y);
           if (poisoned_neighbour == true){
-            //adds Hdefect to the Hamiltonian
-            std::get<2>(nn_info) = old_hamiltonian+Hdefect;
-          } else {
-            //checks if second
-          }
+              std::get<2>(nn_info) = old_hamiltonian+Hdefect;
+              //refer to the adjacent hamiltonian add +0.5 Hdefect!
+          } else {}
         }
+
+
+
+
+
       }
     }
   }
+
 }
 
 Matrix3LD TriangularLattice::ReturnMPHamiltonian(const long double& angle)
