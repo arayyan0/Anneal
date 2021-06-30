@@ -4,19 +4,19 @@
 ///  @brief    defining the spin model
 #include "hamiltonian.hpp"
 
-Parameters::Parameters(const double& kx, const double& ky, const double& kz,
-                       const double& gx, const double& gy, const double& gz,
-                       const double& gammap, const double& heisenberg,
-                       const double& hstrength, const double& htheta, const double& hphi):
+Parameters::Parameters(const long double& kx, const long double& ky, const long double& kz,
+                       const long double& gx, const long double& gy, const long double& gz,
+                       const long double& gammap, const long double& heisenberg,
+                       const long double& hstrength, const long double& htheta, const long double& hphi):
 Kx(kx), Ky(ky), Kz(kz),
 Gx(gx), Gy(gy), Gz(gz),
 Gp(gammap), J1(heisenberg), h(hstrength), hTheta(htheta), hPhi(hphi)
 {
-  double s = sin(hTheta/180*pi);
+  long double s = sin(hTheta/180*pi);
   hDir = s*cos(hPhi/180*pi)*A_Dir + s*sin(hPhi/180*pi)*B_Dir + cos(hTheta/180*pi)*C_Dir;
 }
 
-void Parameters::Anisotropy(const double& scale, const double& g, const double& a,
+void Parameters::Anisotropy(const long double& scale, const long double& g, const long double& a,
                               const bool& kitaev_or_gamma, const int& sign)
 // recall that 0 is false, 1 is true
 // kitaev_or_gamma == 0 -> kitaev, kitaev_or_gamma == 1 -> gamma
@@ -61,7 +61,7 @@ iSpin(spin_i), jSpin(spin_j), BondType(bond_type), Pa(p)
 
 void Bond::SpecifyBondHamiltonian()
 {
-  Eigen::Matrix3d int_matrix;
+  Matrix3LD int_matrix;
   switch (BondType+1)
   {
     case 1:

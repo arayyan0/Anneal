@@ -10,12 +10,12 @@
 class Spin
 {
   public:
-    Eigen::Vector3d VectorXYZ;
+    Vector3LD VectorXYZ;
     //Really should add in VectorABC here...
 
     Spin();
-    Spin(const double& theta, const double& phi);
-    Spin(Eigen::Vector3d& vector);
+    Spin(const long double& theta, const long double& phi);
+    Spin(Vector3LD& vector);
 };
 
 void SpherePointPicker(Spin& some_spin);

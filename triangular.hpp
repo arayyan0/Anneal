@@ -7,12 +7,12 @@
 
 #include "common.hpp"
 #include "spin.hpp"
-#include "hamiltonian.hpp"
+// #include "hamiltonian.hpp"
 
 struct Site
 {
   //nn_1, nn_2, bond-dep Hamiltonian
-  vector<std::tuple<int, int, Eigen::Matrix3d>> NearestNeighbours;
+  vector<std::tuple<int, int, Matrix3LD>> NearestNeighbours;
   Spin OnsiteSpin;
 };
 
@@ -20,21 +20,21 @@ class TriangularLattice
 {
 public:
   const uint L1, L2, NumSites, NumDefects;
-  const double JTau, Lambda, IsingY, Defect, HField;
+  const long double JTau, Lambda, IsingY, Defect, HField;
   vector<vector<Site> > Cluster;
   vector<vector<uint> > Defects;
-  Eigen::Matrix3d Hx, Hy, Hz, Hdefect, Ham;
-  Eigen::Vector3d HDirection, ClusterFMOP,ClusterCombinedOP;
-  Eigen::Vector2d ClusterStripyOP;
+  Matrix3LD Hx, Hy, Hz, Hdefect;
+  Vector3LD HDirection, ClusterFMOP,ClusterCombinedOP;
+  Vector2LD ClusterStripyOP;
   double FinalT;
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
   std::uniform_int_distribution<uint> L1Dist, L2Dist;
   long double ClusterEnergy;
   long double EBar, E2Bar, E3Bar, E4Bar;
-  long ActualDetFlips;
+  long ActualDetSweeps;
 
-  Eigen::ArrayXXd StripySignsX, StripySignsY, StripySignsZ;
+  ArrayXXLD StripySignsX, StripySignsY, StripySignsZ;
 
   long double FMNorm, PerpNorm, ParNorm, CombinedNorm;
   long double FMNorm2, PerpNorm2, ParNorm2, CombinedNorm2;
@@ -42,19 +42,19 @@ public:
 
 
   TriangularLattice(const uint& l1, const uint& l2, const uint& num_defects,
-                    const double& jtau, const double& lambda,
-                    const double& ising_y, const double& defect, const double& h,
-                    Eigen::Vector3d& hdir);
+                    const long double& jtau, const long double& lambda,
+                    const long double& ising_y, const long double& defect,
+                    const long double& h, Vector3LD& hdir);
 
   void CreateClusterPBC();
-  Eigen::Matrix3d ReturnMPHamiltonian(const double& angle);
+  Matrix3LD ReturnMPHamiltonian(const long double& angle);
   void FixMPHamiltonians();
   void AddDefectHamiltonia();
-  void InitializeFMSpins(const double& theta, const double& phi);
+  void InitializeFMSpins(const long double& theta, const long double& phi);
   void InitializeRandomSpins();
   bool CheckIfPoisoned(uint lx, uint ly);
   void CalculateLocalEnergy(const Site& site, long double& energy);
-  void MolecularField(const Site& site, Eigen::Vector3d& molec);
+  void MolecularField(const Site& site, Vector3LD& molec);
   void MetropolisSweep(const double& temperature);
   void DeterministicSweeps(const uint& max_sweeps);
   void PrintConfiguration(std::ostream &out);
@@ -80,7 +80,7 @@ public:
   void PrintThermalObservables(std::ostream &out);
 
   void CreateDefectPositions();
-  void OverrelaxationFlip();
+  // void OverrelaxationFlip();
 
   //private:
   //

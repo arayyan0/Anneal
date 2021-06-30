@@ -21,11 +21,16 @@ using std::cout; using std::endl; using std::vector;
 
 typedef unsigned int uint;
 
+typedef Eigen::Matrix<long double, 2, 1> Vector2LD;
+typedef Eigen::Matrix<long double, 3, 1> Vector3LD;
+typedef Eigen::Matrix<long double, 3, 3> Matrix3LD;
+typedef Eigen::Array<long double, Eigen::Dynamic, Eigen::Dynamic> ArrayXXLD;
+
 #define pi M_PI
 
-#define FIELD_DIR const Eigen::Vector3d A_Dir = Eigen::Vector3d(1/sqrt(6), 1/sqrt(6), -2/sqrt(6));\
-                  const Eigen::Vector3d B_Dir = Eigen::Vector3d(-1/sqrt(2), 1/sqrt(2), 0);\
-                  const Eigen::Vector3d C_Dir = Eigen::Vector3d(1/sqrt(3), 1/sqrt(3), 1/sqrt(3));
+#define FIELD_DIR const Vector3LD A_Dir = Vector3LD(1/sqrt(6), 1/sqrt(6), -2/sqrt(6));\
+                  const Vector3LD B_Dir = Vector3LD(-1/sqrt(2), 1/sqrt(2), 0);\
+                  const Vector3LD C_Dir = Vector3LD(1/sqrt(3), 1/sqrt(3), 1/sqrt(3));
 //
 // #define AXIS_DIR const Eigen::Vector3d X(1, 0, 0);\
 //                  const Eigen::Vector3d Y(0, 1, 0);\
@@ -46,6 +51,6 @@ void PrintTriangularSimulationData(std::ostream &out, const uint& type,
                         const uint& sublattice, const uint& l1, const uint& l2,
                         const double& T_i, double& T_f, const uint& max_sa_sweeps,
                         const uint& max_thermal_sweeps, const uint& max_measuring_sweeps,
-                        const uint& sampling_time, const uint& max_daligns);
+                        const uint& sampling_time, const uint& max_dsweeps);
 
 #endif // COMMON_HPP

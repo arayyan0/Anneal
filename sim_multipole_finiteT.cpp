@@ -21,12 +21,12 @@ int main(int argc, char *argv[])
 
   const uint num_defects = strtol(argv[3], NULL, 10); //should only be 1,3,9
 
-  double jtau = 1;
-  const double lambda = 0;
-  const double ising_y = strtod(argv[4], NULL);
-  const double defect = strtod(argv[5], NULL);
-  const double h_field = 0.000;
-  Eigen::Vector3d hdir = Eigen::Vector3d(0,0,1).normalized();
+  long double jtau = 1;
+  const long double lambda = 0;
+  const long double ising_y = strtod(argv[4], NULL);
+  const long double defect = strtod(argv[5], NULL);
+  const long double h_field = 0.000;
+  Vector3LD hdir = Vector3LD(0,0,1).normalized();
   // cout << l1<<l2<<ising_y<<defect<<endl;
   TriangularLattice triangular(l1, l2, num_defects,jtau, lambda, ising_y, defect, h_field, hdir);
 
@@ -47,14 +47,14 @@ int main(int argc, char *argv[])
   triangular.SampleConfiguration(final_T, num_sweeps_measurement, sampling_time);
 
   triangular.CalculateClusterEnergyandOP();
-  double actual_det_flips=0;
+  double actual_det_sweeps=0;
 
-  std::ostream &which = std::cout;
+  std::ostream &which = std::cerr;
   which << std::fixed << std::setprecision(14);
   PrintTriangularSimulationData(which, type, sublattice, l1, l2,
                                            initial_T, final_T, num_sweeps_SA,
                                            num_sweeps_thermal,num_sweeps_measurement,
-                                           sampling_time, actual_det_flips);
+                                           sampling_time, actual_det_sweeps);
   which << "------------------------Hamiltonian Parameters------------------------\n";
   which << "J_Tau\n";
   which << jtau << "\n";
