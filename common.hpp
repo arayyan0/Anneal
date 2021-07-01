@@ -23,6 +23,7 @@ typedef unsigned int uint;
 
 typedef Eigen::Matrix<long double, 2, 1> Vector2LD;
 typedef Eigen::Matrix<long double, 3, 1> Vector3LD;
+typedef Eigen::Matrix<long double, 1, 3> Vector3LDTrans;
 typedef Eigen::Matrix<long double, 3, 3> Matrix3LD;
 typedef Eigen::Array<long double, Eigen::Dynamic, Eigen::Dynamic> ArrayXXLD;
 

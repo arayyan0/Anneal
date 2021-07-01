@@ -37,6 +37,9 @@ HField(h), HDirection(hdir)
   Hdefect2 = 0.5*Hdefect1;
   AddDefectHamiltonia();
 
+  // cout << Hdefect1 << endl;
+  // cout << Hdefect2 << endl;
+
   InitializeRandomSpins();
 
   std::uniform_int_distribution<uint> l1d(0, L1-1);
@@ -148,34 +151,18 @@ void TriangularLattice::AddDefectHamiltonia()
           poisoned_neighbour = CheckIfPoisoned(nn_x,nn_y);
           if (poisoned_neighbour == true){
             std::get<2>(Cluster[x][y].NearestNeighbours[i]) = old_hamiltonian+Hdefect1;
+
             uint ibefore = (i-1)%6;
             uint iafter = (i+1)%6;
-            std::get<2>(Cluster[x][y].NearestNeighbours[ibefore]) = old_hamiltonian+Hdefect2;
-            std::get<2>(Cluster[x][y].NearestNeighbours[iafter]) = old_hamiltonian+Hdefect2;
+            // oldbefore = Cluster[x][y].NearestNeighbours[ibefore];
+            // oldafter = Cluster[x][y].NearestNeighbours[iafter ];
+            std::get<2>(Cluster[x][y].NearestNeighbours[ibefore]) += Hdefect2;
+            std::get<2>(Cluster[x][y].NearestNeighbours[iafter]) += Hdefect2;
           }
         }
 
       }
-      // for (auto&& nn_info : Cluster[x][y].NearestNeighbours){
-      //   auto [nn_x, nn_y, old_hamiltonian] = nn_info;
-      //
-      //
-      //
-      //   if (poisoned_site == true){
-      //     std::get<2>(nn_info) = old_hamiltonian+Hdefect;
-      //   } else {
-      //     poisoned_neighbour = CheckIfPoisoned(nn_x,nn_y);
-      //     if (poisoned_neighbour == true){
-      //         std::get<2>(nn_info) = old_hamiltonian+Hdefect;
-      //         //refer to the adjacent hamiltonian add +0.5 Hdefect!
-      //     } else {}
-      //   }
-      //
-      //
-      //
-      //
-      //
-      // }
+
     }
   }
 
@@ -242,20 +229,20 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
   for (auto nn_info : site.NearestNeighbours){
     auto [nn_x, nn_y, ham] = nn_info;
     spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-    e += spin_i.VectorXYZ.transpose().dot(ham*spin_j.VectorXYZ)
-        - JTau*HField*HDirection.transpose().dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
+    e += spin_j.VectorXYZ.transpose()*(ham*spin_i.VectorXYZ);
+        - JTau*HField*HDirection.dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
   }
   energy = e;
 }
 
-void TriangularLattice::MolecularField(const Site& site, Vector3LD& molec)
+void TriangularLattice::MolecularField(const Site& site, Vector3LDTrans& molec)
 {
-  Vector3LD v = Vector3LD::Zero();
+  Vector3LDTrans v = Vector3LD::Zero();
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
-  for (auto i : site.NearestNeighbours){
-    auto [nn_x, nn_y, ham] = i;
+  for (auto j : site.NearestNeighbours){
+    auto [nn_x, nn_y, ham] = j;
     spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-    v += -ham*spin_j.VectorXYZ+ JTau*HField*HDirection/6.0;
+    v += -spin_j.VectorXYZ.transpose()*ham + JTau*HField*HDirection.transpose()/6.0;
   }
   molec = v;
 }
@@ -345,24 +332,54 @@ void TriangularLattice::CalculateClusterEnergyandOP()
     ClusterCombinedOP = CombinedOP;
 }
 
-// void TriangularLattice::OverrelaxationFlip(){
-//   uint uc_x, uc_y;
-//   Site *chosen_site_ptr;
-//   Eigen::Vector3d old_spin_vec,molec_field,normalized_field;
-//
-//   uc_x = L1Dist(MyRandom::RNG);
-//   uc_y = L2Dist(MyRandom::RNG);
-//
-//   chosen_site_ptr = &Cluster[uc_x][uc_y];
-//   old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
-//
-//   MolecularField(*chosen_site_ptr, molec_field);
-//
-//   normalized_field = molec_field.normalized();
-//
-//   // Spin new_spin(2*()*-old_spin_vec);
-//
-// }
+void TriangularLattice::OverrelaxationFlip(){
+  uint uc_x, uc_y;
+  Site *chosen_site_ptr;
+  Vector3LD old_spin_vec,new_spin_vec;
+
+  Vector3LDTrans molec_field, normalized_field;
+
+  uc_x = L1Dist(MyRandom::RNG);
+  uc_y = L2Dist(MyRandom::RNG);
+
+  chosen_site_ptr = &Cluster[uc_x][uc_y];
+  old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
+
+  cout << uc_x << " " << uc_y << endl;
+  cout << "old spin " << old_spin_vec.transpose() << " with norm " << old_spin_vec.norm() << endl;
+
+
+  MolecularField(*chosen_site_ptr, molec_field);
+  normalized_field = molec_field.normalized();
+
+
+  cout << "norm molec field " << normalized_field << " with norm " << normalized_field.norm() << endl;
+
+  long double coeff = normalized_field*old_spin_vec;
+  new_spin_vec = -old_spin_vec + 2.0*coeff*normalized_field.transpose();
+  Spin new_spin(new_spin_vec);
+  chosen_site_ptr->OnsiteSpin = new_spin;
+
+  cout << "new spin " << (chosen_site_ptr->OnsiteSpin).VectorXYZ.transpose() << " with norm " << (chosen_site_ptr->OnsiteSpin).VectorXYZ.norm() << endl;
+
+}
+
+void TriangularLattice::OverrelaxationSweep(){
+  uint flip = 0;
+  while (flip < NumSites){
+    CalculateClusterEnergy();
+    long double e_i = ClusterEnergy;
+
+    OverrelaxationFlip();
+
+    CalculateClusterEnergy();
+    long double e_f = ClusterEnergy;
+
+    cout << flip << " " << e_i - e_f << endl;
+    cout <<  "......................" << endl;
+    ++flip;
+  }
+}
 
 void TriangularLattice::MetropolisFlip(
   uint& uc_x, uint& uc_y,
@@ -425,6 +442,11 @@ void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps,
     uint sweep = 0;
     while (sweep < max_sweeps){
       // std::cout << "sweep " << sweep << endl;
+
+      // for (uint i=0;i<10;i++){
+      //   OverrelaxationSweep();
+      // }
+
       MetropolisSweep(temp_T);
       ++sweep;
     }
@@ -441,7 +463,8 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
   Site *chosen_site_ptr;
   Spin new_spin;
 
-  Vector3LD old_spin_vec, molec_field;
+  Vector3LD old_spin_vec;
+  Vector3LDTrans molec_field;
 
   // long double x, norm;
   long double eps = pow(10,-20);
@@ -457,7 +480,8 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
         old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
 
         MolecularField(*chosen_site_ptr, molec_field);
-        Spin new_spin(molec_field);
+        Vector3LD mf_t = molec_field.transpose();
+        Spin new_spin(mf_t);
         chosen_site_ptr->OnsiteSpin = new_spin;
 
         // norm = (new_spin.VectorXYZ - old_spin_vec).norm();
