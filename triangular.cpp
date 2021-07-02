@@ -146,18 +146,15 @@ void TriangularLattice::AddDefectHamiltonia()
         auto [nn_x, nn_y, old_hamiltonian] = Cluster[x][y].NearestNeighbours[i];
 
         if (poisoned_site == true){
-          std::get<2>(Cluster[x][y].NearestNeighbours[i]) = old_hamiltonian+Hdefect1;
+          std::get<2>(Cluster[x][y].NearestNeighbours[i]) += Hdefect1;
         } else {
           poisoned_neighbour = CheckIfPoisoned(nn_x,nn_y);
           if (poisoned_neighbour == true){
-            std::get<2>(Cluster[x][y].NearestNeighbours[i]) = old_hamiltonian+Hdefect1;
-
+            std::get<2>(Cluster[x][y].NearestNeighbours[i]) += Hdefect1;
             uint ibefore = (i-1)%6;
             uint iafter = (i+1)%6;
-            // oldbefore = Cluster[x][y].NearestNeighbours[ibefore];
-            // oldafter = Cluster[x][y].NearestNeighbours[iafter ];
-            std::get<2>(Cluster[x][y].NearestNeighbours[ibefore]) += Hdefect2;
-            std::get<2>(Cluster[x][y].NearestNeighbours[iafter]) += Hdefect2;
+            std::get<2>(Cluster[x][y].NearestNeighbours[ibefore]) += 0.5*Hdefect2;
+            std::get<2>(Cluster[x][y].NearestNeighbours[iafter]) += 0.5*Hdefect2;
           }
         }
 
@@ -222,29 +219,38 @@ void TriangularLattice::InitializeRandomSpins()
   }
 }
 
-void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& energy)
+void TriangularLattice::MolecularField(const Site& site, Vector3LD& molec)
 {
-  long double e = 0;
-  Spin spin_i = site.OnsiteSpin; Spin spin_j;
-  for (auto nn_info : site.NearestNeighbours){
-    auto [nn_x, nn_y, ham] = nn_info;
-    spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-    e += spin_j.VectorXYZ.transpose()*(ham*spin_i.VectorXYZ);
-        - JTau*HField*HDirection.dot(spin_i.VectorXYZ + spin_j.VectorXYZ)/6.0;
-  }
-  energy = e;
-}
-
-void TriangularLattice::MolecularField(const Site& site, Vector3LDTrans& molec)
-{
-  Vector3LDTrans v = Vector3LD::Zero();
+  Vector3LD v = Vector3LD::Zero();
   Spin spin_i = site.OnsiteSpin; Spin spin_j;
   for (auto j : site.NearestNeighbours){
     auto [nn_x, nn_y, ham] = j;
     spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-    v += -spin_j.VectorXYZ.transpose()*ham + JTau*HField*HDirection.transpose()/6.0;
+    v += -spin_j.VectorXYZ.transpose()*ham;
   }
-  molec = v;
+  molec = v.transpose()+ JTau*HField*HDirection.transpose();
+}
+
+void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& energy)
+{
+  Vector3LD molec;
+  MolecularField(site, molec);
+  energy = -site.OnsiteSpin.VectorXYZ.dot(molec+ JTau*HField*HDirection);
+}
+
+void TriangularLattice::CalculateClusterEnergy()
+{
+  long double e=0;
+  long double local_energy;
+
+  for (uint n1=0; n1<L1; ++n1){
+    for (uint n2=0; n2<L2; ++n2){
+      //calculate energy
+      CalculateLocalEnergy(Cluster[n1][n2], local_energy);
+      e += local_energy;
+    }
+  }
+  ClusterEnergy = e/2.0;
 }
 
 void TriangularLattice::CalculateClusterOP(){
@@ -274,21 +280,6 @@ void TriangularLattice::CalculateClusterOP(){
   ClusterStripyOP = StripyOP.row(indices[0]);
   CombinedOP << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
   ClusterCombinedOP = CombinedOP;
-}
-
-void TriangularLattice::CalculateClusterEnergy()
-{
-  long double e=0;
-  long double local_energy;
-
-  for (uint n1=0; n1<L1; ++n1){
-    for (uint n2=0; n2<L2; ++n2){
-      //calculate energy
-      CalculateLocalEnergy(Cluster[n1][n2], local_energy);
-      e += local_energy;
-    }
-  }
-  ClusterEnergy = e/2.0;
 }
 
 void TriangularLattice::CalculateClusterEnergyandOP()
@@ -332,52 +323,29 @@ void TriangularLattice::CalculateClusterEnergyandOP()
     ClusterCombinedOP = CombinedOP;
 }
 
-void TriangularLattice::OverrelaxationFlip(){
-  uint uc_x, uc_y;
+void TriangularLattice::OverrelaxationFlip(uint& uc_x, uint& uc_y){
   Site *chosen_site_ptr;
   Vector3LD old_spin_vec,new_spin_vec;
 
-  Vector3LDTrans molec_field, normalized_field;
-
-  uc_x = L1Dist(MyRandom::RNG);
-  uc_y = L2Dist(MyRandom::RNG);
+  Vector3LD molec_field, normalized_field;
 
   chosen_site_ptr = &Cluster[uc_x][uc_y];
   old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
 
-  cout << uc_x << " " << uc_y << endl;
-  cout << "old spin " << old_spin_vec.transpose() << " with norm " << old_spin_vec.norm() << endl;
-
-
   MolecularField(*chosen_site_ptr, molec_field);
   normalized_field = molec_field.normalized();
 
-
-  cout << "norm molec field " << normalized_field << " with norm " << normalized_field.norm() << endl;
-
-  long double coeff = normalized_field*old_spin_vec;
-  new_spin_vec = -old_spin_vec + 2.0*coeff*normalized_field.transpose();
+  new_spin_vec = -old_spin_vec + 2.0*normalized_field.dot(old_spin_vec)*normalized_field;
   Spin new_spin(new_spin_vec);
   chosen_site_ptr->OnsiteSpin = new_spin;
-
-  cout << "new spin " << (chosen_site_ptr->OnsiteSpin).VectorXYZ.transpose() << " with norm " << (chosen_site_ptr->OnsiteSpin).VectorXYZ.norm() << endl;
 
 }
 
 void TriangularLattice::OverrelaxationSweep(){
-  uint flip = 0;
-  while (flip < NumSites){
-    CalculateClusterEnergy();
-    long double e_i = ClusterEnergy;
-
-    OverrelaxationFlip();
-
-    CalculateClusterEnergy();
-    long double e_f = ClusterEnergy;
-
-    cout << flip << " " << e_i - e_f << endl;
-    cout <<  "......................" << endl;
-    ++flip;
+  for (uint uc_x =0; uc_x<L1; uc_x++){
+    for (uint uc_y =0; uc_y<L2; uc_y++){
+      OverrelaxationFlip(uc_x, uc_y);
+    }
   }
 }
 
@@ -464,7 +432,7 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
   Spin new_spin;
 
   Vector3LD old_spin_vec;
-  Vector3LDTrans molec_field;
+  Vector3LD molec_field;
 
   // long double x, norm;
   long double eps = pow(10,-20);
@@ -480,7 +448,7 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
         old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
 
         MolecularField(*chosen_site_ptr, molec_field);
-        Vector3LD mf_t = molec_field.transpose();
+        Vector3LD mf_t = molec_field;
         Spin new_spin(mf_t);
         chosen_site_ptr->OnsiteSpin = new_spin;
 
@@ -525,11 +493,6 @@ void TriangularLattice::PrintThermalObservables(std::ostream &out){
   long double ns3 = pow(NumSites,3);
   long double ns4 = pow(NumSites,4);
 
-  // long double ns =1;
-  // long double ns2 = 1;
-  // long double ns3 = 1;
-  // long double ns4 = 1;
-
   out << "-------------------------------Thermal-averaged observables-----------------------------\n";
   out << "Energy cumulants (C: E, E2, E3, E4) \n";
   out << std::setprecision(14) << EBar/ns << " " << E2Bar/ns2 << " " << E3Bar/ns3 << " " << E4Bar/ns4 << "\n";
@@ -538,14 +501,6 @@ void TriangularLattice::PrintThermalObservables(std::ostream &out){
   out << std::setprecision(14) << PerpNorm/ns << " " << PerpNorm2/ns2 << " " <<  PerpNorm4/ns4 << "\n";
   out << std::setprecision(14) << ParNorm/ns << " " << ParNorm2/ns2 << " " << ParNorm4/ns4 << "\n";
   out << std::setprecision(14) << CombinedNorm/ns << " " << CombinedNorm2/ns2 << " " << CombinedNorm4/ns4 << "\n";
-  // out << "-------------------------------Thermal-averaged observables-----------------------------\n";
-  // out << "Energy cumulants (C: E, E2, E3, E4) \n";
-  // out << std::setprecision(30) << EBar << " " << E2Bar << " " << E3Bar << " " << E4Bar << "\n";
-  // out << "Order parameter cumulants (R: FM, Perp, Par, Combined), (C: |m|, |m|2, |m|4)\n";
-  // out << std::setprecision(30) << FMNorm << " " << FMNorm2 << " " << FMNorm4 << "\n";
-  // out << std::setprecision(30) << PerpNorm << " " << PerpNorm2 << " " <<  PerpNorm4 << "\n";
-  // out << std::setprecision(30) << ParNorm << " " << ParNorm2 << " " << ParNorm4 << "\n";
-  // out << std::setprecision(30) << CombinedNorm << " " << CombinedNorm2 << " " << CombinedNorm4 << "\n";
 }
 
 void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sweeps)

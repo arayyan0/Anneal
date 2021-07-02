@@ -54,7 +54,7 @@ public:
   void InitializeRandomSpins();
   bool CheckIfPoisoned(uint lx, uint ly);
   void CalculateLocalEnergy(const Site& site, long double& energy);
-  void MolecularField(const Site& site, Vector3LDTrans& molec);
+  void MolecularField(const Site& site, Vector3LD& molec);
   void MetropolisSweep(const double& temperature);
   void DeterministicSweeps(const uint& max_sweeps);
   void PrintConfiguration(std::ostream &out);
@@ -80,7 +80,7 @@ public:
   void PrintThermalObservables(std::ostream &out);
 
   void CreateDefectPositions();
-  void OverrelaxationFlip();
+  void OverrelaxationFlip(uint& uc_x, uint& uc_y);
   void OverrelaxationSweep();
 
   //private:

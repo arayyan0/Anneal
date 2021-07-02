@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
   const uint num_sweeps_measurement = 0;
   const uint sampling_time = 0;
   triangular.CalculateClusterEnergyandOP();
+
   std::ostream &which = std::cout;
   which << std::fixed << std::setprecision(14);
   PrintTriangularSimulationData(which, type, sublattice, l1, l2,
