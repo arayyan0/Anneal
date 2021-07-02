@@ -365,6 +365,7 @@ void TriangularLattice::MetropolisFlip(
   CalculateLocalEnergy(*chosen_site_ptr, old_local_energy);
   old_spin_at_chosen_site = chosen_site_ptr->OnsiteSpin;
 
+  //selection of angle, currently uniform update
   SpherePointPicker(chosen_site_ptr->OnsiteSpin);
 
   CalculateLocalEnergy(*chosen_site_ptr, new_local_energy);
@@ -400,6 +401,21 @@ void TriangularLattice::MetropolisSweep(const double& temperature)
   }
 }
 
+void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sweeps)
+{
+    // cout << temp << " " << temp << endl;
+
+    uint sweep = 0;
+    while (sweep < max_sweeps){
+      // for (uint i=0;i<10;i++){
+      //   OverrelaxationSweep();
+      // }
+
+      MetropolisSweep(temp);
+      ++sweep;
+    }
+}
+
 void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps,
                                           double& initial_T, double& final_T, double& rate)
 {
@@ -407,17 +423,7 @@ void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps,
   double temp_T = initial_T;
   while(temp_T >= final_T){
     // std::cout << "temp " << temp_T << endl;
-    uint sweep = 0;
-    while (sweep < max_sweeps){
-      // std::cout << "sweep " << sweep << endl;
-
-      // for (uint i=0;i<10;i++){
-      //   OverrelaxationSweep();
-      // }
-
-      MetropolisSweep(temp_T);
-      ++sweep;
-    }
+    ThermalizeConfiguration(temp_T,max_sweeps);
     temp_T = scale*temp_T;
   }
   FinalT = temp_T;
@@ -503,20 +509,6 @@ void TriangularLattice::PrintThermalObservables(std::ostream &out){
   out << std::setprecision(14) << CombinedNorm/ns << " " << CombinedNorm2/ns2 << " " << CombinedNorm4/ns4 << "\n";
 }
 
-void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sweeps)
-{
-    // cout << temp << " " << temp << endl;
-
-    uint sweep = 0;
-    while (sweep < max_sweeps){
-      MetropolisSweep(temp);
-
-      // CalculateClusterEnergyandMagnetization();
-      // cout << sweep << " " << ClusterEnergy/(double)NumSites  << endl;
-
-      ++sweep;
-    }
-}
 
 void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps, const uint& sampling_time){
       // cout << temp << " " << temp << endl;
