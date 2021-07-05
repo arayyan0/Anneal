@@ -49,6 +49,8 @@ HField(h), HDirection(hdir)
   L2Dist = l2d;
 
   CreateStripySignMatrices();
+
+  overrelaxMCratio = 0;
 }
 
 void TriangularLattice::CreateClusterPBC()
@@ -105,6 +107,13 @@ void TriangularLattice::CreateDefectPositions(){
     Defects[7] = {(uint)pos,5*(uint)pos};
     Defects[8] = {3*(uint)pos,5*(uint)pos};
   }
+  // uint i = 0;
+  // for (uint y=0; y<L2; ++y){
+  //   for (uint x=0; x<L1; ++x){
+  //     i = y+x*L1;
+  //     // Defects[i] = {x};
+  //   }
+  // }
 
   // cout << "...Defects list..." << endl;
   // for (auto i:Defects){
@@ -238,8 +247,7 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
   energy = -site.OnsiteSpin.VectorXYZ.dot(molec+ JTau*HField*HDirection);
 }
 
-void TriangularLattice::CalculateClusterEnergy()
-{
+void TriangularLattice::CalculateClusterEnergy(){
   long double e=0;
   long double local_energy;
 
@@ -297,6 +305,7 @@ void TriangularLattice::CalculateClusterEnergyandOP()
 
   for (uint n1=0; n1<L1; ++n1){
     for (uint n2=0; n2<L2; ++n2){
+      // local_energy=0;
       //calculate energy
       CalculateLocalEnergy(Cluster[n1][n2], local_energy);
       e += local_energy;
@@ -370,6 +379,7 @@ void TriangularLattice::MetropolisFlip(
 
   CalculateLocalEnergy(*chosen_site_ptr, new_local_energy);
   energy_diff = new_local_energy - old_local_energy;
+
   if (energy_diff < 0){}
   else{
     r = MyRandom::unit_interval(MyRandom::RNG);
@@ -406,12 +416,15 @@ void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sw
     // cout << temp << " " << temp << endl;
 
     uint sweep = 0;
+    // uint overrelaxMCratio = 1;
     while (sweep < max_sweeps){
-      // for (uint i=0;i<10;i++){
-      //   OverrelaxationSweep();
-      // }
+
+      for (uint i=0;i<overrelaxMCratio;i++){
+        OverrelaxationSweep();
+      }
 
       MetropolisSweep(temp);
+
       ++sweep;
     }
 }
@@ -424,6 +437,10 @@ void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps,
   while(temp_T >= final_T){
     // std::cout << "temp " << temp_T << endl;
     ThermalizeConfiguration(temp_T,max_sweeps);
+
+    // CalculateClusterEnergyandOP();
+    // cout << temp_T << " " << ClusterEnergy/NumSites << endl;
+
     temp_T = scale*temp_T;
   }
   FinalT = temp_T;
@@ -510,7 +527,8 @@ void TriangularLattice::PrintThermalObservables(std::ostream &out){
 }
 
 
-void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps, const uint& sampling_time){
+void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps,
+                                            const uint& sampling_time){
       // cout << temp << " " << temp << endl;
       long double m_e = 0;
       long double m_e2 = 0;
@@ -536,11 +554,19 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
       uint sweep = 0;
       uint samples = 0;
       // cout << NumSites << " " << 0<<" " << 0<<" " << 0<<" " << 0<< endl;
+      // uint overrelaxMCratio = 2;
       while (sweep < max_sweeps){
+
+        for (uint i=0;i<overrelaxMCratio;i++){
+          OverrelaxationSweep();
+        }
         MetropolisSweep(temp);
+
         if (sweep%sampling_time == 0){
           CalculateClusterEnergyandOP();
           energy = ClusterEnergy;
+
+          // cout << samples << " " << ClusterEnergy/NumSites << endl;
 
           m_e  += energy;
           m_e2 += pow(energy,2);
@@ -573,6 +599,10 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
       }
 
       EBar  = m_e/(long double)samples;
+      // cout << "....." << endl;
+      // cout << EBar << endl;
+      // cout << "....." << endl;
+
       E2Bar = m_e2/(long double)samples;
       E3Bar = m_e3/(long double)samples;
       E4Bar = m_e4/(long double)samples;
