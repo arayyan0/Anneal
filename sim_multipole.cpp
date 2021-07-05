@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
   const uint num_defects = strtol(argv[3], NULL, 10); //should only be 1,3,9
 
   long double jtau = 1;
-  const long double lambda = 0;
+  const long double lambda = 0.0;
   const long double ising_y = strtod(argv[4], NULL);
   const long double defect = strtod(argv[5], NULL);
   const long double h_field = 0.000;

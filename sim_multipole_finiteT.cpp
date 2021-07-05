@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
   const uint num_sweeps_thermal = 1e4;
   triangular.ThermalizeConfiguration(final_T, num_sweeps_thermal);
 
-  triangular.CalculateClusterEnergyandOP();
+  // triangular.CalculateClusterEnergyandOP();
 
   const uint sampling_time = 1e2;
   const uint num_sweeps_measurement = (1e4)*sampling_time;
