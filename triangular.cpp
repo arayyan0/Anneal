@@ -34,13 +34,14 @@ HField(h), HDirection(hdir)
              0,      0, 0;
   Hdefect1=JTau*Hdefect1;
 
-  Hdefect2 = 0.5*Hdefect1;
+  Hdefect2 = 0.0*Hdefect1;
   AddDefectHamiltonia();
 
   // cout << Hdefect1 << endl;
   // cout << Hdefect2 << endl;
 
-  InitializeRandomSpins();
+  // InitializeRandomSpins();
+  InitializeFMSpins(pi/2.0,pi/2.0);
 
   std::uniform_int_distribution<uint> l1d(0, L1-1);
   std::uniform_int_distribution<uint> l2d(0, L2-1);

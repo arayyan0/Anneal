@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
   triangular.CalculateClusterEnergyandOP();
   double actual_det_sweeps=0;
 
-  std::ostream &which = std::cerr;
+  std::ostream &which = std::cout;
   which << std::fixed << std::setprecision(14);
   PrintTriangularSimulationData(which, type, sublattice, l1, l2,
                                            initial_T, final_T, num_sweeps_SA,
