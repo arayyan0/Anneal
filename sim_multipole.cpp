@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
   const long double ising_y = strtod(argv[4], NULL);
   const long double defect = strtod(argv[5], NULL);
   const long double h_field = 0.000;
-  Vector3LD hdir = Vector3LD(0,0,1).normalized();
+  Vector3LD hdir = Vector3LD(0,1,0).normalized();
   TriangularLattice triangular(l1, l2, num_defects, jtau, lambda, ising_y, defect, h_field, hdir);
 
   const uint num_SA_steps = strtol(argv[6], NULL, 10);
@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
   triangular.SimulatedAnnealing(num_sweeps_SA, initial_T, final_T,cooling_rate);
 
   const uint max_det_sweeps = pow(10,strtol(argv[8], NULL, 10));
+  // const uint max_det_sweeps = 1;
   triangular.DeterministicSweeps(max_det_sweeps);
 
   const uint num_sweeps_thermal = 0;
