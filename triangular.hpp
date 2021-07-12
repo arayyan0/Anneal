@@ -57,7 +57,7 @@ public:
   bool CheckIfPoisoned(uint lx, uint ly);
   void CalculateLocalEnergy(const Site& site, long double& energy);
   void MolecularField(const Site& site, Vector3LD& molec);
-  void MetropolisSweep(const double& temperature);
+  void MetropolisSweep(const double& temperature, uint& accept);
   void DeterministicSweeps(const uint& max_sweeps);
   void PrintConfiguration(std::ostream &out);
 
