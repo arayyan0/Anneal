@@ -333,23 +333,6 @@ void TriangularLattice::CalculateClusterEnergyandOP()
     ClusterCombinedOP = CombinedOP;
 }
 
-// void TriangularLattice::OverrelaxationFlip(uint& uc_x, uint& uc_y){
-//   Site *chosen_site_ptr;
-//   Vector3LD old_spin_vec,new_spin_vec;
-//
-//   Vector3LD molec_field, normalized_field;
-//
-//   chosen_site_ptr = &Cluster[uc_x][uc_y];
-//   old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
-//
-//   MolecularField(*chosen_site_ptr, molec_field);
-//   normalized_field = molec_field.normalized();
-//
-//   new_spin_vec = -old_spin_vec + 2.0*normalized_field.dot(old_spin_vec)*normalized_field;
-//   Spin new_spin(new_spin_vec);
-//   chosen_site_ptr->OnsiteSpin = new_spin;
-//
-// }
 
 void TriangularLattice::OverrelaxationSweep(){
   for (uint uc_x =0; uc_x<L1; uc_x++){
@@ -371,60 +354,6 @@ void TriangularLattice::OverrelaxationSweep(){
     }
   }
 }
-//
-// void TriangularLattice::MetropolisFlip(
-//   uint& uc_x, uint& uc_y,
-//   Spin&  old_spin_at_chosen_site,
-//   long double &old_local_energy, long double &new_local_energy, long double &energy_diff,
-//   double &r, double &pd, const double& temperature
-// )
-// {
-//   Site *chosen_site_ptr;
-//   uc_x = L1Dist(MyRandom::RNG);
-//   uc_y = L2Dist(MyRandom::RNG);
-//
-//   chosen_site_ptr = &Cluster[uc_x][uc_y];
-//
-//   CalculateLocalEnergy(*chosen_site_ptr, old_local_energy);
-//   old_spin_at_chosen_site = chosen_site_ptr->OnsiteSpin;
-//
-//   //selection of angle, currently uniform update
-//   SpherePointPicker(chosen_site_ptr->OnsiteSpin);
-//
-//   CalculateLocalEnergy(*chosen_site_ptr, new_local_energy);
-//   energy_diff = new_local_energy - old_local_energy;
-//
-//   if (energy_diff < 0){}
-//   else{
-//     r = MyRandom::unit_interval(MyRandom::RNG);
-//     pd = exp(-energy_diff/temperature);
-//     if (r < pd){}
-//     else chosen_site_ptr->OnsiteSpin = old_spin_at_chosen_site;
-//   }
-// }
-
-// void TriangularLattice::MetropolisSweep(const double& temperature)
-// {
-//   uint uc_x, uc_y;
-//   Spin old_spin_at_chosen_site;
-//   long double old_local_energy, new_local_energy, energy_diff;
-//   double r, pd;
-//   Site *chosen_site_ptr;
-//
-//   uint flip = 0;
-//
-//   while (flip < NumSites){
-//     MetropolisFlip(
-//       uc_x, uc_y,
-//       old_spin_at_chosen_site,
-//       old_local_energy, new_local_energy, energy_diff, r,
-//       pd,
-//       temperature
-//     );
-//     ++flip;
-//   }
-// }
-
 
 void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
 {

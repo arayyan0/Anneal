@@ -2,10 +2,9 @@
 #author Ahmed Rayyan
 #date   December 2, 2019
 #brief  classical Monte Carlo make file
-CXX = g++
+CXX = mpic++
 CXXFLAGS = -std=c++17 -O3 -c
-#SIM = multipole_finiteT
-SIM = multipole_SA
+SIM = multipole_PT
 LATTICE = triangular
 
 all: sim
