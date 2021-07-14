@@ -16,6 +16,14 @@ struct Site
   Spin OnsiteSpin;
 };
 
+struct Sitee
+{
+  //nn_1, nn_2, bond-dep Hamiltonian
+  vector<std::tuple<int, int, Matrix3LD>> NearestNeighbours;
+  Vector3LD VectorXYZ;
+
+};
+
 class TriangularLattice
 {
 public:
@@ -26,6 +34,8 @@ public:
   Matrix3LD Hx, Hy, Hz, Hdefect1, Hdefect2;
   Vector3LD HDirection, ClusterFMOP,ClusterCombinedOP;
   Vector2LD ClusterStripyOP;
+  Eigen::Matrix<long double, 3, 2> ClusterStripyOPMatrix;
+
   double FinalT;
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
@@ -64,12 +74,14 @@ public:
   void SampleConfiguration(double& temp, const uint& max_sweeps,
                            const uint& sampling_time);
   void CreateStripySignMatrices();
+  void SelectStripyOP();
   void CalculateClusterEnergyandOP();
   void CalculateClusterEnergy();
   void PrintThermalObservables(std::ostream &out);
   void CreateDefectPositions();
   void OverrelaxationSweep();
   void DoTheSweeps(double& temp, uint& accept);
+
 
   //private:
   //

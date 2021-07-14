@@ -267,13 +267,12 @@ void TriangularLattice::CalculateClusterEnergyandOP()
   long double e=0;
   long double local_energy;
 
-  Vector3LD spin, FMOP, CombinedOP;
-  Eigen::Matrix<long double, 3, 2> StripyOP;
-  FMOP << 0,0,0;
-  StripyOP << 0, 0,
-              0, 0,
-              0, 0;
-  CombinedOP << 0,0,0;
+  Vector3LD spin, fmop;
+  Eigen::Matrix<long double, 3, 2> stripyopmatrix;
+  fmop << 0,0,0;
+  stripyopmatrix << 0, 0,
+                    0, 0,
+                    0, 0;
 
   for (uint n1=0; n1<L1; ++n1){
     for (uint n2=0; n2<L2; ++n2){
@@ -284,34 +283,30 @@ void TriangularLattice::CalculateClusterEnergyandOP()
       //calculate three stripy OPs
 
       spin = Cluster[n1][n2].OnsiteSpin.VectorXYZ;
-      FMOP += spin;
+      fmop += spin;
       //
-      StripyOP(0,0) += StripySignsX(n1,n2)*spin(0); StripyOP(0,1) += StripySignsX(n1,n2)*spin(2);
-      StripyOP(1,0) += StripySignsY(n1,n2)*spin(0); StripyOP(1,1) += StripySignsY(n1,n2)*spin(2);
-      StripyOP(2,0) += StripySignsZ(n1,n2)*spin(0); StripyOP(2,1) += StripySignsZ(n1,n2)*spin(2);
+      stripyopmatrix(0,0) += StripySignsX(n1,n2)*spin(0); stripyopmatrix(0,1) += StripySignsX(n1,n2)*spin(2);
+      stripyopmatrix(1,0) += StripySignsY(n1,n2)*spin(0); stripyopmatrix(1,1) += StripySignsY(n1,n2)*spin(2);
+      stripyopmatrix(2,0) += StripySignsZ(n1,n2)*spin(0); stripyopmatrix(2,1) += StripySignsZ(n1,n2)*spin(2);
       }
     }
 
     ClusterEnergy = e/2.0;
 
-    ClusterFMOP = FMOP;
+    ClusterFMOP = fmop;
+    ClusterStripyOPMatrix = stripyopmatrix;
 
-    Eigen::MatrixXd::Index indices[1];
-    long double stripymax = StripyOP.rowwise().norm().maxCoeff(&indices[0]);
-
-    ClusterStripyOP = StripyOP.row(indices[0]);
-    CombinedOP << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
-    ClusterCombinedOP = CombinedOP;
+    SelectStripyOP();
 }
 
 void TriangularLattice::OverrelaxationSweep(){
   Site *chosen_site_ptr;
   Vector3LD old_spin_vec,new_spin_vec;
-  Vector3LD molec_field, normalized_field;
+  Vector3LD molec_field, normalized_field,spindiff;
 
-  for (uint uc_x =0; uc_x<L1; uc_x++){
-    for (uint uc_y =0; uc_y<L2; uc_y++){
-      chosen_site_ptr = &Cluster[uc_x][uc_y];
+  for (uint n1 =0; n1<L1; n1++){
+    for (uint n2 =0; n2<L2; n2++){
+      chosen_site_ptr = &Cluster[n1][n2];
       old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
 
       MolecularField(*chosen_site_ptr, molec_field);
@@ -320,27 +315,35 @@ void TriangularLattice::OverrelaxationSweep(){
       new_spin_vec = -old_spin_vec + 2.0*normalized_field.dot(old_spin_vec)*normalized_field;
       Spin new_spin(new_spin_vec);
       chosen_site_ptr->OnsiteSpin = new_spin;
+
+      //no need to update energy dynamically since these sweeps perserve energy
+      //updating OP dynamically
+      spindiff = new_spin_vec - old_spin_vec;
+      ClusterFMOP+=spindiff;
+      ClusterStripyOPMatrix(0,0) += StripySignsX(n1,n2)*spindiff(0); ClusterStripyOPMatrix(0,1) += StripySignsX(n1,n2)*spindiff(2);
+      ClusterStripyOPMatrix(1,0) += StripySignsY(n1,n2)*spindiff(0); ClusterStripyOPMatrix(1,1) += StripySignsY(n1,n2)*spindiff(2);
+      ClusterStripyOPMatrix(2,0) += StripySignsZ(n1,n2)*spindiff(0); ClusterStripyOPMatrix(2,1) += StripySignsZ(n1,n2)*spindiff(2);
     }
   }
 }
 
 void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
 {
-  uint uc_x, uc_y;
+  uint n1, n2;
   Spin old_spin_at_chosen_site;
   long double old_local_energy, energydiff, new_local_energy;
   double r, ppp;
   Site *chosen_site_ptr;
-
+  Vector3LD spindiff;
   uint flip = 0;
 
   accept=0;
 
   while (flip < NumSites){
-    uc_x = L1Dist(MyRandom::RNG);
-    uc_y = L2Dist(MyRandom::RNG);
+    n1 = L1Dist(MyRandom::RNG);
+    n2 = L2Dist(MyRandom::RNG);
 
-    chosen_site_ptr = &Cluster[uc_x][uc_y];
+    chosen_site_ptr = &Cluster[n1][n2];
 
     CalculateLocalEnergy(*chosen_site_ptr, old_local_energy);
     old_spin_at_chosen_site = chosen_site_ptr->OnsiteSpin;
@@ -355,7 +358,14 @@ void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
 
     if (r < ppp) {
       accept++;
+      //update energy dynamically
       ClusterEnergy+=energydiff;
+      //update OP dynamically
+      spindiff = (chosen_site_ptr->OnsiteSpin).VectorXYZ - old_spin_at_chosen_site.VectorXYZ;
+      ClusterFMOP+=spindiff;
+      ClusterStripyOPMatrix(0,0) += StripySignsX(n1,n2)*spindiff(0); ClusterStripyOPMatrix(0,1) += StripySignsX(n1,n2)*spindiff(2);
+      ClusterStripyOPMatrix(1,0) += StripySignsY(n1,n2)*spindiff(0); ClusterStripyOPMatrix(1,1) += StripySignsY(n1,n2)*spindiff(2);
+      ClusterStripyOPMatrix(2,0) += StripySignsZ(n1,n2)*spindiff(0); ClusterStripyOPMatrix(2,1) += StripySignsZ(n1,n2)*spindiff(2);
     } else {
       chosen_site_ptr->OnsiteSpin = old_spin_at_chosen_site;
     }
@@ -369,6 +379,7 @@ void TriangularLattice::DoTheSweeps(double& temp, uint& accept){
     OverrelaxationSweep();
   }
   MetropolisSweep(temp,accept);
+  cout << ClusterEnergy/(double)NumSites << endl;
 }
 
 
@@ -434,21 +445,12 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
         Vector3LD mf_t = molec_field;
         Spin new_spin(mf_t);
         chosen_site_ptr->OnsiteSpin = new_spin;
-
-        // norm = (new_spin.VectorXYZ - old_spin_vec).norm();
-        // if (norm > x){x = norm;}
-        // else{}
         align++;
     }
-    // if (x > eps){}
-    // else{
-      // ActualDetFlips = sweep;
-      // break;
-    // }
     sweep++;
   }
   ActualDetSweeps = sweep;
-  CalculateClusterEnergyandOP(); //updates energy
+  CalculateClusterEnergyandOP(); //updates energy and OP statically
   // cout << "final: " << std::setprecision(14) << ClusterEnergy/NumSites << endl;
 }
 
@@ -463,12 +465,12 @@ void TriangularLattice::PrintConfiguration(std::ostream &out)
       out << std::setprecision(14) << x << " " << y << " " << 0 << " " << Cluster[x][y].OnsiteSpin.VectorXYZ.transpose() << "\n";
     }
   }
+  SelectStripyOP();
   out << "-------------------------------Final configuration observables--------------------------------\n";
   out << "Order parameters. R1: (FM_x, FM_y, FM_z), R2: (stripy_x, stripy_z),  R3: (stripy_x, FM_y, stripy_z)\n";
   out << std::setprecision(14) << ClusterFMOP.transpose()/(long double)NumSites << "\n";
   out << std::setprecision(14) << ClusterStripyOP.transpose()/(long double)NumSites << "\n";
   out << std::setprecision(14) << ClusterCombinedOP.transpose()/(long double)NumSites << "\n";
-  //which=0 is ground state, which=1 is thermal
 }
 
 void TriangularLattice::PrintThermalObservables(std::ostream &out){
@@ -521,10 +523,10 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
         DoTheSweeps(temp, accept);
 
         if (sweep%sampling_time == 0){
-          CalculateClusterEnergyandOP();
           energy = ClusterEnergy;
-
           // cout << samples << " " << ClusterEnergy/NumSites << endl;
+
+          SelectStripyOP();
 
           m_e  += energy;
           m_e2 += pow(energy,2);
@@ -597,4 +599,15 @@ void TriangularLattice::CreateStripySignMatrices()
   StripySignsX = signs_X;
   StripySignsY = signs_Y;
   StripySignsZ = signs_Z;
+}
+
+void TriangularLattice::SelectStripyOP()
+{
+  Eigen::MatrixXd::Index indices[1];
+  long double stripymax = ClusterStripyOPMatrix.rowwise().norm().maxCoeff(&indices[0]);
+  ClusterStripyOP = ClusterStripyOPMatrix.row(indices[0]);
+
+  Vector3LD combinedop;
+  combinedop << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
+  ClusterCombinedOP = combinedop;
 }
