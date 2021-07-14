@@ -4,7 +4,7 @@
 #brief  classical Monte Carlo make file
 CXX = mpic++
 CXXFLAGS = -std=c++17 -O3 -c
-SIM = multipole_PT
+SIM = multipole_SA
 LATTICE = triangular
 
 all: sim
