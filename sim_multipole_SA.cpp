@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[])
 {
-
+  //lattice settings
   const uint type = 2; //v1 or v2
   const uint sublattice = 1; //1 is rhombic
   const uint l1 = strtol(argv[1], NULL, 10);
@@ -18,33 +18,37 @@ int main(int argc, char *argv[])
     cout << "In principle this is OK if you are not including defects." << endl;
     cout << "If so, ensure that defect strength=0." << endl;
   }
-
   const uint num_defects = strtol(argv[3], NULL, 10); //should only be 1,3,9
 
+  //hamiltonian settings
   long double jtau = 1;
   const long double lambda = 0.0;
   const long double ising_y = strtod(argv[4], NULL);
   const long double defect = strtod(argv[5], NULL);
   const long double h_field = 0.000;
   Vector3LD hdir = Vector3LD(0,1,0).normalized();
-  TriangularLattice triangular(l1, l2, num_defects, jtau, lambda, ising_y, defect, h_field, hdir);
 
+  //simulated annealing settings
   const uint num_SA_steps = strtol(argv[6], NULL, 10);
   const uint num_sweeps_SA = pow(10, strtol(argv[7], NULL, 10));
   double cooling_rate = 0.9;
   double initial_T = 1*abs(jtau);
   double final_T = pow(cooling_rate,num_SA_steps);
-  triangular.SimulatedAnnealing(num_sweeps_SA, initial_T, final_T,cooling_rate);
 
+  //deterministic sweep settings
   const uint max_det_sweeps = pow(10,strtol(argv[8], NULL, 10));
-  // const uint max_det_sweeps = 1;
-  triangular.DeterministicSweeps(max_det_sweeps);
 
+  //no thermalization or measurements in pure simulated annealing
   const uint num_sweeps_thermal = 0;
   const uint num_sweeps_measurement = 0;
   const uint sampling_time = 0;
-  triangular.CalculateClusterEnergyandOP();
 
+  //initiate simulation on each process
+  TriangularLattice triangular(l1, l2, num_defects, jtau, lambda, ising_y, defect, h_field, hdir);
+  triangular.SimulatedAnnealing(num_sweeps_SA, initial_T, final_T,cooling_rate);
+  triangular.DeterministicSweeps(max_det_sweeps);
+
+  //output the information of the cluster
   std::ostream &which = std::cout;
   which << std::fixed << std::setprecision(14);
   PrintTriangularSimulationData(which, type, sublattice, l1, l2,
@@ -64,23 +68,7 @@ int main(int argc, char *argv[])
   which << h_field << "\n";
   which << "HDirection\n";
   which << hdir.transpose() << "\n";
-
   triangular.PrintConfiguration(which);
 
-
-  //prints nearest neighbours of each site
-  // for (int y=0; y<l2; ++y)
-  // {
-  //   for (int x=0; x<l1; ++x)
-  //   {
-  //     cout << "(x,y)= (" << x << "," << y << ")" << endl;
-  //     for (auto i : triangular.Cluster[x][y].NearestNeighbours){
-  //     cout << "(nn_x,nn_y)= (" << std::get<0>(i) << "," << std::get<1>(i) << ")" << endl;
-  //     cout << "type: "<< endl;
-  //     cout << std::get<2>(i)<< endl;
-  //     }
-  //     cout << "........." << endl;
-  //   }
-  // }
   return 0;
 }

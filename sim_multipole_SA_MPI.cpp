@@ -58,7 +58,6 @@ int main(int argc, char *argv[])
   TriangularLattice triangular(l1, l2, num_defects, jtau, lambda, ising_y, defect, h_field, hdir);
   triangular.SimulatedAnnealing(num_sweeps_SA, initial_T, final_T,cooling_rate);
   triangular.DeterministicSweeps(max_det_sweeps);
-  triangular.CalculateClusterEnergyandOP();
 
   //Allgather cluster energies into array, convert to STL vector, and find rank
   //of the lowest ground state
