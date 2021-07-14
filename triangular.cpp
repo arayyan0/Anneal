@@ -33,7 +33,6 @@ HField(h), HDirection(hdir)
              0, Defect, 0,
              0,      0, 0;
   Hdefect1=JTau*Hdefect1;
-
   Hdefect2 = 0.0*Hdefect1;
   AddDefectHamiltonia();
 
@@ -43,15 +42,15 @@ HField(h), HDirection(hdir)
   // InitializeRandomSpins();
   InitializeFMSpins(pi/2.0,pi/2.0);
 
+  CreateStripySignMatrices();
+  CalculateClusterEnergyandOP();
+
   std::uniform_int_distribution<uint> l1d(0, L1-1);
   std::uniform_int_distribution<uint> l2d(0, L2-1);
-
   L1Dist = l1d;
   L2Dist = l2d;
 
-  CreateStripySignMatrices();
-
-  overrelaxMCratio = 0;
+  overrelaxMCratio = 10;
 }
 
 void TriangularLattice::CreateClusterPBC()
@@ -246,6 +245,7 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
   Vector3LD molec;
   MolecularField(site, molec);
   energy = -site.OnsiteSpin.VectorXYZ.dot(molec+ JTau*HField*HDirection);
+  // cout << energy<< endl;
 }
 
 void TriangularLattice::CalculateClusterEnergy(){
@@ -260,35 +260,6 @@ void TriangularLattice::CalculateClusterEnergy(){
     }
   }
   ClusterEnergy = e/2.0;
-}
-
-void TriangularLattice::CalculateClusterOP(){
-  Vector3LD spin, FMOP, CombinedOP;
-  Eigen::Matrix<long double, 3, 2> StripyOP;
-
-  FMOP << 0,0,0;
-  StripyOP << 0, 0,
-              0, 0,
-              0, 0;
-
-  for (uint n1=0; n1<L1; ++n1){
-    for (uint n2=0; n2<L2; ++n2){
-      //calculate three stripy OPs
-      spin = Cluster[n1][n2].OnsiteSpin.VectorXYZ;
-      FMOP += spin;
-      StripyOP(0,0) += StripySignsX(n1,n2)*spin(0); StripyOP(0,1) +=  StripySignsX(n1,n2)*spin(2);
-      StripyOP(1,0) += StripySignsY(n1,n2)*spin(0); StripyOP(1,1) +=  StripySignsY(n1,n2)*spin(2);
-      StripyOP(2,0) += StripySignsZ(n1,n2)*spin(0); StripyOP(2,1) +=  StripySignsZ(n1,n2)*spin(2);
-    }
-  }
-  ClusterFMOP = FMOP;
-
-  Eigen::MatrixXd::Index indices[1];
-  long double stripymax = StripyOP.rowwise().norm().maxCoeff(&indices[0]);
-
-  ClusterStripyOP = StripyOP.row(indices[0]);
-  CombinedOP << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
-  ClusterCombinedOP = CombinedOP;
 }
 
 void TriangularLattice::CalculateClusterEnergyandOP()
@@ -311,10 +282,10 @@ void TriangularLattice::CalculateClusterEnergyandOP()
       CalculateLocalEnergy(Cluster[n1][n2], local_energy);
       e += local_energy;
       //calculate three stripy OPs
+
       spin = Cluster[n1][n2].OnsiteSpin.VectorXYZ;
-
       FMOP += spin;
-
+      //
       StripyOP(0,0) += StripySignsX(n1,n2)*spin(0); StripyOP(0,1) += StripySignsX(n1,n2)*spin(2);
       StripyOP(1,0) += StripySignsY(n1,n2)*spin(0); StripyOP(1,1) += StripySignsY(n1,n2)*spin(2);
       StripyOP(2,0) += StripySignsZ(n1,n2)*spin(0); StripyOP(2,1) += StripySignsZ(n1,n2)*spin(2);
@@ -333,15 +304,13 @@ void TriangularLattice::CalculateClusterEnergyandOP()
     ClusterCombinedOP = CombinedOP;
 }
 
-
 void TriangularLattice::OverrelaxationSweep(){
+  Site *chosen_site_ptr;
+  Vector3LD old_spin_vec,new_spin_vec;
+  Vector3LD molec_field, normalized_field;
+
   for (uint uc_x =0; uc_x<L1; uc_x++){
     for (uint uc_y =0; uc_y<L2; uc_y++){
-      Site *chosen_site_ptr;
-      Vector3LD old_spin_vec,new_spin_vec;
-
-      Vector3LD molec_field, normalized_field;
-
       chosen_site_ptr = &Cluster[uc_x][uc_y];
       old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
 
@@ -359,8 +328,8 @@ void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
 {
   uint uc_x, uc_y;
   Spin old_spin_at_chosen_site;
-  long double old_local_energy, new_local_energy, energy_diff;
-  double r, pd;
+  long double old_local_energy, energydiff, new_local_energy;
+  double r, ppp;
   Site *chosen_site_ptr;
 
   uint flip = 0;
@@ -368,7 +337,6 @@ void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
   accept=0;
 
   while (flip < NumSites){
-    Site *chosen_site_ptr;
     uc_x = L1Dist(MyRandom::RNG);
     uc_y = L2Dist(MyRandom::RNG);
 
@@ -376,23 +344,31 @@ void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
 
     CalculateLocalEnergy(*chosen_site_ptr, old_local_energy);
     old_spin_at_chosen_site = chosen_site_ptr->OnsiteSpin;
-
     //selection of angle, currently uniform update
     SpherePointPicker(chosen_site_ptr->OnsiteSpin);
 
     CalculateLocalEnergy(*chosen_site_ptr, new_local_energy);
-    energy_diff = new_local_energy - old_local_energy;
 
-    if (energy_diff < 0){accept++;}
-    else{
-      r = MyRandom::unit_interval(MyRandom::RNG);
-      pd = exp(-energy_diff/temperature);
-      if (r < pd){accept++;}
-      else{chosen_site_ptr->OnsiteSpin = old_spin_at_chosen_site;}
+    energydiff = new_local_energy-old_local_energy;
+    r = MyRandom::unit_interval(MyRandom::RNG);
+    ppp = std::min(exp(-energydiff/temperature),1.0);
+
+    if (r < ppp) {
+      accept++;
+      ClusterEnergy+=energydiff;
+    } else {
+      chosen_site_ptr->OnsiteSpin = old_spin_at_chosen_site;
     }
     ++flip;
   }
 
+}
+
+void TriangularLattice::DoTheSweeps(double& temp, uint& accept){
+  for (uint i=0;i<overrelaxMCratio;i++){
+    OverrelaxationSweep();
+  }
+  MetropolisSweep(temp,accept);
 }
 
 
@@ -406,10 +382,7 @@ void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sw
     uint Metroaccept = 0;
     // uint overrelaxMCratio = 1;
     while (sweep < max_sweeps){
-      for (uint i=0;i<overrelaxMCratio;i++){
-        OverrelaxationSweep();
-      }
-      MetropolisSweep(temp,accept);
+      DoTheSweeps(temp, accept);
       Metroaccept += accept;
       ++sweep;
     }
@@ -445,7 +418,7 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
   Vector3LD molec_field;
 
   // long double x, norm;
-  long double eps = pow(10,-20);
+  // long double eps = pow(10,-20);
 
   while (sweep < max_sweeps){
     // x = 0;
@@ -475,6 +448,7 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
     sweep++;
   }
   ActualDetSweeps = sweep;
+  CalculateClusterEnergyandOP(); //updates energy
   // cout << "final: " << std::setprecision(14) << ClusterEnergy/NumSites << endl;
 }
 
@@ -540,15 +514,11 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
       long double energy, fm_norm, perp_norm, par_norm, combined_norm;
       uint sweep = 0;
       uint samples = 0;
+      uint accept;
       // cout << NumSites << " " << 0<<" " << 0<<" " << 0<<" " << 0<< endl;
       // uint overrelaxMCratio = 2;
       while (sweep < max_sweeps){
-
-        for (uint i=0;i<overrelaxMCratio;i++){
-          OverrelaxationSweep();
-        }
-        uint accept = 0;
-        MetropolisSweep(temp, accept);
+        DoTheSweeps(temp, accept);
 
         if (sweep%sampling_time == 0){
           CalculateClusterEnergyandOP();

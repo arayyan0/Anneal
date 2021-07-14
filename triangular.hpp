@@ -42,12 +42,10 @@ public:
 
   uint overrelaxMCratio;
 
-
   TriangularLattice(const uint& l1, const uint& l2, const uint& num_defects,
                     const long double& jtau, const long double& lambda,
                     const long double& ising_y, const long double& defect,
                     const long double& h, Vector3LD& hdir);
-
   void CreateClusterPBC();
   Matrix3LD ReturnMPHamiltonian(const long double& angle);
   void FixMPHamiltonians();
@@ -60,30 +58,18 @@ public:
   void MetropolisSweep(const double& temperature, uint& accept);
   void DeterministicSweeps(const uint& max_sweeps);
   void PrintConfiguration(std::ostream &out);
-
   void SimulatedAnnealing(const uint& max_sweeps,
-                                            double& initial_T, double& final_T, double& rate);
-
+                          double& initial_T, double& final_T, double& rate);
   void ThermalizeConfiguration(double& temp, const uint& max_flips);
-  void SampleConfiguration(double& temp, const uint& max_sweeps, const uint& sampling_time);
-
-  void MetropolisFlip(
-    uint& uc_x, uint& uc_y,
-    Spin&  old_spin_at_chosen_site,
-    long double &old_local_energy, long double &new_local_energy, long double &energy_diff, double &r,
-    double &pd,
-    const double& temperature
-  );
+  void SampleConfiguration(double& temp, const uint& max_sweeps,
+                           const uint& sampling_time);
   void CreateStripySignMatrices();
-
   void CalculateClusterEnergyandOP();
   void CalculateClusterEnergy();
-  void CalculateClusterOP();
   void PrintThermalObservables(std::ostream &out);
-
   void CreateDefectPositions();
-  void OverrelaxationFlip(uint& uc_x, uint& uc_y);
   void OverrelaxationSweep();
+  void DoTheSweeps(double& temp, uint& accept);
 
   //private:
   //
