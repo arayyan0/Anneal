@@ -22,6 +22,10 @@ HField(h), HDirection(hdir)
   for(uint i = 0; i < L1; ++i){
       Cluster[i].resize(L2);
   }
+  ClusterInfo.resize(L1);
+  for(uint i = 0; i < L1; ++i){
+      ClusterInfo[i].resize(L2);
+  }
   CreateClusterPBC();
 
   Defects.resize(NumDefects);
@@ -50,7 +54,7 @@ HField(h), HDirection(hdir)
   L1Dist = l1d;
   L2Dist = l2d;
 
-  overrelaxMCratio = 10;
+  overrelaxMCratio = 0;
 }
 
 void TriangularLattice::CreateClusterPBC()
@@ -74,6 +78,14 @@ void TriangularLattice::CreateClusterPBC()
       if (lower_y >= 0){lower_y = lower_y%L2;}
       else if (lower_y < 0){lower_y = L2-1;}
       // cout << lower_x << " " << lower_y << endl;
+      ClusterInfo[x][y] = {
+                        {std::make_tuple(higher_x,        y, Hz),
+                         std::make_tuple(       x, higher_y, Hy),
+                         std::make_tuple( lower_x, higher_y, Hx),
+                         std::make_tuple( lower_x,        y, Hz),
+                         std::make_tuple(       x,  lower_y, Hy),
+                         std::make_tuple(higher_x,  lower_y, Hx)}
+                      };
       Cluster[x][y] = {
                         {std::make_tuple(higher_x,        y, Hz),
                          std::make_tuple(       x, higher_y, Hy),
@@ -152,18 +164,18 @@ void TriangularLattice::AddDefectHamiltonia()
     for (int x=0; x<L1; ++x){
       poisoned_site = CheckIfPoisoned(x, y);
       for (uint i=0; i<6; ++i){
-        auto [nn_x, nn_y, old_hamiltonian] = Cluster[x][y].NearestNeighbours[i];
+        auto [nn_x, nn_y, old_hamiltonian] = ClusterInfo[x][y].NearestNeighbours[i];
 
         if (poisoned_site == true){
-          std::get<2>(Cluster[x][y].NearestNeighbours[i]) += Hdefect1;
+          std::get<2>(ClusterInfo[x][y].NearestNeighbours[i]) += Hdefect1;
         } else {
           poisoned_neighbour = CheckIfPoisoned(nn_x,nn_y);
           if (poisoned_neighbour == true){
-            std::get<2>(Cluster[x][y].NearestNeighbours[i]) += Hdefect1;
+            std::get<2>(ClusterInfo[x][y].NearestNeighbours[i]) += Hdefect1;
             uint ibefore = (i-1)%6;
             uint iafter = (i+1)%6;
-            std::get<2>(Cluster[x][y].NearestNeighbours[ibefore]) += 0.5*Hdefect2;
-            std::get<2>(Cluster[x][y].NearestNeighbours[iafter]) += 0.5*Hdefect2;
+            std::get<2>(ClusterInfo[x][y].NearestNeighbours[ibefore]) += 0.5*Hdefect2;
+            std::get<2>(ClusterInfo[x][y].NearestNeighbours[iafter]) += 0.5*Hdefect2;
           }
         }
 

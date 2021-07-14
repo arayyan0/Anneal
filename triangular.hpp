@@ -9,6 +9,12 @@
 #include "spin.hpp"
 // #include "hamiltonian.hpp"
 
+struct SiteInfo
+{
+  //nn_1, nn_2, bond-dep Hamiltonian
+  vector<std::tuple<int, int, Matrix3LD>> NearestNeighbours;
+};
+
 struct Site
 {
   //nn_1, nn_2, bond-dep Hamiltonian
@@ -21,6 +27,7 @@ class TriangularLattice
 public:
   const uint L1, L2, NumSites, NumDefects;
   const long double JTau, Lambda, IsingY, Defect, HField;
+  vector<vector<SiteInfo> > ClusterInfo;
   vector<vector<Site> > Cluster;
   vector<vector<uint> > Defects;
   Matrix3LD Hx, Hy, Hz, Hdefect1, Hdefect2;
