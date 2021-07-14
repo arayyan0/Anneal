@@ -17,8 +17,6 @@ struct SiteInfo
 
 struct Site
 {
-  //nn_1, nn_2, bond-dep Hamiltonian
-  vector<std::tuple<int, int, Matrix3LD>> NearestNeighbours;
   Vector3LD VectorXYZ;
 };
 
@@ -29,6 +27,7 @@ public:
   const long double JTau, Lambda, IsingY, Defect, HField;
   vector<vector<SiteInfo> > ClusterInfo;
   vector<vector<Site> > Cluster;
+  vector<vector<Site> > RealCluster;
   vector<vector<uint> > Defects;
   Matrix3LD Hx, Hy, Hz, Hdefect1, Hdefect2;
   Vector3LD HDirection, ClusterFMOP,ClusterCombinedOP;
@@ -62,8 +61,8 @@ public:
   void InitializeFMSpins(const long double& theta, const long double& phi);
   void InitializeRandomSpins();
   bool CheckIfPoisoned(uint lx, uint ly);
-  void CalculateLocalEnergy(const Site& site, long double& energy);
-  void MolecularField(const Site& site, Vector3LD& molec);
+  void CalculateLocalEnergy(const uint& n1, const uint& n2, long double& energy);
+  void MolecularField(const uint& n1, const uint& n2, Vector3LD& molec);
   void MetropolisSweep(const double& temperature, uint& accept);
   void DeterministicSweeps(const uint& max_sweeps);
   void PrintConfiguration(std::ostream &out);

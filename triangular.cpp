@@ -87,12 +87,6 @@ void TriangularLattice::CreateClusterPBC()
                          std::make_tuple(higher_x,  lower_y, Hx)}
                       };
       Cluster[x][y] = {
-                        {std::make_tuple(higher_x,        y, Hz),
-                         std::make_tuple(       x, higher_y, Hy),
-                         std::make_tuple( lower_x, higher_y, Hx),
-                         std::make_tuple( lower_x,        y, Hz),
-                         std::make_tuple(       x,  lower_y, Hy),
-                         std::make_tuple(higher_x,  lower_y, Hx)},
                          some_vec
                       };
     }
@@ -158,7 +152,6 @@ bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly){
 void TriangularLattice::AddDefectHamiltonia()
 {
   bool poisoned_site, poisoned_neighbour;
-  Site current_site;
 
   for (int y=0; y<L2; ++y){
     for (int x=0; x<L1; ++x){
@@ -240,21 +233,21 @@ void TriangularLattice::InitializeRandomSpins()
   }
 }
 
-void TriangularLattice::MolecularField(const Site& site, Vector3LD& molec)
+void TriangularLattice::MolecularField(const uint& n1, const uint& n2, Vector3LD& molec)
 {
   Vector3LD v = Vector3LD::Zero();
-  for (auto j : site.NearestNeighbours){
-    auto [nn_x, nn_y, ham] = j;
-    v += -Cluster[nn_x][nn_y].VectorXYZ.transpose()*ham;
+  for (auto j : ClusterInfo[n1][n2].NearestNeighbours){
+    auto [nn_1, nn_2, ham] = j;
+    v += -Cluster[nn_1][nn_2].VectorXYZ.transpose()*ham;
   }
   molec = v.transpose()+ JTau*HField*HDirection.transpose();
 }
 
-void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& energy)
+void TriangularLattice::CalculateLocalEnergy(const uint& n1, const uint& n2, long double& energy)
 {
   Vector3LD molec;
-  MolecularField(site, molec);
-  energy = -site.VectorXYZ.dot(molec+ JTau*HField*HDirection);
+  MolecularField(n1, n2, molec);
+  energy = -Cluster[n1][n2].VectorXYZ.dot(molec+ JTau*HField*HDirection);
   // cout << energy<< endl;
 }
 
@@ -265,7 +258,7 @@ void TriangularLattice::CalculateClusterEnergy(){
   for (uint n1=0; n1<L1; ++n1){
     for (uint n2=0; n2<L2; ++n2){
       //calculate energy
-      CalculateLocalEnergy(Cluster[n1][n2], local_energy);
+      CalculateLocalEnergy(n1, n2, local_energy);
       e += local_energy;
     }
   }
@@ -288,7 +281,7 @@ void TriangularLattice::CalculateClusterEnergyandOP()
     for (uint n2=0; n2<L2; ++n2){
       // local_energy=0;
       //calculate energy
-      CalculateLocalEnergy(Cluster[n1][n2], local_energy);
+      CalculateLocalEnergy(n1, n2, local_energy);
       e += local_energy;
       //calculate three stripy OPs
 
@@ -319,7 +312,7 @@ void TriangularLattice::OverrelaxationSweep(){
       chosen_site_ptr = &Cluster[n1][n2];
       old_spin_vec = chosen_site_ptr->VectorXYZ;
 
-      MolecularField(*chosen_site_ptr, molec_field);
+      MolecularField(n1, n2, molec_field);
       normalized_field = molec_field.normalized();
 
       new_spin_vec = -old_spin_vec + 2.0*normalized_field.dot(old_spin_vec)*normalized_field;
@@ -354,12 +347,12 @@ void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
 
     chosen_site_ptr = &Cluster[n1][n2];
 
-    CalculateLocalEnergy(*chosen_site_ptr, old_local_energy);
+    CalculateLocalEnergy(n1, n2, old_local_energy);
     old_spin_at_chosen_site = chosen_site_ptr->VectorXYZ;
     //selection of angle, currently uniform update
     SpherePointPicker(chosen_site_ptr->VectorXYZ);
 
-    CalculateLocalEnergy(*chosen_site_ptr, new_local_energy);
+    CalculateLocalEnergy(n1, n2, new_local_energy);
 
     energydiff = new_local_energy-old_local_energy;
     r = MyRandom::unit_interval(MyRandom::RNG);
@@ -449,7 +442,7 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
         chosen_site_ptr = &Cluster[uc_x][uc_y];
         old_spin_vec = chosen_site_ptr->VectorXYZ;
 
-        MolecularField(*chosen_site_ptr, molec_field);
+        MolecularField(uc_x, uc_y, molec_field);
         Vector3LD mf_t = molec_field;
         // Spin new_spin(mf_t);
         chosen_site_ptr->VectorXYZ = mf_t.normalized();
