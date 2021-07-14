@@ -18,6 +18,8 @@ class Spin
     Spin(Vector3LD& vector);
 };
 
-void SpherePointPicker(Spin& some_spin);
+Vector3LD SphericalAnglesToCubic(const long double& theta, const long double& phi);
+
+void SpherePointPicker(Vector3LD& some_spin);
 
 #endif // SPIN_HPP

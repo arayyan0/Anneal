@@ -13,15 +13,7 @@ struct Site
 {
   //nn_1, nn_2, bond-dep Hamiltonian
   vector<std::tuple<int, int, Matrix3LD>> NearestNeighbours;
-  Spin OnsiteSpin;
-};
-
-struct Sitee
-{
-  //nn_1, nn_2, bond-dep Hamiltonian
-  vector<std::tuple<int, int, Matrix3LD>> NearestNeighbours;
   Vector3LD VectorXYZ;
-
 };
 
 class TriangularLattice

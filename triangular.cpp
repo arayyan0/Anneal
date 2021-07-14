@@ -56,7 +56,7 @@ HField(h), HDirection(hdir)
 void TriangularLattice::CreateClusterPBC()
 // T1 = a1-a2, T2 = a1
 {
-  Spin some_spin;
+  Vector3LD some_vec;
   int higher_x, higher_y, lower_x, lower_y;
   Matrix3LD hamiltonian = Matrix3LD::Zero();
   for (int y=0; y<L2; ++y)
@@ -81,7 +81,7 @@ void TriangularLattice::CreateClusterPBC()
                          std::make_tuple( lower_x,        y, Hz),
                          std::make_tuple(       x,  lower_y, Hy),
                          std::make_tuple(higher_x,  lower_y, Hx)},
-                         some_spin
+                         some_vec
                       };
     }
   }
@@ -211,10 +211,10 @@ void TriangularLattice::FixMPHamiltonians()
 
 void TriangularLattice::InitializeFMSpins(const long double& theta, const long double& phi)
 {
-  Spin spin(theta, phi);
+  Vector3LD v= SphericalAnglesToCubic(theta, phi);
   for (uint x=0; x<L1; ++x){
     for (uint y=0; y<L2; ++y){
-      Cluster[x][y].OnsiteSpin = spin;
+      Cluster[x][y].VectorXYZ = v;
     }
   }
 }
@@ -223,7 +223,7 @@ void TriangularLattice::InitializeRandomSpins()
 {
   for (uint x=0; x<L1; ++x){
     for (uint y=0; y<L2; ++y){
-      SpherePointPicker(Cluster[x][y].OnsiteSpin);
+      SpherePointPicker(Cluster[x][y].VectorXYZ);
     }
   }
 }
@@ -231,11 +231,9 @@ void TriangularLattice::InitializeRandomSpins()
 void TriangularLattice::MolecularField(const Site& site, Vector3LD& molec)
 {
   Vector3LD v = Vector3LD::Zero();
-  Spin spin_i = site.OnsiteSpin; Spin spin_j;
   for (auto j : site.NearestNeighbours){
     auto [nn_x, nn_y, ham] = j;
-    spin_j = Cluster[nn_x][nn_y].OnsiteSpin;
-    v += -spin_j.VectorXYZ.transpose()*ham;
+    v += -Cluster[nn_x][nn_y].VectorXYZ.transpose()*ham;
   }
   molec = v.transpose()+ JTau*HField*HDirection.transpose();
 }
@@ -244,7 +242,7 @@ void TriangularLattice::CalculateLocalEnergy(const Site& site, long double& ener
 {
   Vector3LD molec;
   MolecularField(site, molec);
-  energy = -site.OnsiteSpin.VectorXYZ.dot(molec+ JTau*HField*HDirection);
+  energy = -site.VectorXYZ.dot(molec+ JTau*HField*HDirection);
   // cout << energy<< endl;
 }
 
@@ -282,7 +280,7 @@ void TriangularLattice::CalculateClusterEnergyandOP()
       e += local_energy;
       //calculate three stripy OPs
 
-      spin = Cluster[n1][n2].OnsiteSpin.VectorXYZ;
+      spin = Cluster[n1][n2].VectorXYZ;
       fmop += spin;
       //
       stripyopmatrix(0,0) += StripySignsX(n1,n2)*spin(0); stripyopmatrix(0,1) += StripySignsX(n1,n2)*spin(2);
@@ -307,14 +305,14 @@ void TriangularLattice::OverrelaxationSweep(){
   for (uint n1 =0; n1<L1; n1++){
     for (uint n2 =0; n2<L2; n2++){
       chosen_site_ptr = &Cluster[n1][n2];
-      old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
+      old_spin_vec = chosen_site_ptr->VectorXYZ;
 
       MolecularField(*chosen_site_ptr, molec_field);
       normalized_field = molec_field.normalized();
 
       new_spin_vec = -old_spin_vec + 2.0*normalized_field.dot(old_spin_vec)*normalized_field;
-      Spin new_spin(new_spin_vec);
-      chosen_site_ptr->OnsiteSpin = new_spin;
+
+      chosen_site_ptr->VectorXYZ = new_spin_vec.normalized();
 
       //no need to update energy dynamically since these sweeps perserve energy
       //updating OP dynamically
@@ -330,11 +328,10 @@ void TriangularLattice::OverrelaxationSweep(){
 void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
 {
   uint n1, n2;
-  Spin old_spin_at_chosen_site;
   long double old_local_energy, energydiff, new_local_energy;
   double r, ppp;
   Site *chosen_site_ptr;
-  Vector3LD spindiff;
+  Vector3LD spindiff,old_spin_at_chosen_site;;
   uint flip = 0;
 
   accept=0;
@@ -346,9 +343,9 @@ void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
     chosen_site_ptr = &Cluster[n1][n2];
 
     CalculateLocalEnergy(*chosen_site_ptr, old_local_energy);
-    old_spin_at_chosen_site = chosen_site_ptr->OnsiteSpin;
+    old_spin_at_chosen_site = chosen_site_ptr->VectorXYZ;
     //selection of angle, currently uniform update
-    SpherePointPicker(chosen_site_ptr->OnsiteSpin);
+    SpherePointPicker(chosen_site_ptr->VectorXYZ);
 
     CalculateLocalEnergy(*chosen_site_ptr, new_local_energy);
 
@@ -361,13 +358,13 @@ void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
       //update energy dynamically
       ClusterEnergy+=energydiff;
       //update OP dynamically
-      spindiff = (chosen_site_ptr->OnsiteSpin).VectorXYZ - old_spin_at_chosen_site.VectorXYZ;
+      spindiff = chosen_site_ptr->VectorXYZ - old_spin_at_chosen_site;
       ClusterFMOP+=spindiff;
       ClusterStripyOPMatrix(0,0) += StripySignsX(n1,n2)*spindiff(0); ClusterStripyOPMatrix(0,1) += StripySignsX(n1,n2)*spindiff(2);
       ClusterStripyOPMatrix(1,0) += StripySignsY(n1,n2)*spindiff(0); ClusterStripyOPMatrix(1,1) += StripySignsY(n1,n2)*spindiff(2);
       ClusterStripyOPMatrix(2,0) += StripySignsZ(n1,n2)*spindiff(0); ClusterStripyOPMatrix(2,1) += StripySignsZ(n1,n2)*spindiff(2);
     } else {
-      chosen_site_ptr->OnsiteSpin = old_spin_at_chosen_site;
+      chosen_site_ptr->VectorXYZ = old_spin_at_chosen_site;
     }
     ++flip;
   }
@@ -379,7 +376,7 @@ void TriangularLattice::DoTheSweeps(double& temp, uint& accept){
     OverrelaxationSweep();
   }
   MetropolisSweep(temp,accept);
-  cout << ClusterEnergy/(double)NumSites << endl;
+  // cout << ClusterEnergy/(double)NumSites << endl;
 }
 
 
@@ -423,7 +420,6 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
   uint align;
   uint uc_x, uc_y;
   Site *chosen_site_ptr;
-  Spin new_spin;
 
   Vector3LD old_spin_vec;
   Vector3LD molec_field;
@@ -439,12 +435,12 @@ void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
         uc_y = L2Dist(MyRandom::RNG);
 
         chosen_site_ptr = &Cluster[uc_x][uc_y];
-        old_spin_vec = (chosen_site_ptr->OnsiteSpin).VectorXYZ;
+        old_spin_vec = chosen_site_ptr->VectorXYZ;
 
         MolecularField(*chosen_site_ptr, molec_field);
         Vector3LD mf_t = molec_field;
-        Spin new_spin(mf_t);
-        chosen_site_ptr->OnsiteSpin = new_spin;
+        // Spin new_spin(mf_t);
+        chosen_site_ptr->VectorXYZ = mf_t.normalized();
         align++;
     }
     sweep++;
@@ -462,7 +458,7 @@ void TriangularLattice::PrintConfiguration(std::ostream &out)
   out << "Spin configuration\n";
   for (uint y=0; y<L2; ++y){
     for (uint x=0; x<L1; ++x){
-      out << std::setprecision(14) << x << " " << y << " " << 0 << " " << Cluster[x][y].OnsiteSpin.VectorXYZ.transpose() << "\n";
+      out << std::setprecision(14) << x << " " << y << " " << 0 << " " << Cluster[x][y].VectorXYZ.transpose() << "\n";
     }
   }
   SelectStripyOP();
