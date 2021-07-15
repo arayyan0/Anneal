@@ -7,7 +7,7 @@
 namespace MyRandom
 {
   auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-  std::mt19937 RNG(69);
+  std::mt19937 RNG(seed);
   std::uniform_real_distribution<double> unit_interval(0,1);
 }
 
