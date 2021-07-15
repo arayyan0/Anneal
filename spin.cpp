@@ -29,5 +29,5 @@ void SpherePointPicker(Vector3LD& some_spin)
   long double u = MyRandom::unit_interval(MyRandom::RNG);
   long double v = MyRandom::unit_interval(MyRandom::RNG);
   long double theta = acos(2*u-1); long double phi = 2*pi*v;
-  some_spin = SphericalAnglesToCubic(theta,phi);
+  some_spin =SphericalAnglesToCubic(theta,phi);
 }

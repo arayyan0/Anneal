@@ -18,13 +18,13 @@ HField(h), HDirection(hdir)
   FixMPHamiltonians();
 
   //changing size of Cluster to L1*L2
-  Cluster.resize(L1);
-  for(uint i = 0; i < L1; ++i){
-      Cluster[i].resize(L2);
-  }
   ClusterInfo.resize(L1);
   for(uint i = 0; i < L1; ++i){
       ClusterInfo[i].resize(L2);
+  }
+  Cluster.resize(L1);
+  for(uint i = 0; i < L1; ++i){
+      Cluster[i].resize(L2);
   }
   CreateClusterPBC();
 
@@ -54,7 +54,7 @@ HField(h), HDirection(hdir)
   L1Dist = l1d;
   L2Dist = l2d;
 
-  overrelaxMCratio = 0;
+  overrelaxMCratio = 10;
 }
 
 void TriangularLattice::CreateClusterPBC()
@@ -86,9 +86,7 @@ void TriangularLattice::CreateClusterPBC()
                          std::make_tuple(       x,  lower_y, Hy),
                          std::make_tuple(higher_x,  lower_y, Hx)}
                       };
-      Cluster[x][y] = {
-                         some_vec
-                      };
+      Cluster[x][y] = some_vec;
     }
   }
 }
@@ -219,7 +217,7 @@ void TriangularLattice::InitializeFMSpins(const long double& theta, const long d
   Vector3LD v= SphericalAnglesToCubic(theta, phi);
   for (uint x=0; x<L1; ++x){
     for (uint y=0; y<L2; ++y){
-      Cluster[x][y].VectorXYZ = v;
+      Cluster[x][y]= v;
     }
   }
 }
@@ -228,7 +226,7 @@ void TriangularLattice::InitializeRandomSpins()
 {
   for (uint x=0; x<L1; ++x){
     for (uint y=0; y<L2; ++y){
-      SpherePointPicker(Cluster[x][y].VectorXYZ);
+      SpherePointPicker(Cluster[x][y]);
     }
   }
 }
@@ -236,9 +234,8 @@ void TriangularLattice::InitializeRandomSpins()
 void TriangularLattice::MolecularField(const uint& n1, const uint& n2, Vector3LD& molec)
 {
   Vector3LD v = Vector3LD::Zero();
-  for (auto j : ClusterInfo[n1][n2].NearestNeighbours){
-    auto [nn_1, nn_2, ham] = j;
-    v += -Cluster[nn_1][nn_2].VectorXYZ.transpose()*ham;
+  for (auto &j : ClusterInfo[n1][n2].NearestNeighbours){
+    v += -Cluster[std::get<0>(j)][std::get<1>(j)].transpose()*std::get<2>(j);
   }
   molec = v.transpose()+ JTau*HField*HDirection.transpose();
 }
@@ -247,23 +244,10 @@ void TriangularLattice::CalculateLocalEnergy(const uint& n1, const uint& n2, lon
 {
   Vector3LD molec;
   MolecularField(n1, n2, molec);
-  energy = -Cluster[n1][n2].VectorXYZ.dot(molec+ JTau*HField*HDirection);
+  energy = -Cluster[n1][n2].dot(molec+ JTau*HField*HDirection);
   // cout << energy<< endl;
 }
 
-void TriangularLattice::CalculateClusterEnergy(){
-  long double e=0;
-  long double local_energy;
-
-  for (uint n1=0; n1<L1; ++n1){
-    for (uint n2=0; n2<L2; ++n2){
-      //calculate energy
-      CalculateLocalEnergy(n1, n2, local_energy);
-      e += local_energy;
-    }
-  }
-  ClusterEnergy = e/2.0;
-}
 
 void TriangularLattice::CalculateClusterEnergyandOP()
 {
@@ -283,11 +267,10 @@ void TriangularLattice::CalculateClusterEnergyandOP()
       //calculate energy
       CalculateLocalEnergy(n1, n2, local_energy);
       e += local_energy;
-      //calculate three stripy OPs
 
-      spin = Cluster[n1][n2].VectorXYZ;
-      fmop += spin;
-      //
+      spin = Cluster[n1][n2];
+      fmop += Cluster[n1][n2];
+      //calculate three stripy OPs
       stripyopmatrix(0,0) += StripySignsX(n1,n2)*spin(0); stripyopmatrix(0,1) += StripySignsX(n1,n2)*spin(2);
       stripyopmatrix(1,0) += StripySignsY(n1,n2)*spin(0); stripyopmatrix(1,1) += StripySignsY(n1,n2)*spin(2);
       stripyopmatrix(2,0) += StripySignsZ(n1,n2)*spin(0); stripyopmatrix(2,1) += StripySignsZ(n1,n2)*spin(2);
@@ -303,25 +286,22 @@ void TriangularLattice::CalculateClusterEnergyandOP()
 }
 
 void TriangularLattice::OverrelaxationSweep(){
-  Site *chosen_site_ptr;
-  Vector3LD old_spin_vec,new_spin_vec;
-  Vector3LD molec_field, normalized_field,spindiff;
+  Vector3LD *chosen_site_ptr;
+  Vector3LD old_spin_vec,molec_field, spindiff;
 
   for (uint n1 =0; n1<L1; n1++){
     for (uint n2 =0; n2<L2; n2++){
-      chosen_site_ptr = &Cluster[n1][n2];
-      old_spin_vec = chosen_site_ptr->VectorXYZ;
+      chosen_site_ptr = &Cluster[n1][n2]; //pointer to spin vector
+      old_spin_vec = *chosen_site_ptr;    //saving it to calculate the OP dynamically
 
       MolecularField(n1, n2, molec_field);
-      normalized_field = molec_field.normalized();
-
-      new_spin_vec = -old_spin_vec + 2.0*normalized_field.dot(old_spin_vec)*normalized_field;
-
-      chosen_site_ptr->VectorXYZ = new_spin_vec.normalized();
+      molec_field.normalize();
+      //overrelaxation step
+      *chosen_site_ptr = (-old_spin_vec + 2.0*molec_field.dot(old_spin_vec)*molec_field).normalized();
 
       //no need to update energy dynamically since these sweeps perserve energy
       //updating OP dynamically
-      spindiff = new_spin_vec - old_spin_vec;
+      spindiff = *chosen_site_ptr - old_spin_vec;
       ClusterFMOP+=spindiff;
       ClusterStripyOPMatrix(0,0) += StripySignsX(n1,n2)*spindiff(0); ClusterStripyOPMatrix(0,1) += StripySignsX(n1,n2)*spindiff(2);
       ClusterStripyOPMatrix(1,0) += StripySignsY(n1,n2)*spindiff(0); ClusterStripyOPMatrix(1,1) += StripySignsY(n1,n2)*spindiff(2);
@@ -334,42 +314,34 @@ void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
 {
   uint n1, n2;
   long double old_local_energy, energydiff, new_local_energy;
-  double r, ppp;
-  Site *chosen_site_ptr;
-  Vector3LD spindiff,old_spin_at_chosen_site;;
-  uint flip = 0;
+  Vector3LD *chosen_site_ptr;
+  Vector3LD spindiff,old_spin_at_chosen_site;
 
   accept=0;
-
+  uint flip = 0;
   while (flip < NumSites){
     n1 = L1Dist(MyRandom::RNG);
     n2 = L2Dist(MyRandom::RNG);
+    CalculateLocalEnergy(n1, n2, old_local_energy);
 
     chosen_site_ptr = &Cluster[n1][n2];
-
-    CalculateLocalEnergy(n1, n2, old_local_energy);
-    old_spin_at_chosen_site = chosen_site_ptr->VectorXYZ;
-    //selection of angle, currently uniform update
-    SpherePointPicker(chosen_site_ptr->VectorXYZ);
-
+    old_spin_at_chosen_site = *chosen_site_ptr;
+    SpherePointPicker(*chosen_site_ptr); //selection of angle, currently uniform update
     CalculateLocalEnergy(n1, n2, new_local_energy);
-
     energydiff = new_local_energy-old_local_energy;
-    r = MyRandom::unit_interval(MyRandom::RNG);
-    ppp = std::min(exp(-energydiff/temperature),1.0);
 
-    if (r < ppp) {
+    if (MyRandom::unit_interval(MyRandom::RNG) < std::min(exp(-energydiff/temperature),1.0)) {
       accept++;
       //update energy dynamically
       ClusterEnergy+=energydiff;
       //update OP dynamically
-      spindiff = chosen_site_ptr->VectorXYZ - old_spin_at_chosen_site;
+      spindiff = *chosen_site_ptr- old_spin_at_chosen_site;
       ClusterFMOP+=spindiff;
       ClusterStripyOPMatrix(0,0) += StripySignsX(n1,n2)*spindiff(0); ClusterStripyOPMatrix(0,1) += StripySignsX(n1,n2)*spindiff(2);
       ClusterStripyOPMatrix(1,0) += StripySignsY(n1,n2)*spindiff(0); ClusterStripyOPMatrix(1,1) += StripySignsY(n1,n2)*spindiff(2);
       ClusterStripyOPMatrix(2,0) += StripySignsZ(n1,n2)*spindiff(0); ClusterStripyOPMatrix(2,1) += StripySignsZ(n1,n2)*spindiff(2);
     } else {
-      chosen_site_ptr->VectorXYZ = old_spin_at_chosen_site;
+      *chosen_site_ptr = old_spin_at_chosen_site;
     }
     ++flip;
   }
@@ -381,25 +353,21 @@ void TriangularLattice::DoTheSweeps(double& temp, uint& accept){
     OverrelaxationSweep();
   }
   MetropolisSweep(temp,accept);
-  // cout << ClusterEnergy/(double)NumSites << endl;
 }
 
 
 void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sweeps)
 {
-    // cout << temp << " " << temp << endl;
+    uint Metroaccept = 0; //total accepted moves per temperature
+    uint accept;          //accepted moves per sweep
 
     uint sweep = 0;
-
-    uint accept;
-    uint Metroaccept = 0;
-    // uint overrelaxMCratio = 1;
     while (sweep < max_sweeps){
       DoTheSweeps(temp, accept);
       Metroaccept += accept;
       ++sweep;
     }
-    // std::cerr << temp << " " << (double)Metroaccept/(double)max_sweeps/(double)NumSites << endl;
+    // std::cerr << temp << " " << ClusterEnergy/(double)NumSites << (double)Metroaccept/(double)max_sweeps/(double)NumSites << endl;
 }
 
 void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps,
@@ -408,51 +376,37 @@ void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps,
   double scale = rate;
   double temp_T = initial_T;
   while(temp_T >= final_T){
-    // std::cout << "temp " << temp_T << endl;
     ThermalizeConfiguration(temp_T,max_sweeps);
-
-    // CalculateClusterEnergyandOP();
-    // cout << temp_T << " " << ClusterEnergy/NumSites << endl;
-
     temp_T = scale*temp_T;
   }
-  FinalT = temp_T;
 }
 
 void TriangularLattice::DeterministicSweeps(const uint& max_sweeps)
 {
-  uint sweep = 0;
   uint align;
   uint uc_x, uc_y;
-  Site *chosen_site_ptr;
+  Vector3LD *chosen_site_ptr;
 
   Vector3LD old_spin_vec;
   Vector3LD molec_field;
 
-  // long double x, norm;
-  // long double eps = pow(10,-20);
-
+  uint sweep = 0;
   while (sweep < max_sweeps){
-    // x = 0;
     align = 0;
     while (align < NumSites){
         uc_x = L1Dist(MyRandom::RNG);
         uc_y = L2Dist(MyRandom::RNG);
-
         chosen_site_ptr = &Cluster[uc_x][uc_y];
-        old_spin_vec = chosen_site_ptr->VectorXYZ;
 
+        old_spin_vec = *chosen_site_ptr;
         MolecularField(uc_x, uc_y, molec_field);
-        Vector3LD mf_t = molec_field;
-        // Spin new_spin(mf_t);
-        chosen_site_ptr->VectorXYZ = mf_t.normalized();
+        molec_field.normalize();
+        *chosen_site_ptr = molec_field;
         align++;
     }
     sweep++;
   }
-  ActualDetSweeps = sweep;
   CalculateClusterEnergyandOP(); //updates energy and OP statically
-  // cout << "final: " << std::setprecision(14) << ClusterEnergy/NumSites << endl;
 }
 
 void TriangularLattice::PrintConfiguration(std::ostream &out)
@@ -463,7 +417,7 @@ void TriangularLattice::PrintConfiguration(std::ostream &out)
   out << "Spin configuration\n";
   for (uint y=0; y<L2; ++y){
     for (uint x=0; x<L1; ++x){
-      out << std::setprecision(14) << x << " " << y << " " << 0 << " " << Cluster[x][y].VectorXYZ.transpose() << "\n";
+      out << std::setprecision(14) << x << " " << y << " " << 0 << " " << Cluster[x][y].transpose() << "\n";
     }
   }
   SelectStripyOP();

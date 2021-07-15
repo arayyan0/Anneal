@@ -15,40 +15,34 @@ struct SiteInfo
   vector<std::tuple<int, int, Matrix3LD>> NearestNeighbours;
 };
 
-struct Site
-{
-  Vector3LD VectorXYZ;
-};
-
 class TriangularLattice
 {
 public:
   const uint L1, L2, NumSites, NumDefects;
   const long double JTau, Lambda, IsingY, Defect, HField;
   vector<vector<SiteInfo> > ClusterInfo;
-  vector<vector<Site> > Cluster;
-  vector<vector<Site> > RealCluster;
   vector<vector<uint> > Defects;
   Matrix3LD Hx, Hy, Hz, Hdefect1, Hdefect2;
-  Vector3LD HDirection, ClusterFMOP,ClusterCombinedOP;
-  Vector2LD ClusterStripyOP;
-  Eigen::Matrix<long double, 3, 2> ClusterStripyOPMatrix;
-
-  double FinalT;
+  Vector3LD HDirection;
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
   std::uniform_int_distribution<uint> L1Dist, L2Dist;
-  long double ClusterEnergy;
-  long double EBar, E2Bar, E3Bar, E4Bar;
-  long ActualDetSweeps;
-
   ArrayXXLD StripySignsX, StripySignsY, StripySignsZ;
 
-  long double FMNorm, PerpNorm, ParNorm, CombinedNorm;
-  long double FMNorm2, PerpNorm2, ParNorm2, CombinedNorm2;
-  long double FMNorm4, PerpNorm4, ParNorm4, CombinedNorm4;
-
   uint overrelaxMCratio;
+
+  vector<vector<Vector3LD> > Cluster;                      //replica-dependent
+
+  long double ClusterEnergy;                               //replica-dependent
+  long double EBar, E2Bar, E3Bar, E4Bar;                   //replica-dependent
+
+  Eigen::Matrix<long double, 3, 2> ClusterStripyOPMatrix;  //replica-dependent
+  Vector3LD ClusterFMOP,ClusterCombinedOP;                 //replica-dependent
+  Vector2LD ClusterStripyOP;                               //replica-dependent
+  long double FMNorm, PerpNorm, ParNorm, CombinedNorm;     //replica-dependent
+  long double FMNorm2, PerpNorm2, ParNorm2, CombinedNorm2; //replica-dependent
+  long double FMNorm4, PerpNorm4, ParNorm4, CombinedNorm4; //replica-dependent
+
 
   TriangularLattice(const uint& l1, const uint& l2, const uint& num_defects,
                     const long double& jtau, const long double& lambda,
@@ -74,7 +68,6 @@ public:
   void CreateStripySignMatrices();
   void SelectStripyOP();
   void CalculateClusterEnergyandOP();
-  void CalculateClusterEnergy();
   void PrintThermalObservables(std::ostream &out);
   void CreateDefectPositions();
   void OverrelaxationSweep();
