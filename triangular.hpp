@@ -20,18 +20,19 @@ class TriangularLattice
 public:
   const uint L1, L2, NumSites, NumDefects;
   const long double JTau, Lambda, IsingY, Defect, HField;
-  vector<vector<SiteInfo> > ClusterInfo;
+  vector<SiteInfo > ClusterInfo;
   vector<vector<uint> > Defects;
   Matrix3LD Hx, Hy, Hz, Hdefect1, Hdefect2;
   Vector3LD HDirection;
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
-  std::uniform_int_distribution<uint> L1Dist, L2Dist;
-  ArrayXXLD StripySignsX, StripySignsY, StripySignsZ;
+  std::uniform_int_distribution<uint> L1L2Dist;
+
+  ArrayXLD StripySignsX, StripySignsY, StripySignsZ;
 
   uint overrelaxMCratio;
 
-  vector<vector<Vector3LD> > Cluster;                      //replica-dependent
+  vector<Vector3LD> Cluster;                               //replica-dependent
 
   long double ClusterEnergy;                               //replica-dependent
   long double EBar, E2Bar, E3Bar, E4Bar;                   //replica-dependent
@@ -55,8 +56,8 @@ public:
   void InitializeFMSpins(const long double& theta, const long double& phi);
   void InitializeRandomSpins();
   bool CheckIfPoisoned(uint lx, uint ly);
-  void CalculateLocalEnergy(const uint& n1, const uint& n2, long double& energy);
-  void MolecularField(const uint& n1, const uint& n2, Vector3LD& molec);
+  void CalculateLocalEnergy(const uint& flat_index, long double& energy);
+  void MolecularField(const uint& flat_index, Vector3LD& molec);
   void MetropolisSweep(const double& temperature, uint& accept);
   void DeterministicSweeps(const uint& max_sweeps);
   void PrintConfiguration(std::ostream &out);
