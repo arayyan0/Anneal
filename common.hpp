@@ -24,6 +24,8 @@ typedef unsigned int uint;
 typedef Eigen::Matrix<long double, 2, 1> Vector2LD;
 typedef Eigen::Matrix<long double, 3, 1> Vector3LD;
 typedef Eigen::Matrix<long double, 3, 3> Matrix3LD;
+
+typedef Eigen::Array<long double, Eigen::Dynamic, 1> ArrayXLD;
 typedef Eigen::Array<long double, Eigen::Dynamic, Eigen::Dynamic> ArrayXXLD;
 
 #define pi M_PI
@@ -52,5 +54,7 @@ void PrintTriangularSimulationData(std::ostream &out, const uint& type,
                         const double& T_i, double& T_f, const uint& max_sa_sweeps,
                         const uint& max_thermal_sweeps, const uint& max_measuring_sweeps,
                         const uint& sampling_time, const uint& max_dsweeps);
+
+void BravaisIndicesToFlat(const uint& x, const uint&y, const uint & period, uint& flat_index);
 
 #endif // COMMON_HPP

@@ -7,7 +7,7 @@
 namespace MyRandom
 {
   auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-  std::mt19937 RNG(seed);
+  std::mt19937 RNG(69);
   std::uniform_real_distribution<double> unit_interval(0,1);
 }
 
@@ -50,4 +50,9 @@ void PrintTriangularSimulationData(std::ostream &out, const uint& type,
   out << max_sa_sweeps << " " << max_thermal_sweeps << " " << max_measuring_sweeps << "/" << sampling_time << "\n";
   out << "Number of Deterministic sweeps\n";
   out << max_dsweeps << "\n";
+}
+
+void BravaisIndicesToFlat(const uint& x, const uint&y, const uint & period, uint& flat_index)
+{
+  flat_index = x + y*period;
 }
