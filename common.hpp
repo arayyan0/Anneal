@@ -33,6 +33,10 @@ typedef Eigen::Array<long double, Eigen::Dynamic, Eigen::Dynamic> ArrayXXLD;
 #define FIELD_DIR const Vector3LD A_Dir = Vector3LD(1/sqrt(6), 1/sqrt(6), -2/sqrt(6));\
                   const Vector3LD B_Dir = Vector3LD(-1/sqrt(2), 1/sqrt(2), 0);\
                   const Vector3LD C_Dir = Vector3LD(1/sqrt(3), 1/sqrt(3), 1/sqrt(3));
+
+#define LATTICE_DIR const Vector2LD a1 = Vector2LD( 1.0/2.0, sqrt(3)/2.0);\
+                    const Vector2LD a2 = Vector2LD(-1.0/2.0, sqrt(3)/2.0);
+
 //
 // #define AXIS_DIR const Eigen::Vector3d X(1, 0, 0);\
 //                  const Eigen::Vector3d Y(0, 1, 0);\
@@ -56,5 +60,9 @@ void PrintTriangularSimulationData(std::ostream &out, const uint& type,
                         const uint& sampling_time, const uint& max_dsweeps);
 
 void BravaisIndicesToFlat(const uint& x, const uint&y, const uint & period, uint& flat_index);
+
+long double Lorentzian(long double s, long double x, long double l);
+
+long double Gaussian(long double s, long double x, long double l);
 
 #endif // COMMON_HPP

@@ -56,3 +56,17 @@ void BravaisIndicesToFlat(const uint& x, const uint&y, const uint & period, uint
 {
   flat_index = x + y*period;
 }
+
+long double Lorentzian(long double s, long double x, long double l){
+  long double cutoff=10000;
+  long double dist = (x-0.5)/l;
+  long double result = dist<cutoff ? s /(1 + pow(dist,2)) : 0;
+  return result;
+}
+
+long double Gaussian(long double s, long double x, long double l){
+  long double cutoff=10000;
+  long double dist = (x-0.5)/l;
+  long double result = dist<cutoff ? s*exp(-pow(dist,2)/2.0) : 0;
+  return result;
+}
