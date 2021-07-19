@@ -60,7 +60,7 @@ void BravaisIndicesToFlat(const uint& x, const uint&y, const uint & period, uint
 long double Lorentzian(long double s, long double x, long double l){
   long double cutoff=10000;
   long double dist = (x-0.5)/l;
-  long double result = dist<cutoff ? s /(1 + pow(dist,2)) : 0;
+  long double result = dist<cutoff ? s /pow( 1 + pow(dist,2), 2.0/2.0 ) : 0;
   return result;
 }
 
