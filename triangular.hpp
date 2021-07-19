@@ -12,24 +12,27 @@
 struct SiteInfo
 {
   //nn_1, nn_2, bond-dep Hamiltonian
-  vector<std::tuple<int, int, Matrix3LD>> NearestNeighbours;
+  vector<std::tuple<uint, uint, Matrix3LD, int, int>> NearestNeighbours;
+  Vector2LD Position;
 };
 
 class TriangularLattice
 {
 public:
   const uint L1, L2, NumSites, NumDefects;
-  const long double JTau, Lambda, IsingY, Defect, HField;
   vector<SiteInfo > ClusterInfo;
-  vector<vector<uint> > Defects;
-  Matrix3LD Hx, Hy, Hz, Hdefect1, Hdefect2;
+  vector<std::tuple<uint,uint>> Defects;
+  Vector2LD Translation1,Translation2;
+
+  const long double JTau, Lambda, IsingY, DefectStrength, HField;
   Vector3LD HDirection;
+  Matrix3LD Hx, Hy, Hz, Hdefect1, Hdefect2;
+
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
   std::uniform_int_distribution<uint> L1L2Dist;
 
   ArrayXLD StripySignsX, StripySignsY, StripySignsZ;
-
   uint overrelaxMCratio;
 
   vector<Vector3LD> Cluster;                               //replica-dependent
@@ -75,8 +78,8 @@ public:
   void DoTheSweeps(double& temp, uint& accept);
 
 
-  //private:
-  //
+  private:
+    LATTICE_DIR;
 };
 
 #endif
