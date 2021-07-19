@@ -24,22 +24,7 @@ HField(h), HDirection(hdir)
 
   Defects.resize(NumDefects);
   CreateDefectPositions();
-  // Hdefect1 << 0,              0, 0,
-  //             0, DefectStrength, 0,
-  //             0,              0, 0;
-  // Hdefect1=JTau*Hdefect1;
-  // Hdefect2 = 0.0*Hdefect1;
-  // cout << Hdefect1 << endl;
-  // cout << Hdefect2 << endl;
   AddDefectHamiltonia();
-  // for (uint i=0;i<NumSites;i++){
-  //   std::cerr << "-----------site: "<< i << "-----------"<< endl;
-  //   for (auto &j:ClusterInfo[i].NearestNeighbours){
-  //     std::cerr << std::get<0>(j) << " " <<  std::get<1>(j) << endl;
-  //     std::cerr << std::get<2>(j) << " " << endl;
-  //     std::cerr << ".........." << endl;
-  //   }
-  // }
 
   // InitializeRandomSpins();
   InitializeFMSpins(pi/2.0,pi/2.0);
@@ -81,11 +66,11 @@ void TriangularLattice::CreateClusterPBC()
       position = x*Translation1+y*Translation2;
       BravaisIndicesToFlat(x, y, L1, flat_index);
       ClusterInfo[flat_index] = {
-                                  {std::make_tuple(higher_x,        y, Hz, x+1,   y),
-                                   std::make_tuple(       x, higher_y, Hy,   x, y+1),
+                                  {std::make_tuple(higher_x,        y, Hz, x+1, y  ),
+                                   std::make_tuple(       x, higher_y, Hy, x  , y+1),
                                    std::make_tuple( lower_x, higher_y, Hx, x-1, y+1),
-                                   std::make_tuple( lower_x,        y, Hz, x-1,   y),
-                                   std::make_tuple(       x,  lower_y, Hy,   x, y-1),
+                                   std::make_tuple( lower_x,        y, Hz, x-1, y  ),
+                                   std::make_tuple(       x,  lower_y, Hy, x  , y-1),
                                    std::make_tuple(higher_x,  lower_y, Hx, x+1, y-1)},
                                    position
       };
@@ -138,40 +123,38 @@ bool TriangularLattice::CheckIfPoisoned(uint lx, uint ly){
   return false;
 }
 
-// void TriangularLattice::AddDefectHamiltonia()
-// {
-//   bool poisoned_site, poisoned_neighbour;
-//   uint flat_index;
-//
-//   for (int y=0; y<L2; ++y){
-//     for (int x=0; x<L1; ++x){
-//       poisoned_site = CheckIfPoisoned(x, y);
-//       BravaisIndicesToFlat(x, y, L1, flat_index);
-//       for (uint i=0; i<6; ++i){
-//         auto [nn_x, nn_y, old_hamiltonian] = ClusterInfo[flat_index].NearestNeighbours[i];
-//
-//         if (poisoned_site == true){
-//           std::get<2>(ClusterInfo[flat_index].NearestNeighbours[i]) += Hdefect1;
-//         } else {
-//           poisoned_neighbour = CheckIfPoisoned(nn_x,nn_y);
-//           if (poisoned_neighbour == true){
-//             std::get<2>(ClusterInfo[flat_index].NearestNeighbours[i]) += Hdefect1;
-//             uint ibefore = (i-1)%6;
-//             uint iafter = (i+1)%6;
-//             std::get<2>(ClusterInfo[flat_index].NearestNeighbours[ibefore]) += 0.5*Hdefect2;
-//             std::get<2>(ClusterInfo[flat_index].NearestNeighbours[iafter]) += 0.5*Hdefect2;
-//           }
-//         }
-//
-//       }
-//
-//     }
-//   }
-//
-// }
 
 void TriangularLattice::AddDefectHamiltonia()
 {
+  //below is previous implementation that goes by bond
+  //bool poisoned_site, poisoned_neighbour;
+  //   uint flat_index;
+  //
+  //   for (int y=0; y<L2; ++y){
+  //     for (int x=0; x<L1; ++x){
+  //       poisoned_site = CheckIfPoisoned(x, y);
+  //       BravaisIndicesToFlat(x, y, L1, flat_index);
+  //       for (uint i=0; i<6; ++i){
+  //         auto [nn_x, nn_y, old_hamiltonian] = ClusterInfo[flat_index].NearestNeighbours[i];
+  //
+  //         if (poisoned_site == true){
+  //           std::get<2>(ClusterInfo[flat_index].NearestNeighbours[i]) += Hdefect1;
+  //         } else {
+  //           poisoned_neighbour = CheckIfPoisoned(nn_x,nn_y);
+  //           if (poisoned_neighbour == true){
+  //             std::get<2>(ClusterInfo[flat_index].NearestNeighbours[i]) += Hdefect1;
+  //             uint ibefore = (i-1)%6;
+  //             uint iafter = (i+1)%6;
+  //             std::get<2>(ClusterInfo[flat_index].NearestNeighbours[ibefore]) += 0.5*Hdefect2;
+  //             std::get<2>(ClusterInfo[flat_index].NearestNeighbours[iafter]) += 0.5*Hdefect2;
+  //           }
+  //         }
+  //
+  //       }
+  //
+  //     }
+  //   }
+  //
   long double lengthscale = 1;
   Vector2LD rdefect, rsite, rNN, rbond, rseparation;
 

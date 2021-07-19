@@ -26,7 +26,7 @@ public:
 
   const long double JTau, Lambda, IsingY, DefectStrength, HField;
   Vector3LD HDirection;
-  Matrix3LD Hx, Hy, Hz, Hdefect1, Hdefect2;
+  Matrix3LD Hx, Hy, Hz;
 
   std::mt19937 RNG;
   std::uniform_real_distribution<double> unit_interval;
