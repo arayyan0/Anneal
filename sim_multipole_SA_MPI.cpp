@@ -66,6 +66,8 @@ int main(int argc, char *argv[])
   std::vector<long double> v(minarr,minarr+size);
   int firstlowestrank = std::min_element(v.begin(),v.end()) - v.begin();
 
+  free(minarr);
+
   //output the information of the cluster with lowest energy
   if (rank == firstlowestrank){
     std::ostream &which = std::cout;
