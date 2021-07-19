@@ -55,8 +55,8 @@ Bond::Bond(const Spin& spin_i, const Spin& spin_j, const uint& bond_type, const 
 iSpin(spin_i), jSpin(spin_j), BondType(bond_type), Pa(p)
 {
   SpecifyBondHamiltonian();
-  MolecFieldContribution = -BondHamiltonian*jSpin.VectorXYZ + Pa.h*Pa.hDir/3;
-  BondEnergy = - iSpin.VectorXYZ.transpose().dot(MolecFieldContribution + Pa.h*Pa.hDir/3);
+  MolecFieldContribution = -BondHamiltonian*jSpin.VectorXYZ + Pa.h*Pa.hDir/3.0;
+  BondEnergy = - iSpin.VectorXYZ.transpose().dot(MolecFieldContribution + Pa.h*Pa.hDir/3.0);
 }
 
 void Bond::SpecifyBondHamiltonian()
