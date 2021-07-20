@@ -24,7 +24,7 @@ public:
   vector<std::tuple<uint,uint>> Defects;
   Vector2LD Translation1,Translation2;
 
-  const long double JTau, Lambda, IsingY, DefectStrength, HField;
+  const long double JTau, Lambda, IsingY, DefectStrength, HField,DefectLengthScale;
   Vector3LD HDirection;
   Matrix3LD Hx, Hy, Hz;
 
@@ -51,6 +51,7 @@ public:
   TriangularLattice(const uint& l1, const uint& l2, const uint& num_defects,
                     const long double& jtau, const long double& lambda,
                     const long double& ising_y, const long double& defect,
+                    const long double& defect_lengthscale,
                     const long double& h, Vector3LD& hdir);
   void CreateClusterPBC();
   Matrix3LD ReturnMPHamiltonian(const long double& angle);
@@ -71,6 +72,7 @@ public:
                            const uint& sampling_time);
   void CreateStripySignMatrices();
   void SelectStripyOP();
+  void AverageStripyOP();
   void CalculateClusterEnergyandOP();
   void PrintThermalObservables(std::ostream &out);
   void CreateDefectPositions();

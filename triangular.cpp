@@ -8,10 +8,12 @@ TriangularLattice::TriangularLattice(const uint& l1, const uint& l2, const uint&
                                      const long double& jtau, const long double& lambda,
                                      const long double& ising_y,
                                      const long double& defect,
+                                     const long double& defect_lengthscale,
                                      const long double& h,
                                      Vector3LD& hdir):
 L1(l1), L2(l2), NumSites(l1*l2), NumDefects(num_defects),
 JTau(jtau), Lambda(lambda), IsingY(ising_y), DefectStrength(defect),
+DefectLengthScale(defect_lengthscale),
 HField(h), HDirection(hdir)
 {
   // defining the bond Hamiltonians
@@ -31,11 +33,12 @@ HField(h), HDirection(hdir)
 
   CreateStripySignMatrices();
   CalculateClusterEnergyandOP();
+  // cout << ClusterEnergy/(double)NumSites << endl;
 
   std::uniform_int_distribution<uint> l1l2d(0, L1*L2-1);
   L1L2Dist = l1l2d;
 
-  overrelaxMCratio = 10;
+  overrelaxMCratio = 5;
 }
 
 void TriangularLattice::CreateClusterPBC()
@@ -154,8 +157,6 @@ void TriangularLattice::AddDefectHamiltonia()
   //
   //     }
   //   }
-  //
-  long double lengthscale = 1;
   Vector2LD rdefect, rsite, rNN, rbond, rseparation;
 
   auto function = Gaussian;
@@ -171,7 +172,6 @@ void TriangularLattice::AddDefectHamiltonia()
                                                   { -1, -1}, //bottom-left
                                                   {  1, -1}  //bottom-right
                                                 };
-
   for (auto& indices:Defects){
     rdefect = std::get<0>(indices)*Translation1+std::get<1>(indices)*Translation2;
     for (uint i=0;i<NumSites;i++){
@@ -186,7 +186,7 @@ void TriangularLattice::AddDefectHamiltonia()
         for (auto &j:defect_index){
             std::get<2>(nninfo)(1,1) += JTau*function(DefectStrength,
             (rseparation - std::get<0>(j)*L1*Translation1 - std::get<1>(j)*L2*Translation2).norm(),
-            lengthscale);
+            DefectLengthScale);
         }
       }
     }
@@ -295,7 +295,8 @@ void TriangularLattice::CalculateClusterEnergyandOP()
   ClusterFMOP = fmop;
   ClusterStripyOPMatrix = stripyopmatrix;
 
-  SelectStripyOP();
+  // SelectStripyOP();
+  AverageStripyOP();
 }
 
 void TriangularLattice::OverrelaxationSweep(){
@@ -357,6 +358,9 @@ void TriangularLattice::MetropolisSweep(const double& temperature, uint& accept)
     }
     ++flip;
   }
+  //output sweep, energy at the end of sweep, and acceptance rate within the sweep
+  // std::cout <<  " " << ClusterEnergy/(double)NumSites << endl;
+  // std::cerr <<  " " << ClusterEnergy/(double)NumSites << " " << (double)accept/(double)NumSites << endl;
 }
 
 void TriangularLattice::DoTheSweeps(double& temp, uint& accept){
@@ -378,7 +382,8 @@ void TriangularLattice::ThermalizeConfiguration(double& temp, const uint& max_sw
     Metroaccept += accept;
     ++sweep;
   }
-  // std::cerr << temp << " " << ClusterEnergy/(double)NumSites << (double)Metroaccept/(double)max_sweeps/(double)NumSites << endl;
+  //output temperature, energy at the end of temperature, and acceptance rate within the temperature
+  // std::cout << temp << " " << ClusterEnergy/(double)NumSites << " " << (double)Metroaccept/(double)max_sweeps/(double)NumSites << endl;
 }
 
 void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps,
@@ -386,9 +391,14 @@ void TriangularLattice::SimulatedAnnealing(const uint& max_sweeps,
 {
   double scale = rate;
   double temp_T = initial_T;
-  while(temp_T >= final_T){
+  while(temp_T > final_T){
+    // std::cerr << temp_T << endl;
     ThermalizeConfiguration(temp_T,max_sweeps);
     temp_T = scale*temp_T;
+  }
+  if (temp_T < final_T){
+    // std::cerr << final_T << endl;
+    ThermalizeConfiguration(final_T,max_sweeps);
   }
 }
 
@@ -431,7 +441,8 @@ void TriangularLattice::PrintConfiguration(std::ostream &out)
       out << std::setprecision(14) << x << " " << y << " " << 0 << " " << Cluster[flat_index].transpose() << "\n";
     }
   }
-  SelectStripyOP();
+  // SelectStripyOP();
+  AverageStripyOP();
   out << "-------------------------------Final configuration observables--------------------------------\n";
   out << "Order parameters. R1: (FM_x, FM_y, FM_z), R2: (stripy_x, stripy_z),  R3: (stripy_x, FM_y, stripy_z)\n";
   out << std::setprecision(14) << ClusterFMOP.transpose()/(long double)NumSites << "\n";
@@ -483,8 +494,7 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
   uint sweep = 0;
   uint samples = 0;
   uint accept;
-  // cout << NumSites << " " << 0<<" " << 0<<" " << 0<<" " << 0<< endl;
-  // uint overrelaxMCratio = 2;
+
   while (sweep < max_sweeps){
     DoTheSweeps(temp, accept);
 
@@ -492,7 +502,8 @@ void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps
       energy = ClusterEnergy;
       // cout << samples << " " << ClusterEnergy/NumSites << endl;
 
-      SelectStripyOP();
+      // SelectStripyOP();
+      AverageStripyOP();
 
       m_e  += energy;
       m_e2 += pow(energy,2);
@@ -576,6 +587,15 @@ void TriangularLattice::SelectStripyOP()
   Eigen::MatrixXd::Index indices[1];
   long double stripymax = ClusterStripyOPMatrix.rowwise().norm().maxCoeff(&indices[0]);
   ClusterStripyOP = ClusterStripyOPMatrix.row(indices[0]);
+
+  Vector3LD combinedop;
+  combinedop << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
+  ClusterCombinedOP = combinedop;
+}
+
+void TriangularLattice::AverageStripyOP()
+{
+  ClusterStripyOP = ClusterStripyOPMatrix.colwise().sum().transpose();
 
   Vector3LD combinedop;
   combinedop << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
