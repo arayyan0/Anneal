@@ -111,14 +111,16 @@ class SweepTemperatureJobs:
 
         if spacing == 'ari':
             self.XArray = np.linspace(x_min, x_max, N_x)
-        elif spacing == 'geo':
+        elif spacing == 'geo_rightdense':
             self.XArray = (x_max+x_min) - np.geomspace(x_min, x_max, N_x)
+        elif spacing == 'geo_leftdense':
+	        self.XArray = np.geomspace(x_min, x_max, N_x)
 
         print(f"{self.XLabel}:\n{self.XArray}")
 
         self.L1, self.L2 = cluster_list
 
-        self.IsingY, self.Defect, self.NumDefects = ham_list
+        self.IsingY, self.Defect, self.LengthScale, self.NumDefects = ham_list
 
         self.JobTitle = f"jobrun_{run}"
         print(self.JobTitle)
@@ -138,7 +140,7 @@ class SweepTemperatureJobs:
         F.write(f"{self.XLabel}-array: {self.XArray}\n")
         F.write("all files in this folder have the following global parameters.\n")
         F.write(f"(l1, l2) = ({self.L1}, {self.L2})\n")
-        F.write(f"Ising_y, defect, number of defects = {self.IsingY, self.Defect, self.NumDefects}\n")
+        F.write(f"Ising_y, defect, lengthscale, number of defects = {self.IsingY, self.Defect, self.LengthScale, self.NumDefects}\n")
         F.close()
 
     def WriteSHFile(self):
@@ -157,7 +159,7 @@ class SweepTemperatureJobs:
         F.close()
 
     def WriteLSTFile(self, versions):
-        command = f"./sim {self.L1} {self.L2} {self.NumDefects} {self.IsingY} {self.Defect}"
+        command = f"./sim {self.L1} {self.L2} {self.NumDefects} {self.IsingY} {self.Defect} {self.LengthScale}"
 
         File = open(f'{self.JobTitle}.lst','w+')
         for v in range(1, versions+1):
