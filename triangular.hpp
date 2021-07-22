@@ -28,12 +28,12 @@ public:
   Vector3LD HDirection;
   Matrix3LD Hx, Hy, Hz;
 
-  std::mt19937 RNG;
-  std::uniform_real_distribution<double> unit_interval;
-  std::uniform_int_distribution<uint> L1L2Dist;
+  std::mt19937 RNG;                                                          //MC
+  std::uniform_real_distribution<double> unit_interval;                      //MC
+  std::uniform_int_distribution<uint> L1L2Dist;                              //MC
 
   ArrayXLD StripySignsX, StripySignsY, StripySignsZ;
-  uint overrelaxMCratio;
+  uint overrelaxMCratio;                                                     //MC
 
   vector<Vector3LD> Cluster;                               //replica-dependent
 
@@ -62,13 +62,13 @@ public:
   bool CheckIfPoisoned(uint lx, uint ly);
   void CalculateLocalEnergy(const uint& flat_index, long double& energy);
   void MolecularField(const uint& flat_index, Vector3LD& molec);
-  void MetropolisSweep(const double& temperature, uint& accept);
-  void DeterministicSweeps(const uint& max_sweeps);
+  void MetropolisSweep(const double& temperature, uint& accept);             //MC
+  void DeterministicSweeps(const uint& max_sweeps);                          //MC
   void PrintConfiguration(std::ostream &out);
   void SimulatedAnnealing(const uint& max_sweeps,
-                          double& initial_T, double& final_T, double& rate);
-  void ThermalizeConfiguration(double& temp, const uint& max_flips);
-  void SampleConfiguration(double& temp, const uint& max_sweeps,
+                          double& initial_T, double& final_T, double& rate); //MC
+  void ThermalizeConfiguration(double& temp, const uint& max_flips);         //MC
+  void SampleConfiguration(double& temp, const uint& max_sweeps,             //MC
                            const uint& sampling_time);
   void CreateStripySignMatrices();
   void SelectStripyOP();
@@ -76,8 +76,8 @@ public:
   void CalculateClusterEnergyandOP();
   void PrintThermalObservables(std::ostream &out);
   void CreateDefectPositions();
-  void OverrelaxationSweep();
-  void DoTheSweeps(double& temp, uint& accept);
+  void OverrelaxationSweep();                                                //MC
+  void DoTheSweeps(double& temp, uint& accept);                              //MC
 
 
   private:
