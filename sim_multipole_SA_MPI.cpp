@@ -5,10 +5,15 @@
 #include "common.hpp"
 #include "triangular.hpp"
 #include "hamiltonian.hpp"
-#include <mpi.h>
 
 int main(int argc, char *argv[])
 {
+  //initiate MPI
+  MPI_Init(&argc, &argv);
+  int size, rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
   //lattice settings
   const uint type = 2; //v1 or v2
   const uint sublattice = 1; //1 is rhombic
@@ -46,12 +51,6 @@ int main(int argc, char *argv[])
   const uint num_sweeps_measurement = 0;
   const uint sampling_time = 0;
 
-  //initiale MPI
-  MPI_Init(&argc, &argv);
-  int size, rank;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
   //pointer to array of size size which contains cluster energy
   //out of which we will find the lowest energy configuration
   long double* minarr = (long double *)malloc(sizeof(long double)*size);
@@ -60,6 +59,7 @@ int main(int argc, char *argv[])
   TriangularLattice triangular(l1, l2, num_defects, jtau, lambda, ising_y, defect, defect_lengthscale, h_field, hdir);
   triangular.SimulatedAnnealing(num_sweeps_SA, initial_T, final_T,cooling_rate);
   triangular.DeterministicSweeps(max_det_sweeps);
+  triangular.CalculateClusterEnergyandOP();
 
   //Allgather cluster energies into array, convert to STL vector, and find rank
   //of the lowest ground state
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
    which << h_field << "\n";
    which << "HDirection\n";
    which << hdir.transpose() << "\n";
-    triangular.PrintConfiguration(which);
+  triangular.PrintConfiguration(which);
   }
   MPI_Finalize();
 
