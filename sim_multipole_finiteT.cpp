@@ -52,13 +52,14 @@ int main(int argc, char *argv[])
   num_sweeps_SA = 0;
   initial_T = 0;
   num_sweeps_thermal = 5*1e4;
-  triangular.ThermalizeConfiguration(final_T, num_sweeps_thermal);
-  //
   const uint sampling_time = 1e2;
   const uint num_sweeps_measurement = 1*(1e4)*sampling_time;
-  triangular.SampleConfiguration(final_T, num_sweeps_measurement, sampling_time);
-  //
   double actual_det_sweeps=0;
+
+  triangular.ThermalizeConfiguration(final_T, num_sweeps_thermal);
+  triangular.SampleConfiguration(final_T, num_sweeps_measurement, sampling_time);
+  triangular.CalculateClusterEnergyandOP();
+
   std::ostream &which = std::cout;
   which << std::fixed << std::setprecision(14);
   PrintTriangularSimulationData(which, type, sublattice, l1, l2,
