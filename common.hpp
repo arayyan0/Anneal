@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <mpi.h>
 #include <random>
 #include <sstream>
 #include <vector>
