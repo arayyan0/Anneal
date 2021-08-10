@@ -23,21 +23,8 @@ void MonteCarloStatistics::WriteStatisticsFile()
   outfile.close();
 }
 
-// MonteCarlo::MonteCarlo(TriLatt& lattice, const double& final_T, const uint& num_overrelax_ratio,
-//                                                                 const bool& recordstats):
-// Lattice(lattice), FinalT(final_T),OverrelaxMCRatio(num_overrelax_ratio), RecordStats(recordstats)
-// {
-//   auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-//   std::mt19937 rng(seed);
-//   std::uniform_real_distribution<double> unit_interval(0,1);
-//   std::uniform_int_distribution<uint> sd(0, Lattice.NumSites-1);
-//
-//   RNG = rng;
-//   UnitInterval = unit_interval;
-//   SiteDist = sd;
-// }
-
-MonteCarlo::MonteCarlo(HoneyLatt& lattice, const double& final_T, const uint& num_overrelax_ratio,
+// MonteCarlo::MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
+MonteCarlo::MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
                                                                 const bool& recordstats):
 Lattice(lattice), FinalT(final_T),OverrelaxMCRatio(num_overrelax_ratio), RecordStats(recordstats)
 {
@@ -238,7 +225,9 @@ void MonteCarlo::OverrelaxationSweep(){
   Vector3LD old_spin_vec,molec_field, spindiff;
   uint flat_index;
 
-  for (uint flat_index =0; flat_index<Lattice.NumSites; flat_index++){
+  uint flip=0;
+  while (flip<Lattice.NumSites){
+    flat_index = SiteDist(RNG);
     chosen_site_ptr = &(Lattice.Cluster[flat_index]); //pointer to spin vector
     old_spin_vec = *chosen_site_ptr;    //saving it to calculate the OP dynamically
 
@@ -246,6 +235,7 @@ void MonteCarlo::OverrelaxationSweep(){
     molec_field.normalize();
     //overrelaxation step
     *chosen_site_ptr = (-old_spin_vec + 2.0*molec_field.dot(old_spin_vec)*molec_field).normalized();
+    flip++;
   }
 }
 
@@ -306,7 +296,8 @@ void MonteCarlo::DeterministicSweeps(const uint& num_D_sweeps)
   uint sweep = 0;
   while (sweep < num_D_sweeps){
     align = 0;
-    for (uint flat_index=0; flat_index<Lattice.NumSites; flat_index++){
+    while (align < Lattice.NumSites){
+        flat_index = SiteDist(RNG);
         chosen_site_ptr = &(Lattice.Cluster[flat_index]);
 
         old_spin_vec = *chosen_site_ptr;

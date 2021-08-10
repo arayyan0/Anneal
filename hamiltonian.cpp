@@ -4,81 +4,115 @@
 ///  @brief    defining the spin model
 #include "hamiltonian.hpp"
 
-Parameters::Parameters(const long double& kx, const long double& ky, const long double& kz,
-                       const long double& gx, const long double& gy, const long double& gz,
-                       const long double& gammap, const long double& heisenberg,
-                       const long double& hstrength, const long double& htheta, const long double& hphi):
-Kx(kx), Ky(ky), Kz(kz),
-Gx(gx), Gy(gy), Gz(gz),
-Gp(gammap), J1(heisenberg), h(hstrength), hTheta(htheta), hPhi(hphi)
+
+Hamiltonia::Hamiltonia(const long double& phi, const long double& g, const long double& a,
+                       const long double& h_magnitude, const Vector3LD& h_direction):
+                       hMagnitude(h_magnitude),
+                       hDirection(h_direction),
+                       hField(h_magnitude*h_direction)
 {
-  long double s = sin(hTheta/180*pi);
-  hDir = s*cos(hPhi/180*pi)*A_Dir + s*sin(hPhi/180*pi)*B_Dir + cos(hTheta/180*pi)*C_Dir;
+
+  const long double G0 = sin(phi*pi);
+  const long double K0 = cos(phi*pi);
+
+  const long double gx = +G0*(2*(1-a)*(1-g));
+  const long double gy = +G0*(2*(1-a)*g);
+  const long double gz = +G0*(1+2*a);
+
+  const long double kx = -K0*(2*(1-a)*(1-g));
+  const long double ky = -K0*(2*(1-a)*g);
+  const long double kz = -K0*(1+2*a);
+
+  const long double gp = 0;
+  const long double j1 = 0;
+
+  Matrix3LD matrix1, matrix2, matrix3;
+  matrix1  <<  j1+kx,    gp,    gp,
+                  gp,    j1,    gx,
+                  gp,    gx,    j1;
+  matrix2  <<     j1,    gp,    gy,
+                  gp, j1+ky,    gp,
+                  gy,    gp,    j1;
+  matrix3  <<     j1,    gz,    gp,
+                  gz,    j1,    gp,
+                  gp,    gp, j1+kz;
+
+  Hx = matrix1;
+  Hy = matrix2;
+  Hz = matrix3;
+
+  std::stringstream paramout;
+  paramout << std::fixed << std::setprecision(14);
+  paramout << "------------------------Hamiltonian Parameters------------------------\n";
+  paramout << "Kx Ky Kz\n";
+  paramout << kx << " " << ky << " " << kz << "\n";
+  paramout << "Gx Gy Gz\n";
+  paramout << gx << " " << gy << " " << gz << "\n";
+  paramout << "Gp\n";
+  paramout << gp << "\n";
+  paramout << "J1\n";
+  paramout << j1 << "\n";
+  paramout << "hMagnitude\n";
+  paramout << hMagnitude << "\n";
+  paramout << "hDirection\n";
+  paramout << hDirection.transpose() << "\n";
+  ParameterOutput = paramout.str();
 }
 
-void Parameters::Anisotropy(const long double& scale, const long double& g, const long double& a,
-                              const bool& kitaev_or_gamma, const int& sign)
-// recall that 0 is false, 1 is true
-// kitaev_or_gamma == 0 -> kitaev, kitaev_or_gamma == 1 -> gamma
+Hamiltonia::Hamiltonia(const long double& jtau, const long double& lambda,
+                       const long double& jquad, const long double& jocto,
+                       const long double& h_magnitude, const Vector3LD& h_direction):
+                       hMagnitude(h_magnitude),
+                       hDirection(h_direction),
+                       hField(h_magnitude*h_direction)
 {
-  if (kitaev_or_gamma){
-    Gx = sign*scale*(2*(1-a)*(1-g));
-    Gy = sign*scale*(2*(1-a)*g);
-    Gz = sign*scale*(1+2*a);
-  } else{
-    Kx = sign*scale*(2*(1-a)*(1-g));
-    Ky = sign*scale*(2*(1-a)*g);
-    Kz = sign*scale*(1+2*a);
+
+  if (abs(jtau-1.0) > pow(10,-6) ){
+    std::cerr << "Ensure that J_Tau is equal to +1 or change units accordingly." << endl;
+    abort();
   }
+
+  Matrix3LD matrix1, matrix2;
+  //bond-independent: lambda term + Ising in y direction
+  matrix1  <<  -lambda,      0,       0,
+                     0, lambda,       0,
+                     0,      0, -lambda;
+
+  matrix2  <<   jquad,     0,     0,
+                    0, jocto,     0,
+                    0,     0, jquad;
+
+  long double pz = 0;
+  long double px = 2*pi/3.0;
+  long double py = 4*pi/3.0;
+
+  Hz = matrix1/2.0 + matrix2 + ReturnJTauHamiltonian(pz);
+  Hx = matrix1/2.0 + matrix2 + ReturnJTauHamiltonian(px);
+  Hy = matrix1/2.0 + matrix2 + ReturnJTauHamiltonian(py);
+
+  std::stringstream paramout;
+  paramout << std::fixed << std::setprecision(14);
+  paramout << "------------------------Hamiltonian Parameters------------------------\n";
+  paramout << "Bond-dependent JTau\n";
+  paramout << jtau << "\n";
+  paramout << "Lambda\n";
+  paramout << lambda << "\n";
+  paramout << "Quadropolar/octopolar interactions\n";
+  paramout << jquad << "/" << jocto << "\n";
+  paramout << "hMagnitude\n";
+  paramout << hMagnitude << "\n";
+  paramout << "hDirection\n";
+  paramout << hDirection.transpose() << "\n";
+  ParameterOutput = paramout.str();
 }
 
-void Parameters::PrintParameters(std::ostream &out)
+Matrix3LD Hamiltonia::ReturnJTauHamiltonian(const long double& angle)
 {
-  out << "------------------------Hamiltonian Parameters------------------------\n";
-  out << "Kx Ky Kz\n";
-  out << Kx << " " << Ky << " " << Kz << "\n";
-  out << "Gx Gy Gz\n";
-  out << Gx << " " << Gy << " " << Gz << "\n";
-  out << "Gp\n";
-  out << Gp << "\n";
-  out << "J1\n";
-  out << J1 << "\n";
-  out << "h\n";
-  out << h << "\n";
-  out << "h_theta\n";
-  out << hTheta << "\n";
-  out << "h_phi\n";
-  out << hPhi << "\n";
-}
-
-Bond::Bond(const Spin& spin_i, const Spin& spin_j, const uint& bond_type, const Parameters& p):
-iSpin(spin_i), jSpin(spin_j), BondType(bond_type), Pa(p)
-{
-  SpecifyBondHamiltonian();
-  MolecFieldContribution = -BondHamiltonian*jSpin.VectorXYZ + Pa.h*Pa.hDir/3.0;
-  BondEnergy = - iSpin.VectorXYZ.transpose().dot(MolecFieldContribution + Pa.h*Pa.hDir/3.0);
-}
-
-void Bond::SpecifyBondHamiltonian()
-{
-  Matrix3LD int_matrix;
-  switch (BondType+1)
-  {
-    case 1:
-      int_matrix << Pa.Kx + Pa.J1, Pa.Gp , Pa.Gp,
-                           Pa.Gp , Pa.J1 , Pa.Gx,
-                           Pa.Gp , Pa.Gx , Pa.J1;
-      break;
-    case 2:
-      int_matrix << Pa.J1 , Pa.Gp        , Pa.Gy,
-                     Pa.Gp, Pa.Ky + Pa.J1, Pa.Gp,
-                     Pa.Gy,   Pa.Gp      , Pa.J1;
-      break;
-    case 3:
-      int_matrix << Pa.J1 , Pa.Gz,         Pa.Gp,
-                     Pa.Gz, Pa.J1,         Pa.Gp,
-                     Pa.Gp, Pa.Gp, Pa.J1 + Pa.Kz;
-      break;
-  }
-  BondHamiltonian = int_matrix;
+  Matrix3LD matrix;
+  long double c = cos(angle);
+  long double s = sin(angle);
+  matrix  <<  1-c, 0,  -s,
+                0, 0,   0,
+               -s, 0, 1+c;
+  return matrix/2.0;
 }

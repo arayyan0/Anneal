@@ -6,41 +6,24 @@
 #define HAMILTONIAN_HPP
 
 #include "common.hpp"
-#include "spin.hpp"
 
-struct Parameters
+class Hamiltonia
 {
 public:
-  long double Kx, Ky, Kz, Gx, Gy, Gz;
-  const long double Gp, J1, h, hTheta, hPhi;
-  Vector3LD hDir;
+  Matrix3LD Hx, Hy, Hz;
+  const Vector3LD hField;
+  std::string ParameterOutput;
 
-  Parameters(const long double& kx, const long double& ky, const long double& kz,
-             const long double& gx, const long double& gy, const long double& gz,
-             const long double& gammap, const long double& heisenberg,
-             const long double& hstrength, const long double& htheta, const long double& hphi);
-  void Anisotropy(const long double& scale, const long double& g, const long double& a,
-                    const bool& kitaev_or_gamma, const int& sign);
-  void PrintParameters(std::ostream &out);
-
+  Hamiltonia(const long double& phi, const long double& g, const long double& a,
+             const long double& h_magnitude, const Vector3LD& h_direction);
+  Hamiltonia(const long double& jtau, const long double& lambda,
+             const long double& jquad, const long double& jocto,
+             const long double& h_magnitude, const Vector3LD& h_direction);
 private:
-  FIELD_DIR
+  const long double hMagnitude;
+  const Vector3LD hDirection;
+  Matrix3LD ReturnJTauHamiltonian(const long double& angle);
 };
 
-class Bond
-{
-public:
-  long double BondEnergy;
-  Vector3LD MolecFieldContribution;
-
-  Bond(const Spin& spin_i, const Spin& spin_j, const uint& bond_type, const Parameters& p);
-private:
-  Spin iSpin, jSpin;
-  uint BondType;
-  Parameters Pa;
-  Matrix3LD BondHamiltonian;
-
-  void SpecifyBondHamiltonian();
-};
 
 #endif // HAMILTONIAN_HPP

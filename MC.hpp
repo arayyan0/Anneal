@@ -5,7 +5,7 @@
 #ifndef MC_HPP
 #define MC_HPP
 
-#include "triangular.hpp"
+#include "lattice.hpp"
 
 class MonteCarloStatistics{
 public:
@@ -19,11 +19,11 @@ private:
 class MonteCarlo
 {
   public:
-    // TriLatt Lattice;
-    // MonteCarlo(TriLatt& lattice, const double& final_T, const uint& num_overrelax_ratio,
+    // Triangular Lattice;
+    // MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
     //                                                     const bool& recordstats);
-    HoneyLatt Lattice;
-    MonteCarlo(HoneyLatt& lattice, const double& final_T, const uint& num_overrelax_ratio,
+    Honeycomb Lattice;
+    MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
                                                         const bool& recordstats);
 
     void PerformSimulation(std::ostream &out);

@@ -4,25 +4,24 @@
 #brief  classical Monte Carlo make file
 CXX = mpic++
 CXXFLAGS = -std=c++17 -O3 -c
-SIM = multipole_finiteT
-LATTICE = triangular
+SIM = kga
 
 all: sim
 
-sim: sim_${SIM}.o ${LATTICE}.o hamiltonian.o spin.o common.o
-	${CXX} sim_${SIM}.o ${LATTICE}.o hamiltonian.o spin.o common.o -o sim
+sim: sim_${SIM}.o MC.o lattice.o hamiltonian.o common.o
+	${CXX} sim_${SIM}.o MC.o lattice.o hamiltonian.o common.o -o sim
 
-sim_${SIM}.o: sim_${SIM}.cpp ${LATTICE}.hpp hamiltonian.hpp
+sim_${SIM}.o: sim_${SIM}.cpp MC.hpp lattice.hpp hamiltonian.hpp common.hpp
 	${CXX} ${CXXFLAGS} sim_${SIM}.cpp
 
-${LATTICE}.o: ${LATTICE}.cpp ${LATTICE}.hpp hamiltonian.hpp common.hpp
-	${CXX} ${CXXFLAGS} ${LATTICE}.cpp
+MC.o: MC.cpp MC.hpp lattice.hpp hamiltonian.hpp common.hpp
+	${CXX} ${CXXFLAGS} MC.cpp
+	
+lattice.o: lattice.cpp lattice.hpp hamiltonian.hpp common.hpp
+	${CXX} ${CXXFLAGS} lattice.cpp
 
-hamiltonian.o: hamiltonian.cpp hamiltonian.hpp spin.hpp common.hpp
+hamiltonian.o: hamiltonian.cpp hamiltonian.hpp common.hpp
 	${CXX} ${CXXFLAGS} hamiltonian.cpp
-
-spin.o: spin.cpp spin.hpp common.hpp
-	${CXX} ${CXXFLAGS} spin.cpp
 
 common.o: common.cpp common.hpp
 	${CXX} ${CXXFLAGS} common.cpp
