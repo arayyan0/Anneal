@@ -1,6 +1,11 @@
 #include "MC.hpp"
 
 int main(int argc, char *argv[]){
+  //initiate MPI
+  MPI_Init(&argc, &argv);
+  int mpisize, mpirank;
+  MPI_Comm_size(MPI_COMM_WORLD, &mpisize);
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpirank);
 
   const uint l1 = strtol(argv[1], NULL, 10);
   const uint l2 = strtol(argv[2], NULL, 10);          //should be equal to l1
@@ -29,8 +34,8 @@ int main(int argc, char *argv[]){
     const long double final_T = pow(cooling_rate,num_SA_steps);
     const uint num_overrelax_ratio = 5;
 
-    const bool printstats = false;
-    MonteCarlo mc(tri, final_T, num_overrelax_ratio, printstats);
+    const bool printstats = true;
+    MonteCarlo mc(tri, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
 
     std::ostream &which = std::cout;
     which << std::fixed << std::setprecision(14);
@@ -46,7 +51,7 @@ int main(int argc, char *argv[]){
     const uint num_overrelax_ratio = 5;
 
     const bool printstats = false;
-    MonteCarlo mc(tri, final_T, num_overrelax_ratio, printstats);
+    MonteCarlo mc(tri, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
 
     std::ostream &which = std::cout;
     which << std::fixed << std::setprecision(14);
@@ -57,6 +62,7 @@ int main(int argc, char *argv[]){
     mc.PerformFiniteT(which, num_therm_sweeps, num_sweeps_measurement, sampling_time);
   }
 
+  MPI_Finalize();
 
   return 0;
 }

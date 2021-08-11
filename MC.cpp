@@ -25,8 +25,9 @@ void MonteCarloStatistics::WriteStatisticsFile()
 
 // MonteCarlo::MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
 MonteCarlo::MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
-                                                                const bool& recordstats):
-Lattice(lattice), FinalT(final_T),OverrelaxMCRatio(num_overrelax_ratio), RecordStats(recordstats)
+                       const bool& recordstats, const int& mpirank, const int& mpisize):
+Lattice(lattice), FinalT(final_T),OverrelaxMCRatio(num_overrelax_ratio), RecordStats(recordstats),
+MPIRank(mpirank), MPISize(mpisize)
 {
   auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
   std::mt19937 rng(seed);
@@ -55,7 +56,6 @@ void MonteCarlo::InitializeRandomSpins()
 
 void MonteCarlo::MolecularField(const uint& flat_index, Vector3LD& molec)
 {
-  //need to change 0 -> something in ClusterInfo site info
   Vector3LD v = Vector3LD::Zero();
   uint flat_index_nn;
   for (auto &j : Lattice.ClusterInfo[flat_index].NearestNeighbours){
@@ -97,11 +97,16 @@ void MonteCarlo::PerformSimulatedAnnealing(std::ostream &out, const double& cool
   const uint max_thermal_sweeps = 0;
   const uint max_measuring_sweeps = 0;
   const uint sampling_time = 0;
-  Lattice.PrintLatticeParameters(out);
-  PrintSimulationData(out, initial_T, FinalT, num_MC_sweeps,
-               max_thermal_sweeps, max_measuring_sweeps,
-               sampling_time, num_D_sweeps);
-  Lattice.PrintHamiltonianParameters(out);
+
+  if (MPIRank == 0){
+    Lattice.PrintLatticeParameters(out);
+    PrintSimulationData(out, initial_T, FinalT, num_MC_sweeps,
+                 max_thermal_sweeps, max_measuring_sweeps,
+                 sampling_time, num_D_sweeps);
+    Lattice.PrintHamiltonianParameters(out);
+  }
+
+  long double* minarr = (long double *)malloc(sizeof(long double)*MPISize);
 
   InitializeFMSpins(pi/2.0,pi/2.0);
   // InitializeRandomSpins();
@@ -118,8 +123,8 @@ void MonteCarlo::PerformSimulatedAnnealing(std::ostream &out, const double& cool
         OverrelaxationSweep(); //perform overrelaxation sweeps
       }
       single_sweep_accept=0; // reset total acceptance per sweep
-      MetropolisSweep(temp_T,single_sweep_accept); //perform Metropolis sweeps
-      if (RecordStats == true){ //save statistics
+      MetropolisSweep(temp_T,single_sweep_accept); //perform Metropolis sweep
+      if (RecordStats == true){ //save statistics of every sweep
         index = sweep+temp_counter*num_MC_sweeps;
         statistics.EnergyDensity[index] = (double)Lattice.ClusterEnergy/(double)Lattice.NumSites;
         statistics.AcceptanceRate[index] = (double)single_sweep_accept/(double)Lattice.NumSites;
@@ -127,16 +132,30 @@ void MonteCarlo::PerformSimulatedAnnealing(std::ostream &out, const double& cool
     }
   }
 
-  if (RecordStats == true){
-    statistics.WriteStatisticsFile();
-  }
-
   DeterministicSweeps(num_D_sweeps);
   CalculateClusterEnergy();
 
-  PrintConfiguration(out);
-  Lattice.CalculateClusterOP();
-  Lattice.PrintOP(out);
+  MPI_Allgather(&Lattice.ClusterEnergy,1,MPI_LONG_DOUBLE,
+                minarr, 1, MPI_LONG_DOUBLE,MPI_COMM_WORLD);
+  std::vector<long double> v(minarr,minarr+MPISize);
+  int firstlowestrank = std::min_element(v.begin(),v.end()) - v.begin();
+  free(minarr);
+
+  // if (MPIRank == 0){
+  //   for (uint i=0; i<MPISize; i++){
+  //     cout << i << " " << v[i]/(double)Lattice.NumSites <<  endl;
+  //   }
+  //   cout << firstlowestrank << endl;
+  // }
+
+  if (MPIRank == firstlowestrank){
+    if (RecordStats == true){
+      statistics.WriteStatisticsFile();
+    }
+    PrintConfiguration(out);
+    Lattice.CalculateClusterOP();
+    Lattice.PrintOP(out);
+  }
 }
 
 void MonteCarlo::PerformFiniteT(std::ostream &out, const uint& num_thermal_sweeps,
