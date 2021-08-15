@@ -43,8 +43,21 @@ int main(int argc, char *argv[])
     mc.PerformSimulatedAnnealing(which, cooling_rate, initial_T, num_SA_steps,
                                                                  num_MC_sweeps,
                                                                  num_D_sweeps);
-  } else if (simulation == 1){}
+  } else if (simulation == 1){
+    const long double final_T = strtod(argv[8], NULL);
+    const uint num_overrelax_ratio = 5;
 
+    const bool printstats = false;
+    MonteCarlo mc(honey, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
+
+    std::ostream &which = std::cout;
+    which << std::fixed << std::setprecision(14);
+
+    const uint num_therm_sweeps = 5*1e4;
+    const uint sampling_time = 1e2;
+    const uint num_sweeps_measurement = 1*(1e4)*sampling_time;
+    mc.PerformFiniteT(which, num_therm_sweeps, num_sweeps_measurement, sampling_time);
+  }
   MPI_Finalize();
 
   return 0;

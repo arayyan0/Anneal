@@ -7,8 +7,8 @@
 MonteCarloStatistics::MonteCarloStatistics(const uint& num_temps, const uint& num_sweeps):
 NumTemps(num_temps), NumSweeps(num_sweeps)
 {
-  EnergyDensity.resize(NumTemps*NumSweeps);
-  AcceptanceRate.resize(NumTemps*NumSweeps);
+  EnergyDensity.resize(NumTemps*NumSweeps+1);
+  AcceptanceRate.resize(NumTemps*NumSweeps+1);
 }
 
 void MonteCarloStatistics::WriteStatisticsFile()
@@ -17,7 +17,7 @@ void MonteCarloStatistics::WriteStatisticsFile()
   outfile.open("stats.out");
   outfile << std::fixed << std::setprecision(14);
   outfile << NumTemps << " " << NumSweeps <<  " " << 1 << endl;
-  for (uint i=0; i<NumTemps*NumSweeps;++i){
+  for (uint i=0; i<EnergyDensity.size();++i){
     outfile << i << " " << EnergyDensity[i] << " " << AcceptanceRate[i] << endl;
   }
   outfile.close();
@@ -134,6 +134,12 @@ void MonteCarlo::PerformSimulatedAnnealing(std::ostream &out, const double& cool
 
   DeterministicSweeps(num_D_sweeps);
   CalculateClusterEnergy();
+
+  if (RecordStats == true){//save statistics
+    index++;
+    statistics.EnergyDensity[index] = (double)Lattice.ClusterEnergy/(double)Lattice.NumSites;
+    statistics.AcceptanceRate[index] = 1;
+  }
 
   MPI_Allgather(&Lattice.ClusterEnergy,1,MPI_LONG_DOUBLE,
                 minarr, 1, MPI_LONG_DOUBLE,MPI_COMM_WORLD);
