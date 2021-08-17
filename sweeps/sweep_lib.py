@@ -2,6 +2,67 @@ import numpy as np
 import os
 import itertools as it
 
+class SweepClusterJobs:
+    '''
+    '''
+    def __init__(self, p, a, cluster_info_list, param_list, cpus_per_task, num_anneal, run):
+        self.JobTitle = f"jobrun_{run}"
+        print(self.JobTitle)
+        self.OutputPath = f"out/{self.JobTitle}"
+        if not os.path.exists(self.OutputPath):
+            os.makedirs(self.OutputPath)
+
+
+        print("(p,a): " + f"({p:.3f},{a:.3f})")
+        print(cluster_info_list)
+
+        self.WriteJobDescription(p, a, cluster_info_list, param_list)
+        print("Writing .sh file...")
+        print("Please ensure that you changed the number of nodes and time from the default!")
+        self.WriteSHFile(cpus_per_task, num_anneal)
+        self.WriteLSTFile(p, a, cluster_info_list, param_list, num_anneal)
+
+
+    def WriteJobDescription(self, p, a, cluster_info_list, param_list):
+        F = open(self.OutputPath+"/SA_param.lst", 'w+')
+        F.write("cluster list:\n")
+        for cluster in cluster_info_list:
+            F.write(f"[{cluster[0]}, {cluster[1]}, {cluster[2]}, {cluster[3]}]\n")
+        F.write("all files in this folder have the following global parameters.\n")
+        F.write(f"p, a: {p}, {a}\n")
+        F.write(f"Tf = {(0.9)**param_list[0]:.20f}\n")
+        F.write(f"Metropolis sweeps = {(10)**param_list[1]}\n")
+        F.write(f"Deterministic sweeps = {(10)**param_list[2]}\n")
+        F.close()
+
+    def WriteSHFile(self,cpus_per_task,num_anneal):
+        F = open(f'{self.JobTitle}.sh','w+')
+        F.write(f'#!/bin/bash'+'\n'+'\n')
+        F.write(f'#SBATCH --nodes=1'+'\n')
+        F.write(f'#SBATCH --cpus-per-task={cpus_per_task}'+'\n')
+        F.write(f'#SBATCH --time=00:30:00'+'\n')
+        F.write(f'#SBATCH --job-name={self.JobTitle}'+'\n'+'\n')
+        F.write(f'cd $SLURM_SUBMIT_DIR'+'\n'+'\n')
+        F.write(f'module purge'+'\n')
+        F.write(f'module load gcc openmpi gnu-parallel'+'\n')
+        F.write(f'parallel --jobs {int(cpus_per_task/num_anneal)} --joblog {self.OutputPath}/{self.JobTitle}.out'+
+                  f' < {self.JobTitle}.lst\n')
+        F.close()
+
+    def WriteLSTFile(self, p, a, cluster_info_list, param_list, num_anneal):
+        commandbegin = f"mpirun -np {num_anneal} ./sim "
+        commandend = f" {param_list[0]} {param_list[1]} {param_list[2]}"
+        File = open(f'{self.JobTitle}.lst','w+')
+        for cluster in cluster_info_list:
+            File.write(commandbegin + \
+                       f'{cluster[0]} {cluster[1]} {cluster[2]} {cluster[3]} {p} 0.5 {a}' + \
+                       commandend + \
+                       ' > ' + \
+                       f'{self.OutputPath}'+ \
+                       f'/ct_{cluster[0]}_s_{cluster[1]}_l1_{cluster[2]}_l2_{cluster[3]}_.out\n')
+        File.close()
+
+
 class SweepPhaseDiagramJobs:
     '''
     '''
@@ -55,8 +116,7 @@ class SweepPhaseDiagramJobs:
         F.write(f'#SBATCH --job-name={self.JobTitle}'+'\n'+'\n')
         F.write(f'cd $SLURM_SUBMIT_DIR'+'\n'+'\n')
         F.write(f'module purge'+'\n')
-        F.write(f'module load gcc'+'\n')
-        F.write(f'module load gnu-parallel'+'\n')
+        F.write(f'module load gcc openmpi gnu-parallel'+'\n')
         F.write(f'parallel --jobs 80 --joblog {self.OutputPath}/{self.JobTitle}.out'+
                   f' < {self.JobTitle}.lst\n')
         F.close()
@@ -89,8 +149,7 @@ class KGammaAnisotropyJobs(SweepPhaseDiagramJobs):
         self.WriteLSTFile(versions)
 
     def WriteLSTFile(self, versions):
-        command = f"./sim {self.ClusterType} {self.S} {self.L1} {self.L2} " +\
-                     f"{self.Tf_Pow} {self.MS_Pow} {self.DS_Pow}"
+        command = f"mpirun -np 20 ./sim {self.ClusterType} {self.S} {self.L1} {self.L2}"
 
         product = list(it.product(list(self.pArray), list(self.aArray)))
         File = open(f'{self.JobTitle}.lst','w+')
@@ -98,7 +157,8 @@ class KGammaAnisotropyJobs(SweepPhaseDiagramJobs):
             if not os.path.exists(self.OutputPath+f'/v_{v}'):
                 os.makedirs(self.OutputPath+f'/v_{v}')
             for prod in product:
-                File.write(command+f' {prod[0]:.3f} 0.5 {prod[1]:.3f}' + ' > ' +
+                File.write(command+f' {prod[0]:.3f} 0.5 {prod[1]:.3f} ' +\
+                             f"{self.Tf_Pow} {self.MS_Pow} {self.DS_Pow}"+ ' > ' +
                         self.OutputPath+f'/v_{v}/p_{prod[0]:.3f}_a_{prod[1]:.3f}_.out\n')
         File.close()
 
@@ -152,8 +212,7 @@ class SweepTemperatureJobs:
         F.write(f'#SBATCH --job-name={self.JobTitle}'+'\n'+'\n')
         F.write(f'cd $SLURM_SUBMIT_DIR'+'\n'+'\n')
         F.write(f'module purge'+'\n')
-        F.write(f'module load gcc'+'\n')
-        F.write(f'module load gnu-parallel'+'\n')
+        F.write(f'module load gcc openmpi gnu-parallel'+'\n')
         F.write(f'parallel --jobs 80 --joblog {self.OutputPath}/{self.JobTitle}.out'+
                   f' < {self.JobTitle}.lst\n')
         F.close()
