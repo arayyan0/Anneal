@@ -108,8 +108,8 @@ void MonteCarlo::PerformSimulatedAnnealing(std::ostream &out, const double& cool
 
   long double* minarr = (long double *)malloc(sizeof(long double)*MPISize);
 
-  InitializeFMSpins(pi/2.0,pi/2.0);
-  // InitializeRandomSpins();
+  // InitializeFMSpins(pi/2.0,pi/2.0);
+  InitializeRandomSpins();
   CalculateClusterEnergy();
 
   MonteCarloStatistics statistics(num_SA_steps+1, num_MC_sweeps);
@@ -149,9 +149,9 @@ void MonteCarlo::PerformSimulatedAnnealing(std::ostream &out, const double& cool
 
   // if (MPIRank == 0){
   //   for (uint i=0; i<MPISize; i++){
-  //     cout << i << " " << v[i]/(double)Lattice.NumSites <<  endl;
+  //     std::cerr << i << " " << v[i]/(double)Lattice.NumSites <<  endl;
   //   }
-  //   cout << firstlowestrank << endl;
+  //   std::cerr << firstlowestrank << endl;
   // }
 
   if (MPIRank == firstlowestrank){
@@ -161,6 +161,13 @@ void MonteCarlo::PerformSimulatedAnnealing(std::ostream &out, const double& cool
     PrintConfiguration(out);
     Lattice.CalculateClusterOP();
     Lattice.PrintOP(out);
+
+    // Vector3LD aaa = Vector3LD::Zero();
+    // for (uint flat_index=0; flat_index<Lattice.NumSites; ++flat_index){
+    //   MolecularField(flat_index, aaa);
+    //   std::cerr << aaa.normalized().transpose() << endl;
+    // }
+
   }
 }
 

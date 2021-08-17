@@ -29,9 +29,9 @@ int main(int argc, char *argv[])
     const double cooling_rate = 0.9;
     const uint num_SA_steps = strtol(argv[8], NULL, 10);
     const long double final_T = pow(cooling_rate,num_SA_steps);
-    const uint num_overrelax_ratio = 5;
+    const uint num_overrelax_ratio = 0;
 
-    const bool printstats = true;
+    const bool printstats = false;
     MonteCarlo mc(honey, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
 
     std::ostream &which = std::cout;
