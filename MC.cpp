@@ -4,11 +4,14 @@
 ///  @brief    defining a separate Monte Carlo class
 #include "MC.hpp"
 
-MonteCarloStatistics::MonteCarloStatistics(const uint& num_temps, const uint& num_sweeps):
+MonteCarloStatistics::MonteCarloStatistics(const bool& recordstats, const uint& num_temps,
+const uint& num_sweeps):
 NumTemps(num_temps), NumSweeps(num_sweeps)
 {
-  EnergyDensity.resize(NumTemps*NumSweeps+1);
-  AcceptanceRate.resize(NumTemps*NumSweeps+1);
+  if (recordstats==true){
+    EnergyDensity.resize(NumTemps*NumSweeps+1);
+    AcceptanceRate.resize(NumTemps*NumSweeps+1);
+  }
 }
 
 void MonteCarloStatistics::WriteStatisticsFile()
@@ -112,7 +115,7 @@ void MonteCarlo::PerformSimulatedAnnealing(std::ostream &out, const double& cool
   InitializeRandomSpins();
   CalculateClusterEnergy();
 
-  MonteCarloStatistics statistics(num_SA_steps+1, num_MC_sweeps);
+  MonteCarloStatistics statistics(RecordStats, num_SA_steps+1, num_MC_sweeps);
 
   long double temp_T;
   uint single_sweep_accept, index;
@@ -188,7 +191,7 @@ void MonteCarlo::PerformFiniteT(std::ostream &out, const uint& num_thermal_sweep
   // InitializeRandomSpins();
   CalculateClusterEnergy();
 
-  MonteCarloStatistics statistics(1, num_thermal_sweeps);
+  MonteCarloStatistics statistics(RecordStats, 1, num_thermal_sweeps);
 
   uint single_sweep_accept, index;          //sweep counter
   for (uint sweep = 0; sweep < num_thermal_sweeps; sweep++){
