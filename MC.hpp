@@ -9,7 +9,7 @@
 
 class MonteCarloStatistics{
 public:
-  MonteCarloStatistics(const uint& num_temps, const uint& num_sweeps);
+  MonteCarloStatistics(const bool& recordstats, const uint& num_temps, const uint& num_sweeps);
   void WriteStatisticsFile();
   vector<long double> EnergyDensity, AcceptanceRate;
 private:
