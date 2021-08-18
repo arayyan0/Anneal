@@ -39,7 +39,7 @@ class SweepClusterJobs:
         F = open(f'{self.JobTitle}.sh','w+')
         F.write(f'#!/bin/bash'+'\n'+'\n')
         F.write(f'#SBATCH --nodes=1'+'\n')
-        F.write(f'#SBATCH --cpus-per-task={cpus_per_task}'+'\n')
+        F.write(f'#SBATCH --ntasks-per-node={cpus_per_task}'+'\n')
         F.write(f'#SBATCH --time=00:30:00'+'\n')
         F.write(f'#SBATCH --job-name={self.JobTitle}'+'\n'+'\n')
         F.write(f'cd $SLURM_SUBMIT_DIR'+'\n'+'\n')
@@ -50,7 +50,7 @@ class SweepClusterJobs:
         F.close()
 
     def WriteLSTFile(self, p, a, cluster_info_list, param_list, num_anneal):
-        commandbegin = f"mpirun -np {num_anneal} ./sim "
+        commandbegin = f"mpirun -np {num_anneal} --bind-to none ./sim "
         commandend = f" {param_list[0]} {param_list[1]} {param_list[2]}"
         File = open(f'{self.JobTitle}.lst','w+')
         for cluster in cluster_info_list:
