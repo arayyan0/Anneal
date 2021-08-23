@@ -1,14 +1,14 @@
 from sweep_lib import SweepClusterJobs
 
 p, a = 0.08, 0.00
-cluster_info_list = [[2, 4, 1, n] for n in range(1,12+1)]
+cluster_info_list = [[2, 4, 1, n] for n in range(12,0,-1)]
 
 # Tf, MS_pow, DS_pow
-param_list = [50, 1, 4]
+param_list = [200, 6, 4]
 
 #ensure that num_anneal evenly divides cpus_per_task
-cpus_per_task = 6
-num_anneal = 6
+cpus_per_task = 80
+num_anneal = 20
 
 run = 1
 

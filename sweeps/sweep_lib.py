@@ -39,7 +39,7 @@ class SweepClusterJobs:
         F = open(f'{self.JobTitle}.sh','w+')
         F.write(f'#!/bin/bash'+'\n'+'\n')
         F.write(f'#SBATCH --nodes=1'+'\n')
-        F.write(f'#SBATCH --cpus-per-task={cpus_per_task}'+'\n')
+        F.write(f'#SBATCH --ntasks-per-node={cpus_per_task}'+'\n')
         F.write(f'#SBATCH --time=00:30:00'+'\n')
         F.write(f'#SBATCH --job-name={self.JobTitle}'+'\n'+'\n')
         F.write(f'cd $SLURM_SUBMIT_DIR'+'\n'+'\n')
@@ -50,7 +50,7 @@ class SweepClusterJobs:
         F.close()
 
     def WriteLSTFile(self, p, a, cluster_info_list, param_list, num_anneal):
-        commandbegin = f"mpirun -np {num_anneal} ./sim "
+        commandbegin = f"mpirun -np {num_anneal} --bind-to none ./sim "
         commandend = f" {param_list[0]} {param_list[1]} {param_list[2]}"
         File = open(f'{self.JobTitle}.lst','w+')
         for cluster in cluster_info_list:
@@ -66,7 +66,8 @@ class SweepClusterJobs:
 class SweepPhaseDiagramJobs:
     '''
     '''
-    def __init__(self, x_val_list, y_val_list, cluster_list, param_list, run):
+    def __init__(self, x_val_list, y_val_list, cluster_list, param_list,
+                 cpus_per_task, num_anneal, run):
         '''
         Parameters
         x_val_list (list): x-values parameters
@@ -92,7 +93,7 @@ class SweepPhaseDiagramJobs:
         self.WriteJobDescription()
         print("Writing .sh file...")
         print("Please ensure that you changed the number of nodes and time from the default!")
-        self.WriteSHFile()
+        self.WriteSHFile(cpus_per_task,num_anneal)
 
     def WriteJobDescription(self):
         F = open(self.OutputPath+"/SA_param.lst", 'w+')
@@ -107,17 +108,17 @@ class SweepPhaseDiagramJobs:
         F.write(f"Deterministic sweeps = {(10)**self.DS_Pow}\n")
         F.close()
 
-    def WriteSHFile(self):
+    def WriteSHFile(self,cpus_per_task,num_anneal):
         F = open(f'{self.JobTitle}.sh','w+')
         F.write(f'#!/bin/bash'+'\n'+'\n')
         F.write(f'#SBATCH --nodes=1'+'\n')
-        F.write(f'#SBATCH --cpus-per-task=80'+'\n')
+        F.write(f'#SBATCH --ntasks-per-node={cpus_per_task}'+'\n')
         F.write(f'#SBATCH --time=00:30:00'+'\n')
         F.write(f'#SBATCH --job-name={self.JobTitle}'+'\n'+'\n')
         F.write(f'cd $SLURM_SUBMIT_DIR'+'\n'+'\n')
         F.write(f'module purge'+'\n')
         F.write(f'module load gcc openmpi gnu-parallel'+'\n')
-        F.write(f'parallel --jobs 80 --joblog {self.OutputPath}/{self.JobTitle}.out'+
+        F.write(f'parallel --jobs {int(cpus_per_task/num_anneal)} --joblog {self.OutputPath}/{self.JobTitle}.out'+
                   f' < {self.JobTitle}.lst\n')
         F.close()
 
@@ -139,27 +140,30 @@ class SweepPhaseDiagramJobs:
         return x_array, y_array
 
 class KGammaAnisotropyJobs(SweepPhaseDiagramJobs):
-    def __init__(self, which_swept, p_list, a_list, cluster_list, param_list, run, versions):
+    def __init__(self, which_swept, p_list, a_list, cluster_list, param_list,
+                 cpus_per_task, num_anneal, run):
         if which_swept == 'p':
-            super().__init__(p_list, a_list, cluster_list, param_list, run)
+            super().__init__(p_list, a_list, cluster_list, param_list,
+                             cpus_per_task, num_anneal, run)
             self.pArray, self.aArray = self.XArray, self.YArray
         elif which_swept == 'a':
-            super().__init__(a_list, p_list, cluster_list, param_list, run)
+            super().__init__(a_list, p_list, cluster_list, param_list,
+                             cpus_per_task, num_anneal, run)
             self.aArray, self.pArray = self.XArray, self.YArray
-        self.WriteLSTFile(versions)
+        self.WriteLSTFile(num_anneal)
 
-    def WriteLSTFile(self, versions):
-        command = f"mpirun -np 20 ./sim {self.ClusterType} {self.S} {self.L1} {self.L2}"
-
+    def WriteLSTFile(self, num_anneal):
+        commandbegin = f"mpirun -np {num_anneal} --bind-to none ./sim "
+        commandend = f" {self.Tf_Pow} {self.MS_Pow} {self.DS_Pow}"
         product = list(it.product(list(self.pArray), list(self.aArray)))
         File = open(f'{self.JobTitle}.lst','w+')
-        for v in range(1, versions+1):
-            if not os.path.exists(self.OutputPath+f'/v_{v}'):
-                os.makedirs(self.OutputPath+f'/v_{v}')
-            for prod in product:
-                File.write(command+f' {prod[0]:.3f} 0.5 {prod[1]:.3f} ' +\
-                             f"{self.Tf_Pow} {self.MS_Pow} {self.DS_Pow}"+ ' > ' +
-                        self.OutputPath+f'/v_{v}/p_{prod[0]:.3f}_a_{prod[1]:.3f}_.out\n')
+        for prod in product:
+            File.write(commandbegin + \
+                       f'{self.ClusterType} {self.S} {self.L1} {self.L2} {prod[0]:.3f} 0.5 {prod[1]:.3f}' + \
+                       commandend + \
+                       ' > ' + \
+                       f'{self.OutputPath}'+ \
+                       f'/p_{prod[0]:.3f}_a_{prod[1]:.3f}_.out\n')
         File.close()
 
 class SweepTemperatureJobs:
