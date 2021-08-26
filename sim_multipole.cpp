@@ -20,34 +20,35 @@ int main(int argc, char *argv[]){
   Vector3LD h_direction = Vector3LD(0,1,0).normalized();
   Hamiltonia hams(jtau, lambda, jquad, jocto, h_magnitude, h_direction);
 
-  const long double defect_strength = strtod(argv[6], NULL);
-  const long double defect_lengthscale = strtod(argv[7], NULL);
+  const long double defect_quad = strtod(argv[6], NULL);
+  const long double defect_octo = strtod(argv[7], NULL);
+  const long double defect_lengthscale = strtod(argv[8], NULL);
 
   Triangular tri(l1, l2, num_sublattices, num_defects, hams,
-    defect_strength, defect_lengthscale);
+    defect_quad, defect_octo, defect_lengthscale);
 
   uint simulation = 0; //0 for simulated annealing, 1 for finite T
 
   if (simulation == 0){
     const double cooling_rate = 0.9;
-    const uint num_SA_steps = strtol(argv[8], NULL, 10);
+    const uint num_SA_steps = strtol(argv[9], NULL, 10);
     const long double final_T = pow(cooling_rate,num_SA_steps);
-    const uint num_overrelax_ratio = 5;
+    const uint num_overrelax_ratio = 0;
 
-    const bool printstats = true;
+    const bool printstats = false;
     MonteCarlo mc(tri, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
 
     std::ostream &which = std::cout;
     which << std::fixed << std::setprecision(14);
     const long double initial_T = 1.0;
-    const uint num_MC_sweeps = pow(10,strtol(argv[9], NULL, 10));
-    const uint num_D_sweeps = pow(10,strtol(argv[10], NULL, 10));
+    const uint num_MC_sweeps = pow(10,strtol(argv[10], NULL, 10));
+    const uint num_D_sweeps = pow(10,strtol(argv[11], NULL, 10));
     // const uint num_D_sweeps = 0;
     mc.PerformSimulatedAnnealing(which, cooling_rate, initial_T, num_SA_steps,
                                                                  num_MC_sweeps,
                                                                  num_D_sweeps);
   } else if (simulation == 1){
-    const long double final_T = strtod(argv[8], NULL);
+    const long double final_T = strtod(argv[9], NULL);
     const uint num_overrelax_ratio = 5;
 
     const bool printstats = false;

@@ -65,7 +65,8 @@ class Triangular
     Triangular(const uint& l1, const uint& l2, const uint& num_sublattices,
                      const uint& num_defects,
                      Hamiltonia& haminfo,
-                     const long double& defect_strength,
+                     const long double& defect_quad,
+                     const long double& defect_octo,
                      const long double& defect_lengthscale);
     void PrintLatticeParameters(std::ostream &out);
     void PrintHamiltonianParameters(std::ostream &out);
@@ -81,7 +82,7 @@ class Triangular
 
     //nn_1, nn_2, sub
     vector<std::tuple<uint,uint,uint>> Defects;
-    const long double DefectStrength, DefectLengthScale;
+    const long double DefectQuad, DefectOcto, DefectLengthScale;
     uint NumDefects;
 
     ArrayXLD StripySignsX, StripySignsY, StripySignsZ;

@@ -26,8 +26,8 @@ void MonteCarloStatistics::WriteStatisticsFile()
   outfile.close();
 }
 
-// MonteCarlo::MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
-MonteCarlo::MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
+MonteCarlo::MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
+// MonteCarlo::MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
                        const bool& recordstats, const int& mpirank, const int& mpisize):
 Lattice(lattice), FinalT(final_T),OverrelaxMCRatio(num_overrelax_ratio), RecordStats(recordstats),
 MPIRank(mpirank), MPISize(mpisize)

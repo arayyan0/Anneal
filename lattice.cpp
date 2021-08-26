@@ -272,13 +272,15 @@ void Honeycomb::PrintHamiltonianParameters(std::ostream &out){
 
 Triangular::Triangular(const uint& l1, const uint& l2, const uint& num_sublattices,
                        const uint& num_defects, Hamiltonia& haminfo,
-                       const long double& defect_strength,
+                       const long double& defect_quad,
+                       const long double& defect_octo,
                        const long double& defect_lengthscale):
 L1(l1), L2(l2), NumSublattices(num_sublattices), NumSites(l1*l2*num_sublattices),
 NumDefects(num_defects),
 HamInfo(haminfo),
 hField(haminfo.hField),
-DefectStrength(defect_strength),
+DefectQuad(defect_quad),
+DefectOcto(defect_octo),
 DefectLengthScale(defect_lengthscale)
 {
   if (not ( (num_defects == 1) || (num_defects == 3) || (num_defects == 9) )){
@@ -286,11 +288,11 @@ DefectLengthScale(defect_lengthscale)
     std::cerr << "If you want zero defects, set defect strength to zero." << endl;
     abort();
   }
-  if ( (L1!=L2) && ( abs(defect_strength) > pow(10,-6) ) ){
+  if ( (L1!=L2) && ( (abs(defect_quad) > pow(10,-6)) && (abs(defect_octo) > pow(10,-6)) ) ){
     std::cerr << "Only use L1 != L2 if defect strength is zero." << endl;
     abort();
   }
-  if ( ((L1<6) || (L2<6)) && ( abs(defect_strength) > pow(10,-6) ) ){
+  if ( ((L1<6) || (L2<6)) && ( (abs(defect_quad) > pow(10,-6)) && (abs(defect_octo) > pow(10,-6)) )) {
     std::cerr << "Only use L1,L2<6 if defect strength is zero." << endl;
     abort();
   }
@@ -384,13 +386,19 @@ void Triangular::AddDefectHamiltonia()
   // further image charges are assumed to be non-zero. this should be changed if defect
   // is long ranged
   std::vector<std::tuple<int, int>> defect_index = {
-                                                  {  0,  0}, // real defect
-                                                  {  1,  0}, //right image
-                                                  { -1,  0}, //left image
-                                                  {  0,  1}, //top image
-                                                  {  0, -1}, //bottom image
-                                                  { -1,  1}, //top-left
-                                                  {  1, -1}  //bottom-right
+                                                  {  0,  0},
+                                                  {  1,  0},
+                                                  { -1,  0},
+                                                  {  0,  1},
+                                                  {  0, -1},
+                                                  { -1,  1},
+                                                  {  1, -1},
+                                                  {  1,  1},
+                                                  { -1,  2},
+                                                  { -2,  1},
+                                                  {  2, -1},
+                                                  {  1, -2},
+                                                  { -1, -1}
                                                 };
   for (auto& indices:Defects){
     rdefect = get<0>(indices)*Translation1+get<1>(indices)*Translation2+SublatticeOffset[get<2>(indices)]; //+
@@ -404,12 +412,12 @@ void Triangular::AddDefectHamiltonia()
         rbond = (rsite+rNN)/2.0;
         rseparation = rbond - rdefect;
         for (auto &j:defect_index){
-            strength = function(DefectStrength,
+            strength = function(1,
             (rseparation - get<0>(j)*L1*Translation1 - get<1>(j)*L2*Translation2).norm(),
             DefectLengthScale);
-            get<3>(nninfo)(1,1) += +1*strength;
-            get<3>(nninfo)(0,0) += -1*strength;
-            get<3>(nninfo)(2,2) += -1*strength;
+            get<3>(nninfo)(1,1) += +1*DefectOcto*strength;
+            get<3>(nninfo)(0,0) += +1*DefectQuad*strength;
+            get<3>(nninfo)(2,2) += +1*DefectQuad*strength;
         }
       }
     }
@@ -498,8 +506,8 @@ void Triangular::PrintLatticeParameters(std::ostream &out){
 
 void Triangular::PrintHamiltonianParameters(std::ostream &out){
   out << HamInfo.ParameterOutput;
-  out << "Defect strength/defect length scale/number of defects\n";
-  out << DefectStrength << "/" << DefectLengthScale << "/" << NumDefects << "\n";
+  out << "Defect quad/defect octo/defect length scale/number of defects\n";
+  out << DefectQuad << "/" << DefectOcto << "/" << DefectLengthScale << "/" << NumDefects << "\n";
 }
 
 void Triangular::PrintOP(std::ostream &out)
