@@ -1,4 +1,4 @@
-///  @file     triangular.hpp
+///  @file     MC.hpp
 ///  @author   Ahmed Rayyan
 ///  @date     July 23, 2021
 ///  @brief    defining a separate Monte Carlo class
@@ -19,12 +19,12 @@ private:
 class MonteCarlo
 {
   public:
-    Triangular Lattice;
-    MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
-               const bool& recordstats, const int& mpirank, const int& mpisize);
-    // Honeycomb Lattice;
-    // MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
-               // const bool& recordstats,  const int& mpirank, const int& mpisize);
+    // Triangular Lattice;
+    // MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
+               // const bool& recordstats, const int& mpirank, const int& mpisize);
+    Honeycomb Lattice;
+    MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
+               const bool& recordstats,  const int& mpirank, const int& mpisize);
 
     void PerformSimulation(std::ostream &out);
     void PerformSimulatedAnnealing(std::ostream &out, const double& cooling_rate,
@@ -37,7 +37,7 @@ class MonteCarlo
 
   private:
     std::mt19937 RNG;
-    std::uniform_real_distribution<double> UnitInterval;
+    std::uniform_real_distribution<long double> UnitInterval;
     std::uniform_int_distribution<uint> SiteDist;
 
     const double FinalT;

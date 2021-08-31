@@ -1,4 +1,4 @@
-///  @file     triangular.hpp
+///  @file     MC.hpp
 ///  @author   Ahmed Rayyan
 ///  @date     July 23, 2021
 ///  @brief    defining a separate Monte Carlo class
@@ -26,15 +26,15 @@ void MonteCarloStatistics::WriteStatisticsFile()
   outfile.close();
 }
 
-MonteCarlo::MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
-// MonteCarlo::MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
+// MonteCarlo::MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
+MonteCarlo::MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
                        const bool& recordstats, const int& mpirank, const int& mpisize):
 Lattice(lattice), FinalT(final_T),OverrelaxMCRatio(num_overrelax_ratio), RecordStats(recordstats),
 MPIRank(mpirank), MPISize(mpisize)
 {
   auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
   std::mt19937 rng(seed);
-  std::uniform_real_distribution<double> unit_interval(0,1);
+  std::uniform_real_distribution<long double> unit_interval(0,1);
   std::uniform_int_distribution<uint> sd(0, Lattice.NumSites-1);
 
   RNG = rng;
@@ -293,7 +293,7 @@ void MonteCarlo::MetropolisSweep(const double& temperature, uint& single_sweep_a
     CalculateLocalEnergy(flat_index, new_local_energy);
     energydiff = new_local_energy-old_local_energy;
 
-    if (UnitInterval(RNG) < std::min(exp(-energydiff/temperature),1.0)){
+    if (UnitInterval(RNG) < std::min<long double>(exp(-energydiff/temperature),1.0)){
       ++single_sweep_accept;
       Lattice.ClusterEnergy+=energydiff;
     }else{

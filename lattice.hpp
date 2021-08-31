@@ -1,7 +1,7 @@
 ///  @file     triangular.hpp
 ///  @author   Ahmed Rayyan
 ///  @date     June 7, 2021
-///  @brief    defining the triangular Lattice class
+///  @brief    defining the types of Lattices
 #ifndef LATTICE_HPP
 #define LATTICE_HPP
 
