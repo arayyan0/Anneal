@@ -307,7 +307,7 @@ DefectLengthScale(defect_lengthscale)
   CreateDefectPositions();
   AddDefectHamiltonia();
 
-  DebugHamiltonians();
+  // DebugHamiltonians();
 
   CreateStripySignMatrices();
 }
@@ -315,40 +315,43 @@ DefectLengthScale(defect_lengthscale)
 void Triangular::DebugHamiltonians(){
   uint flat1, flat2, s2, x2, y2;
   uint wrongham=0;
+  double wrongamout=0.0;
   Matrix3LD hamdiff;
   for (uint y1=0; y1<L2; ++y1){
     for (uint x1=0; x1<L1; ++x1){
       for (uint s1=0; s1<NumSublattices;++s1){
         BravaisIndicesToFlat(s1, x1, NumSublattices, y1, L1*NumSublattices, flat1);
-        cout << "site: " << x1 << " " << y1 << " " << s1 << endl;
+        // std::cerr << "site: " << x1 << " " << y1 << " " << s1 << endl;
+        // std::cerr << "---------entering NN loop --------" << endl;
         for (auto &j:ClusterInfo[flat1].NearestNeighbours){
           x2 = get<0>(j);
           y2 = get<1>(j);
           s2 = get<2>(j);
           BravaisIndicesToFlat(s2, x2, NumSublattices, y2, L1*NumSublattices, flat2);
-          cout << "NN: " << x2 << " " << y2 << " " << s2 << endl;
+          // std::cerr << "NN: " << x2 << " " << y2 << " " << s2 << endl;
           /////////////////////output bond Hamiltonian
-          //
-          // cout << get<3>(j)<< endl;
-          //
-          /////////////////////find other pair's Hamiltonian and output diff
+          if ((x2 == 10) && (y2 == 6)){
+            // std::cerr << get<3>(j)<< endl;
+          }
+          // ///////////////////find other pair's Hamiltonian and output diff
           //
           for (auto &jj:ClusterInfo[flat2].NearestNeighbours){
             if ((x1 == get<0>(jj)) && (y1 == get<1>(jj)) && (s1 == get<2>(jj))){
               hamdiff = get<3>(j) - get<3>(jj);
               if (hamdiff.norm()> 0){
-                cout << "oof, wrong hamiltonian for: (" << x1 <<","<<y1<<") and ("<< x2 <<","<<y2<<")" << endl;
+                // std::cerr << "oof, wrong hamiltonian for: (" << x1 <<","<<y1<<") and ("<< x2 <<","<<y2<<") w/ norm "<< hamdiff.norm()<< endl;
                 wrongham++;
+                wrongamout+=hamdiff.norm();
               }
             }
           }
-          //
+        //
         }
-        cout << "---------finished NN loop --------" << endl;
+        // std::cerr << "---------finished NN loop --------" << endl;
       }
     }
   }
-  cout << (double)wrongham/6.0/(double)NumSites*100 << "% wrong bonds" << endl;
+  std::cerr << (double)wrongham/6.0/(double)NumSites*100 << "% wrong bonds, total wrong is " << wrongamout << endl;
 }
 
 void Triangular::CreateDefectPositions(){
@@ -428,32 +431,37 @@ void Triangular::AddDefectHamiltonia()
   // is long ranged
   std::vector<std::tuple<int, int>> defect_index = {
                                                   {  0,  0},
-                                                  {  1,  0},
-                                                  { -1,  0},
-                                                  {  0,  1},
-                                                  {  0, -1},
-                                                  { -1,  1},
-                                                  {  1, -1},
-                                                  {  1,  1},
-                                                  { -1,  2},
-                                                  { -2,  1},
-                                                  {  2, -1},
-                                                  {  1, -2},
-                                                  { -1, -1}
+                                                  // {  1,  0},
+                                                  // { -1,  0},
+                                                  // {  0,  1},
+                                                  // {  0, -1},
+                                                  // { -1,  1},
+                                                  // {  1, -1},
+                                                  // {  1,  1},
+                                                  // { -1,  2},
+                                                  // { -2,  1},
+                                                  // {  2, -1},
+                                                  // {  1, -2},
+                                                  // { -1, -1}
                                                 };
   for (auto& indices:Defects){
     rdefect = get<0>(indices)*Translation1+get<1>(indices)*Translation2+SublatticeOffset[get<2>(indices)]; //+
     for (uint i=0;i<Cluster.size();i++){
+    // for (uint i=0;i<1;i++){
       rsite = ClusterInfo[i].Position;
+      // cout << rsite.transpose() << endl;
       //check length would go here
+      // std::cerr << "site: " << i << endl;
+      // std::cerr << "_______________________________entering NN loop" << endl;
       for (auto& nninfo:ClusterInfo[i].NearestNeighbours){
         //I'm using the non-wrapped position indices here.
         //this is to deal with the (periodic) bonds that go beyond the finite size cluster
         rNN = get<4>(nninfo)*Translation1+get<5>(nninfo)*Translation2+SublatticeOffset[get<2>(nninfo)];
         rbond = (rsite+rNN)/2.0;
         rseparation = rbond - rdefect;
+        // std::cerr << rseparation.transpose() << " " << rseparation.norm() << endl;
         for (auto &j:defect_index){
-            strength = function(1,
+            strength = function(
             (rseparation - get<0>(j)*L1*Translation1 - get<1>(j)*L2*Translation2).norm(),
             DefectLengthScale);
             get<3>(nninfo)(1,1) += +1*DefectOcto*strength;
@@ -461,6 +469,7 @@ void Triangular::AddDefectHamiltonia()
             get<3>(nninfo)(2,2) += +1*DefectQuad*strength;
         }
       }
+      // std::cerr << "_______________________________leaving NN loop" << endl;
     }
   }
 }
