@@ -96,6 +96,8 @@ class Triangular
     void SelectStripyOP();
     void AverageStripyOP();
 
+    void DebugHamiltonians();
+
 };
 
 #endif
