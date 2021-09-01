@@ -35,17 +35,17 @@ typedef Eigen::Array<long double, Eigen::Dynamic, Eigen::Dynamic> ArrayXXLD;
                   const Vector3LD B_Dir = Vector3LD(-1/sqrt(2), 1/sqrt(2), 0);\
                   const Vector3LD C_Dir = Vector3LD(1/sqrt(3), 1/sqrt(3), 1/sqrt(3));
 
-#define LATTICE_DIR const Vector2LD a1 = Vector2LD( 1.0/2.0, sqrt(3)/2.0);\
-                    const Vector2LD a2 = Vector2LD(-1.0/2.0, sqrt(3)/2.0);
+#define LATTICE_DIR const Vector2LD a1 = Vector2LD( 1.0/2.0, +sqrt(3)/2.0);\
+                    const Vector2LD a2 = Vector2LD(-1.0/2.0, +sqrt(3)/2.0);
 
 
 void BravaisIndicesToFlat(const uint& x, const uint&y, const uint & period1,
                                          const uint&z, const uint & period2,
                                                            uint& flat_index);
 
-long double Lorentzian(const long double& s, const long double& x, const long double& l);
+long double Lorentzian(const long double& r, const long double& l);
 
-long double Gaussian(const long double& s, const long double& x, const long double& l);
+// long double Gaussian(const long double& s, const long double& x, const long double& l);
 
 Vector3LD SphericalAnglesToCubic(const long double& theta, const long double& phi);
 
