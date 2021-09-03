@@ -27,7 +27,7 @@ int main(int argc, char *argv[]){
   Triangular tri(l1, l2, num_sublattices, num_defects, hams,
     defect_quad, defect_octo, defect_lengthscale);
 
-  uint simulation = 0; //0 for simulated annealing, 1 for finite T
+  uint simulation = 1; //0 for simulated annealing, 1 for finite T
 
   if (simulation == 0){
     const double cooling_rate = 0.9;
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
                                                                  num_D_sweeps);
   } else if (simulation == 1){
     const long double final_T = strtod(argv[9], NULL);
-    const uint num_overrelax_ratio = 5;
+    const uint num_overrelax_ratio = 0;
 
     const bool printstats = false;
     MonteCarlo mc(tri, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
