@@ -270,6 +270,7 @@ void Honeycomb::PrintHamiltonianParameters(std::ostream &out){
   out << HamInfo.ParameterOutput;
 }
 
+
 Triangular::Triangular(const uint& l1, const uint& l2, const uint& num_sublattices,
                        const uint& num_defects, Hamiltonia& haminfo,
                        const long double& defect_quad,
@@ -309,7 +310,31 @@ DefectLengthScale(defect_lengthscale)
 
   // DebugHamiltonians();
 
-  CreateStripySignMatrices();
+  SSFPoints = {gamma,
+               gammapx, gammapy, gammapz,
+               kx, ky, kz,
+               kx/2.0, ky/2.0, kz/2.0,
+               mx, my, mz,
+               2.0/3.0*mx, 2.0/3.0*my, 2.0/3.0*mz};
+
+  SSFPointsLabel = {"Gamma   ",
+                    "GammaPx ",
+                    "GammaPy ",
+                    "GammaPz ",
+                    "Kx      ",
+                    "Ky      ",
+                    "Kz      ",
+                    "Kx/2    ",
+                    "Ky/2    ",
+                    "Kz/2    ",
+                    "Mx      ",
+                    "My      ",
+                    "Mz      ",
+                    "2Mx/3   ",
+                    "2My/3   ",
+                    "2Mz/3   "
+  };
+
 }
 
 void Triangular::DebugHamiltonians(){
@@ -321,17 +346,17 @@ void Triangular::DebugHamiltonians(){
     for (uint x1=0; x1<L1; ++x1){
       for (uint s1=0; s1<NumSublattices;++s1){
         BravaisIndicesToFlat(s1, x1, NumSublattices, y1, L1*NumSublattices, flat1);
-        // std::cerr << "site: " << x1 << " " << y1 << " " << s1 << endl;
-        // std::cerr << "---------entering NN loop --------" << endl;
+        std::cerr << "site: " << x1 << " " << y1 << " " << s1 << endl;
+        std::cerr << "---------entering NN loop --------" << endl;
         for (auto &j:ClusterInfo[flat1].NearestNeighbours){
           x2 = get<0>(j);
           y2 = get<1>(j);
           s2 = get<2>(j);
           BravaisIndicesToFlat(s2, x2, NumSublattices, y2, L1*NumSublattices, flat2);
-          // std::cerr << "NN: " << x2 << " " << y2 << " " << s2 << endl;
+          std::cerr << "NN: " << x2 << " " << y2 << " " << s2 << endl;
           /////////////////////output bond Hamiltonian
-          if ((x2 == 10) && (y2 == 6)){
-            // std::cerr << get<3>(j)<< endl;
+          if ((x2 == 7) && (y2 == 6)){
+            std::cerr << get<3>(j)<< endl;
           }
           // ///////////////////find other pair's Hamiltonian and output diff
           //
@@ -347,7 +372,7 @@ void Triangular::DebugHamiltonians(){
           }
         //
         }
-        // std::cerr << "---------finished NN loop --------" << endl;
+        std::cerr << "---------finished NN loop --------" << endl;
       }
     }
   }
@@ -474,75 +499,27 @@ void Triangular::AddDefectHamiltonia()
   }
 }
 
-void Triangular::CreateStripySignMatrices()
-{
-  ArrayXXLD signs_Y(L1,L2);
-  ArrayXXLD signs_Z(L1,L2);
-  for (uint x=0; x<L1; ++x){
-    for (uint y=0; y<L2; ++y){
-      x%2 == 0 ? signs_Y(x,y) = 1 : signs_Y(x,y) = -1;
-      y%2 == 0 ? signs_Z(x,y) = 1 : signs_Z(x,y) = -1;
-    }
-  }
-  ArrayXXLD signs_X = signs_Y*signs_Z;
-
-  Eigen::Map<ArrayXLD> ssx(signs_X.data(), signs_X.size()); //reshapes matrix (column-major)
-  Eigen::Map<ArrayXLD> ssy(signs_Y.data(), signs_Y.size());
-  Eigen::Map<ArrayXLD> ssz(signs_Z.data(), signs_Z.size());
-
-  StripySignsX = ssx;
-  StripySignsY = ssy;
-  StripySignsZ = ssz;
-}
 
 void Triangular::CalculateClusterOP()
 {
-  uint flat_index;
-  Vector3LD spin, fmop;
-  Eigen::Matrix<long double, 3, 2> stripyopmatrix;
-  fmop << 0,0,0;
-  stripyopmatrix << 0, 0,
-                    0, 0,
-                    0, 0;
+  Vector3LD SS_ij;
+  Vector2LD r_ij;
 
-  for (uint flat_index=0; flat_index<NumSites; ++flat_index){
-    // local_energy=0;
-    //calculate energy
-    spin = Cluster[flat_index];
-    fmop += spin;
-    //calculate three stripy OPs
-    // cout << fmop << endl;
-    stripyopmatrix(0,0) += StripySignsX(flat_index)*spin(0); stripyopmatrix(0,1) += StripySignsX(flat_index)*spin(2);
-    stripyopmatrix(1,0) += StripySignsY(flat_index)*spin(0); stripyopmatrix(1,1) += StripySignsY(flat_index)*spin(2);
-    stripyopmatrix(2,0) += StripySignsZ(flat_index)*spin(0); stripyopmatrix(2,1) += StripySignsZ(flat_index)*spin(2);
-    // cout << fmop << endl;
+  Vector3LDc SS_q;
+
+  vector<Vector3LD> clusterssf(SSFPoints.size(),Vector3LD::Zero());
+  for (uint q=0; q<SSFPoints.size(); q++){
+    SS_q = Vector3LDc::Zero();
+    for (uint i =0; i<NumSites;i++){
+      for (uint j =0; j<NumSites;j++){
+        SS_ij = Cluster[i].cwiseProduct(Cluster[j]);
+        r_ij = ClusterInfo[i].Position - ClusterInfo[j].Position;
+        SS_q += std::polar((long double)1.0,-SSFPoints[q].dot(r_ij))*SS_ij;
+      }
+    }
+    clusterssf[q]=SS_q.cwiseAbs();
   }
-
-  ClusterFMOP = fmop;
-  ClusterStripyOPMatrix = stripyopmatrix;
-
-  // SelectStripyOP();
-  AverageStripyOP();
-}
-
-void Triangular::SelectStripyOP()
-{
-  Eigen::MatrixXd::Index indices[1];
-  long double stripymax = ClusterStripyOPMatrix.rowwise().norm().maxCoeff(&indices[0]);
-  ClusterStripyOP = ClusterStripyOPMatrix.row(indices[0]);
-
-  Vector3LD combinedop;
-  combinedop << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
-  ClusterCombinedOP = combinedop;
-}
-
-void Triangular::AverageStripyOP()
-{
-  ClusterStripyOP = ClusterStripyOPMatrix.colwise().sum().transpose();
-
-  Vector3LD combinedop;
-  combinedop << ClusterStripyOP(0), ClusterFMOP(1),ClusterStripyOP(1);
-  ClusterCombinedOP = combinedop;
+  ClusterSSf = clusterssf;
 }
 
 void Triangular::PrintLatticeParameters(std::ostream &out){
@@ -562,132 +539,27 @@ void Triangular::PrintHamiltonianParameters(std::ostream &out){
 
 void Triangular::PrintOP(std::ostream &out)
 {
-  // SelectStripyOP();
-  AverageStripyOP();
   out << "-------------------------------Final configuration observables--------------------------------\n";
-  out << "Order parameters. R1: (FM_x, FM_y, FM_z), R2: (stripy_x, stripy_z),  R3: (stripy_x, FM_y, stripy_z)\n";
-  out << std::setprecision(14) << ClusterFMOP.transpose()/(long double)NumSites << "\n";
-  out << std::setprecision(14) << ClusterStripyOP.transpose()/(long double)NumSites << "\n";
-  out << std::setprecision(14) << ClusterCombinedOP.transpose()/(long double)NumSites << "\n";
+  Vector3LD whoa;
+  out << "             Quad             Octo\n";
+  for(uint j=0; j <SSFPoints.size(); j++){
+    whoa = ClusterSSf[j]/(long double)NumSites/(long double)NumSites;
+    out << SSFPointsLabel[j] << sqrt(whoa(0) +whoa(2)) << " " << sqrt(whoa(1))  << endl;
+  }
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-// void TriangularLattice::PrintThermalObservables(std::ostream &out){
-//   long double ns = NumSites;
-//   long double ns2 = pow(NumSites,2);
-//   long double ns3 = pow(NumSites,3);
-//   long double ns4 = pow(NumSites,4);
-//
-//   out << "-------------------------------Thermal-averaged observables-----------------------------\n";
-//   out << "Energy cumulants (C: E, E2, E3, E4) \n";
-//   out << std::setprecision(14) << EBar/ns << " " << E2Bar/ns2 << " " << E3Bar/ns3 << " " << E4Bar/ns4 << "\n";
-//   out << "Order parameter cumulants (R: FM, Perp, Par, Combined), (C: |m|, |m|2, |m|4)\n";
-//   out << std::setprecision(14) << FMNorm/ns << " " << FMNorm2/ns2 << " " << FMNorm4/ns4 << "\n";
-//   out << std::setprecision(14) << PerpNorm/ns << " " << PerpNorm2/ns2 << " " <<  PerpNorm4/ns4 << "\n";
-//   out << std::setprecision(14) << ParNorm/ns << " " << ParNorm2/ns2 << " " << ParNorm4/ns4 << "\n";
-//   out << std::setprecision(14) << CombinedNorm/ns << " " << CombinedNorm2/ns2 << " " << CombinedNorm4/ns4 << "\n";
-// }
-//
-//
-// void TriangularLattice::SampleConfiguration(double &temp, const uint& max_sweeps,
-//                                             const uint& sampling_time){
-//   // cout << temp << " " << temp << endl;
-//   long double m_e = 0;
-//   long double m_e2 = 0;
-//   long double m_e3 = 0;
-//   long double m_e4 = 0;
-//
-//   long double m_fm_norm =0;
-//   long double m_perp_norm =0;
-//   long double m_par_norm =0;
-//   long double m_combined_norm =0;
-//
-//   long double m_fm_norm2 =0;
-//   long double m_perp_norm2 =0;
-//   long double m_par_norm2 =0;
-//   long double m_combined_norm2 =0;
-//
-//   long double m_fm_norm4 =0;
-//   long double m_perp_norm4 =0;
-//   long double m_par_norm4 =0;
-//   long double m_combined_norm4 =0;
-//
-//   long double energy, fm_norm, perp_norm, par_norm, combined_norm;
-//   uint sweep = 0;
-//   uint samples = 0;
-//   uint accept;
-//
-//   while (sweep < max_sweeps){
-//     DoTheSweeps(temp, accept);
-//
-//     if (sweep%sampling_time == 0){
-//       // cout << samples << " " << ClusterEnergy/NumSites << endl;
-//
-//       // SelectStripyOP();
-//       CalculateClusterEnergyandOP();
-//       energy = ClusterEnergy;
-//       AverageStripyOP();
-//
-//       m_e  += energy;
-//       m_e2 += pow(energy,2);
-//       m_e3 += pow(energy,3);
-//       m_e4 += pow(energy,4);
-//
-//       fm_norm   = ClusterFMOP.norm();
-//       perp_norm = ClusterStripyOP.norm();
-//       par_norm  = abs(ClusterFMOP(1));
-//       combined_norm = ClusterCombinedOP.norm();
-//
-//       m_fm_norm    += fm_norm;
-//       m_perp_norm  += perp_norm;
-//       m_par_norm   += par_norm;
-//       m_combined_norm += combined_norm;
-//
-//       m_fm_norm2   += pow(fm_norm,2);
-//       m_perp_norm2 += pow(perp_norm,2);
-//       m_par_norm2  += pow(par_norm,2);
-//       m_combined_norm2  += pow(combined_norm,2);
-//
-//       m_fm_norm4   += pow(fm_norm,4);
-//       m_perp_norm4 += pow(perp_norm,4);
-//       m_par_norm4  += pow(par_norm,4);
-//       m_combined_norm4  += pow(combined_norm,4);
-//       ++samples;
-//
-//     }
-//     ++sweep;
-//   }
-//
-//   EBar  = m_e/(long double)samples;
-//   // cout << "....." << endl;
-//   // cout << EBar << endl;
-//   // cout << "....." << endl;
-//
-//   E2Bar = m_e2/(long double)samples;
-//   E3Bar = m_e3/(long double)samples;
-//   E4Bar = m_e4/(long double)samples;
-//   // cout << std::setprecision(14) << 0  << " " << ebar << " " << e2bar << endl;
-//
-//   FMNorm       = m_fm_norm/(long double)samples;
-//   PerpNorm     = m_perp_norm/(long double)samples;
-//   ParNorm      = m_par_norm/(long double)samples;
-//   CombinedNorm = m_combined_norm/(long double)samples;
-//
-//   FMNorm2       = m_fm_norm2/(long double)samples;
-//   PerpNorm2     = m_perp_norm2/(long double)samples;
-//   ParNorm2      = m_par_norm2/(long double)samples;
-//   CombinedNorm2 = m_combined_norm2/(long double)samples;
-//
-//   FMNorm4       = m_fm_norm4/(long double)samples;
-//   PerpNorm4     = m_perp_norm4/(long double)samples;
-//   ParNorm4      = m_par_norm4/(long double)samples;
-//   CombinedNorm4 = m_combined_norm4/(long double)samples;
-// }
+void Triangular::PrintThermalObservables(std::ostream &out){
+  long double ns = NumSites;
+  long double ns2 = pow(NumSites,2);
+  Vector3LD whoa;
+  out << std::setprecision(14);
+  out << "-------------------------------Thermal-averaged observables-----------------------------\n";
+  out << "Energy cumulants: <E>, <E2> \n";
+  out << EBar/ns << " " << E2Bar/ns2 << "\n";
+  out << "Magnetic order parameter: M(Q) = 1/N sqrt( sum_ij exp[-i Q.(Ri - Rj)] <Si^a Sj^a> )\n";
+  out << "             Quad             Octo\n";
+  for(uint j=0; j <SSFPoints.size(); j++){
+    whoa = SSfBar[j]/ns2;
+    out << SSFPointsLabel[j] << sqrt(whoa(0) +whoa(2)) << " " << sqrt(whoa(1))  << endl;
+  }
+}
