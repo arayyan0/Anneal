@@ -26,8 +26,8 @@ void MonteCarloStatistics::WriteStatisticsFile()
   outfile.close();
 }
 
-// MonteCarlo::MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
-MonteCarlo::MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
+MonteCarlo::MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
+// MonteCarlo::MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
                        const bool& recordstats, const int& mpirank, const int& mpisize):
 Lattice(lattice), FinalT(final_T),OverrelaxMCRatio(num_overrelax_ratio), RecordStats(recordstats),
 MPIRank(mpirank), MPISize(mpisize)
@@ -191,8 +191,7 @@ void MonteCarlo::PerformFiniteT(std::ostream &out, const uint& num_thermal_sweep
   // InitializeRandomSpins();
   CalculateClusterEnergy();
 
-  MonteCarloStatistics statistics(RecordStats, 1, num_thermal_sweeps);
-
+  //thermalization
   uint single_sweep_accept, index;          //sweep counter
   for (uint sweep = 0; sweep < num_thermal_sweeps; sweep++){
     for (uint i=0;i<OverrelaxMCRatio;i++){
@@ -200,20 +199,43 @@ void MonteCarlo::PerformFiniteT(std::ostream &out, const uint& num_thermal_sweep
     }
     single_sweep_accept=0; // reset total acceptance per sweep
     MetropolisSweep(FinalT,single_sweep_accept); //perform Metropolis sweeps
-    if (RecordStats == true){//save statistics
-      index = sweep;
-      statistics.EnergyDensity[index] = (double)Lattice.ClusterEnergy/(double)Lattice.NumSites;
-      statistics.AcceptanceRate[index] = (double)single_sweep_accept/(double)Lattice.NumSites;
-    }
   }
 
-  if (RecordStats == true){
-    statistics.WriteStatisticsFile();
+  //measurement sweeps
+  long double ebar = 0;
+  long double e2bar = 0;
+  vector<Vector3LD> ssfbar(Lattice.SSFPoints.size(), Vector3LD::Zero());
+  uint n_samples = num_measuring_sweeps/sampling_time;
+  for (uint sweep = 0; sweep < num_measuring_sweeps; sweep++){
+    for (uint i=0;i<OverrelaxMCRatio;i++){
+      OverrelaxationSweep(); //perform overrelaxation sweeps
+    }
+    single_sweep_accept=0; // reset total acceptance per sweep
+    MetropolisSweep(FinalT,single_sweep_accept); //perform Metropolis sweeps
+
+    //measuring in this loop
+    if (sweep%sampling_time==0){
+      ebar  += Lattice.ClusterEnergy;
+      e2bar += pow(Lattice.ClusterEnergy,2);
+
+      Lattice.CalculateClusterOP();
+
+      for (uint kk=0; kk < Lattice.SSFPoints.size(); kk++){
+        ssfbar[kk] += Lattice.ClusterSSf[kk];
+      }
+
+    }
+  }
+  Lattice.EBar  = ebar/n_samples;
+  Lattice.E2Bar = e2bar/n_samples;
+  for (uint jj=0; jj < Lattice.SSFPoints.size(); jj++){
+    Lattice.SSfBar.push_back(ssfbar[jj]/n_samples);
   }
 
   PrintConfiguration(out);
   Lattice.CalculateClusterOP();
   Lattice.PrintOP(out);
+  Lattice.PrintThermalObservables(out);
 }
 
 void MonteCarlo::PrintConfiguration(std::ostream &out){

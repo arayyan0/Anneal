@@ -19,12 +19,12 @@ private:
 class MonteCarlo
 {
   public:
-    // Triangular Lattice;
-    // MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
-               // const bool& recordstats, const int& mpirank, const int& mpisize);
-    Honeycomb Lattice;
-    MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
-               const bool& recordstats,  const int& mpirank, const int& mpisize);
+    Triangular Lattice;
+    MonteCarlo(Triangular& lattice, const double& final_T, const uint& num_overrelax_ratio,
+               const bool& recordstats, const int& mpirank, const int& mpisize);
+    // Honeycomb Lattice;
+    // MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
+               // const bool& recordstats,  const int& mpirank, const int& mpisize);
 
     void PerformSimulation(std::ostream &out);
     void PerformSimulatedAnnealing(std::ostream &out, const double& cooling_rate,
