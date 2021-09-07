@@ -57,6 +57,7 @@ void Honeycomb::CreateRhombicCluster()
   Vector3LD some_vec;
   int higher_x, higher_y, lower_x, lower_y;
   uint flat_index;
+  uint nn1, nn2, nn3, nn4, nn5, nn6;
   Vector2LD position;
   for (int y=0; y<L2; ++y){
     for (int x=0; x<L1; ++x){ //both x,y should NOT be ints as they may become negative
@@ -75,18 +76,25 @@ void Honeycomb::CreateRhombicCluster()
         position = x*Translation1+y*Translation2+SublatticeOffset[sub];
         BravaisIndicesToFlat(sub, x, NumSublattices, y, L1*NumSublattices, flat_index);
 
+        BravaisIndicesToFlat(1, lower_x, NumSublattices,       y, L1*NumSublattices, nn1);
+        BravaisIndicesToFlat(1,       x, NumSublattices, lower_y, L1*NumSublattices, nn2);
+        BravaisIndicesToFlat(1,       x, NumSublattices,       y, L1*NumSublattices, nn3);
+        BravaisIndicesToFlat(0, higher_x, NumSublattices,        y, L1*NumSublattices, nn4);
+        BravaisIndicesToFlat(0,        x, NumSublattices, higher_y, L1*NumSublattices, nn5);
+        BravaisIndicesToFlat(0,        x, NumSublattices,        y, L1*NumSublattices, nn6);
+
         Cluster[flat_index] = some_vec;
         if (flat_index%NumSublattices==0){
           ClusterInfo[flat_index+0] = {
-                                      {std::make_tuple(lower_x,       y, 1, h1, x-1,   y),
-                                       std::make_tuple(      x, lower_y, 1, h2,   x, y-1),
-                                       std::make_tuple(      x,       y, 1, h3,   x,   y)},
+                                      {std::make_tuple(lower_x,       y, 1, h1, x-1,   y, nn1),
+                                       std::make_tuple(      x, lower_y, 1, h2,   x, y-1, nn2),
+                                       std::make_tuple(      x,       y, 1, h3,   x,   y, nn3)},
                                        position
                                      };
           ClusterInfo[flat_index+1] = {
-                                      {std::make_tuple(higher_x,        y, 0, h1, x+1,   y),
-                                       std::make_tuple(       x, higher_y, 0, h2,   x, y+1),
-                                       std::make_tuple(       x,        y, 0, h3,   x,   y)},
+                                      {std::make_tuple(higher_x,        y, 0, h1, x+1,   y, nn4),
+                                       std::make_tuple(       x, higher_y, 0, h2,   x, y+1, nn5),
+                                       std::make_tuple(       x,        y, 0, h3,   x,   y, nn6)},
                                        position
                                      };
         }
@@ -127,6 +135,7 @@ void Honeycomb::CreateRectangularCluster()
   int higher_x, higher_y, lower_x, lower_y;
   uint flat_index;
   Vector2LD position;
+  uint nn1, nn2, nn3, nn4, nn5, nn6, nn7, nn8, nn9, nn10, nn11, nn12;
   for (int y=0; y<L2; ++y){
     for (int x=0; x<L1; ++x){
       for (uint sub =0; sub<NumSublattices; ++sub){
@@ -144,30 +153,43 @@ void Honeycomb::CreateRectangularCluster()
         position = x*Translation1+y*Translation2+SublatticeOffset[sub];
         BravaisIndicesToFlat(sub, x, NumSublattices, y, L1*NumSublattices, flat_index);
 
+        BravaisIndicesToFlat(1, lower_x, NumSublattices,       y, L1*NumSublattices, nn1);
+        BravaisIndicesToFlat(3,       x, NumSublattices, lower_y, L1*NumSublattices, nn2);
+        BravaisIndicesToFlat(1,       x, NumSublattices,       y, L1*NumSublattices, nn3);
+        BravaisIndicesToFlat(0, higher_x, NumSublattices, y, L1*NumSublattices, nn4);
+        BravaisIndicesToFlat(2,        x, NumSublattices, y, L1*NumSublattices, nn5);
+        BravaisIndicesToFlat(0,        x, NumSublattices, y, L1*NumSublattices, nn6);
+        BravaisIndicesToFlat(3,        x, NumSublattices, y, L1*NumSublattices, nn7);
+        BravaisIndicesToFlat(1,        x, NumSublattices, y, L1*NumSublattices, nn8);
+        BravaisIndicesToFlat(3, higher_x, NumSublattices, y, L1*NumSublattices, nn9);
+        BravaisIndicesToFlat(2,       x, NumSublattices,        y, L1*NumSublattices, nn10);
+        BravaisIndicesToFlat(0,       x, NumSublattices, higher_y, L1*NumSublattices, nn11);
+        BravaisIndicesToFlat(2, lower_x, NumSublattices,        y, L1*NumSublattices, nn12);
+
         Cluster[flat_index] = some_vec;
         if (flat_index%NumSublattices==0){
           ClusterInfo[flat_index+0] = {
-                                      {std::make_tuple(lower_x,       y, 1, h1, x-1,   y),
-                                       std::make_tuple(      x, lower_y, 3, h2,   x, y-1),
-                                       std::make_tuple(      x,       y, 1, h3,   x,   y)},
+                                      {std::make_tuple(lower_x,       y, 1, h1, x-1,   y,nn1),
+                                       std::make_tuple(      x, lower_y, 3, h2,   x, y-1,nn2),
+                                       std::make_tuple(      x,       y, 1, h3,   x,   y,nn3)},
                                        position
                                      };
           ClusterInfo[flat_index+1] = {
-                                      {std::make_tuple(higher_x,        y, 0, h1, x+1,   y),
-                                       std::make_tuple(       x,        y, 2, h2,   x,   y),
-                                       std::make_tuple(       x,        y, 0, h3,   x,   y)},
+                                      {std::make_tuple(higher_x,        y, 0, h1, x+1,   y,nn4),
+                                       std::make_tuple(       x,        y, 2, h2,   x,   y,nn5),
+                                       std::make_tuple(       x,        y, 0, h3,   x,   y,nn6)},
                                        position
                                      };
           ClusterInfo[flat_index+2] = {
-                                      {std::make_tuple(       x,       y, 3, h1,   x,   y),
-                                       std::make_tuple(       x,       y, 1, h2,   x,   y),
-                                       std::make_tuple(higher_x,       y, 3, h3, x+1,   y)},
+                                      {std::make_tuple(       x,       y, 3, h1,   x,   y,nn7),
+                                       std::make_tuple(       x,       y, 1, h2,   x,   y,nn8),
+                                       std::make_tuple(higher_x,       y, 3, h3, x+1,   y,nn9)},
                                        position
                                      };
           ClusterInfo[flat_index+3] = {
-                                      {std::make_tuple(       x,        y, 2, h1,   x,   y),
-                                       std::make_tuple(       x, higher_y, 0, h2,   x, y+1),
-                                       std::make_tuple( lower_x,        y, 2, h3, x-1,   y)},
+                                      {std::make_tuple(       x,        y, 2, h1,   x,   y,nn10),
+                                       std::make_tuple(       x, higher_y, 0, h2,   x, y+1,nn11),
+                                       std::make_tuple( lower_x,        y, 2, h3, x-1,   y,nn12)},
                                        position
                                      };
         }
@@ -193,6 +215,7 @@ void Honeycomb::CreateC3Cluster()
   int higher_x, higher_y, lower_x, lower_y;
   uint flat_index;
   Vector2LD position;
+  uint nn1, nn2, nn3, nn4, nn5, nn6, nn7, nn8, nn9, nn10, nn11, nn12, nn13, nn14, nn15, nn16, nn17, nn18;
   for (int y=0; y<L2; ++y){
     for (int x=0; x<L1; ++x){
       for (uint sub =0; sub<NumSublattices; ++sub){
@@ -210,42 +233,61 @@ void Honeycomb::CreateC3Cluster()
         position = x*Translation1+y*Translation2+SublatticeOffset[sub];
         BravaisIndicesToFlat(sub, x, NumSublattices, y, L1*NumSublattices, flat_index);
 
+        BravaisIndicesToFlat(1,       x, NumSublattices,       y, L1*NumSublattices, nn1);
+        BravaisIndicesToFlat(5,       x, NumSublattices,       y, L1*NumSublattices, nn2);
+        BravaisIndicesToFlat(3, lower_x, NumSublattices, lower_y, L1*NumSublattices, nn3);
+        BravaisIndicesToFlat(0, x, NumSublattices,       y, L1*NumSublattices, nn4);
+        BravaisIndicesToFlat(4, x, NumSublattices, lower_y, L1*NumSublattices, nn5);
+        BravaisIndicesToFlat(2, x, NumSublattices,       y, L1*NumSublattices, nn6);
+        BravaisIndicesToFlat(5, higher_x, NumSublattices, y, L1*NumSublattices, nn7);
+        BravaisIndicesToFlat(3,        x, NumSublattices, y, L1*NumSublattices, nn8);
+        BravaisIndicesToFlat(1,        x, NumSublattices, y, L1*NumSublattices, nn9);
+        BravaisIndicesToFlat(4,        x, NumSublattices,        y, L1*NumSublattices, nn10);
+        BravaisIndicesToFlat(2,        x, NumSublattices,        y, L1*NumSublattices, nn11);
+        BravaisIndicesToFlat(0, higher_x, NumSublattices, higher_y, L1*NumSublattices, nn12);
+        BravaisIndicesToFlat(3, x, NumSublattices,        y, L1*NumSublattices, nn13);
+        BravaisIndicesToFlat(1, x, NumSublattices, higher_y, L1*NumSublattices, nn14);
+        BravaisIndicesToFlat(5, x, NumSublattices,        y, L1*NumSublattices, nn15);
+        BravaisIndicesToFlat(2, lower_x, NumSublattices, y, L1*NumSublattices, nn16);
+        BravaisIndicesToFlat(0,       x, NumSublattices, y, L1*NumSublattices, nn17);
+        BravaisIndicesToFlat(4,       x, NumSublattices, y, L1*NumSublattices, nn18);
+
         Cluster[flat_index] = some_vec;
         if (flat_index%NumSublattices==0){
           ClusterInfo[flat_index+0] = {
-                                      {std::make_tuple(      x,       y, 1, HamInfo.Hx,   x,   y),
-                                       std::make_tuple(      x,       y, 5, HamInfo.Hy,   x,   y),
-                                       std::make_tuple(lower_x, lower_y, 3, HamInfo.Hz, x-1, y-1)},
+                                      {std::make_tuple(      x,       y, 1, HamInfo.Hx,   x,   y,nn1),
+                                       std::make_tuple(      x,       y, 5, HamInfo.Hy,   x,   y,nn2),
+                                       std::make_tuple(lower_x, lower_y, 3, HamInfo.Hz, x-1, y-1,nn3)},
                                        position
                                      };
           ClusterInfo[flat_index+1] = {
-                                      {std::make_tuple(       x,        y, 0, HamInfo.Hx,   x,   y),
-                                       std::make_tuple(       x,  lower_y, 4, HamInfo.Hy,   x, y-1),
-                                       std::make_tuple(       x,        y, 2, HamInfo.Hz,   x,   y)},
+                                      {std::make_tuple(       x,        y, 0, HamInfo.Hx,   x,   y,nn4),
+                                       std::make_tuple(       x,  lower_y, 4, HamInfo.Hy,   x, y-1,nn5),
+                                       std::make_tuple(       x,        y, 2, HamInfo.Hz,   x,   y,nn6)},
                                        position
                                      };
           ClusterInfo[flat_index+2] = {
-                                      {std::make_tuple(higher_x,       y, 5, HamInfo.Hx, x+1,   y),
-                                       std::make_tuple(       x,       y, 3, HamInfo.Hy,   x,   y),
-                                       std::make_tuple(       x,       y, 1, HamInfo.Hz,   x,   y)},
+                                      {std::make_tuple(higher_x,       y, 5, HamInfo.Hx, x+1,   y,nn7),
+                                       std::make_tuple(       x,       y, 3, HamInfo.Hy,   x,   y,nn8),
+                                       std::make_tuple(       x,       y, 1, HamInfo.Hz,   x,   y,nn9)},
                                        position
                                      };
           ClusterInfo[flat_index+3] = {
-                                      {std::make_tuple(       x,        y, 4, HamInfo.Hx,   x,   y),
-                                       std::make_tuple(       x,        y, 2, HamInfo.Hy,   x,   y),
-                                       std::make_tuple(higher_x, higher_y, 0, HamInfo.Hz, x+1, y+1)},
+                                      {std::make_tuple(       x,        y, 4, HamInfo.Hx,   x,   y,nn10),
+                                       std::make_tuple(       x,        y, 2, HamInfo.Hy,   x,   y,nn11),
+                                       std::make_tuple(higher_x, higher_y, 0, HamInfo.Hz, x+1, y+1,nn12)},
                                        position
                                      };
           ClusterInfo[flat_index+4] = {
-                                     {std::make_tuple(       x,       y, 3, HamInfo.Hx,   x,   y),
-                                      std::make_tuple(       x,higher_y, 1, HamInfo.Hy,   x, y+1),
-                                      std::make_tuple(       x,       y, 5, HamInfo.Hz,   x,   y)},
+                                     {std::make_tuple(       x,       y, 3, HamInfo.Hx,   x,   y,nn13),
+                                      std::make_tuple(       x,higher_y, 1, HamInfo.Hy,   x, y+1,nn14),
+                                      std::make_tuple(       x,       y, 5, HamInfo.Hz,   x,   y,nn15)},
                                       position
                                     };
           ClusterInfo[flat_index+5] = {
-                                     {std::make_tuple( lower_x,        y, 2, HamInfo.Hx, x-1,   y),
-                                      std::make_tuple(       x,        y, 0, HamInfo.Hy,   x,   y),
-                                      std::make_tuple(       x,        y, 4, HamInfo.Hz,   x,   y)},
+                                     {std::make_tuple( lower_x,        y, 2, HamInfo.Hx, x-1,   y,nn16),
+                                      std::make_tuple(       x,        y, 0, HamInfo.Hy,   x,   y,nn17),
+                                      std::make_tuple(       x,        y, 4, HamInfo.Hz,   x,   y,nn18)},
                                       position
                                     };
         }
@@ -254,9 +296,10 @@ void Honeycomb::CreateC3Cluster()
   }
 }
 
-void Honeycomb::CreateKekuleCluster(){}      //to be implemented later
-void Honeycomb::CalculateClusterOP(){}       //to be implemented later
-void Honeycomb::PrintOP(std::ostream &out){} //to be implemented later
+void Honeycomb::CreateKekuleCluster(){}                      //to be implemented later
+void Honeycomb::CalculateClusterOP(){}                       //to be implemented later
+void Honeycomb::PrintOP(std::ostream &out){}                 //to be implemented later
+void Honeycomb::PrintThermalObservables(std::ostream &out){} //to be implemented later
 
 void Honeycomb::PrintLatticeParameters(std::ostream &out){
   out << "-------------------------Simulation Parameters-------------------------\n";
@@ -382,7 +425,7 @@ void Triangular::DebugHamiltonians(){
 void Triangular::CreateDefectPositions(){
   // only to be trusted for l1 = l2= 6*n!!
   // only to be trusted for NumDefects = 1,3,9 only!
-
+  uint flat;
   double pos = (double)L1/6.0;
   if (NumDefects >= 1){
     Defects[0] = std::make_tuple(3*(uint)pos,3*(uint)pos,0);
@@ -413,6 +456,7 @@ void Triangular::CreateRhombicCluster()
   int higher_x, higher_y, lower_x, lower_y;
   uint flat_index;
   Vector2LD position;
+  uint nn1, nn2, nn3, nn4, nn5, nn6;
   for (int y=0; y<L2; ++y){
     for (int x=0; x<L1; ++x){
       for (uint sub =0; sub<NumSublattices; ++sub){
@@ -429,13 +473,21 @@ void Triangular::CreateRhombicCluster()
         // cout << lower_x << " " << lower_y << endl;
         position = x*Translation1+y*Translation2+SublatticeOffset[sub];
         BravaisIndicesToFlat(sub, x, NumSublattices, y, L1*NumSublattices, flat_index);
+
+        BravaisIndicesToFlat(sub, higher_x, NumSublattices,        y, L1*NumSublattices, nn1);
+        BravaisIndicesToFlat(sub,        x, NumSublattices, higher_y, L1*NumSublattices, nn2);
+        BravaisIndicesToFlat(sub,  lower_x, NumSublattices, higher_y, L1*NumSublattices, nn3);
+        BravaisIndicesToFlat(sub,  lower_x, NumSublattices,        y, L1*NumSublattices, nn4);
+        BravaisIndicesToFlat(sub,        x, NumSublattices,  lower_y, L1*NumSublattices, nn5);
+        BravaisIndicesToFlat(sub, higher_x, NumSublattices,  lower_y, L1*NumSublattices, nn6);
+
         ClusterInfo[flat_index] = {
-                                    {std::make_tuple(higher_x,        y, sub, HamInfo.Hz, x+1, y  ),
-                                     std::make_tuple(       x, higher_y, sub, HamInfo.Hy, x  , y+1),
-                                     std::make_tuple( lower_x, higher_y, sub, HamInfo.Hx, x-1, y+1),
-                                     std::make_tuple( lower_x,        y, sub, HamInfo.Hz, x-1, y  ),
-                                     std::make_tuple(       x,  lower_y, sub, HamInfo.Hy, x  , y-1),
-                                     std::make_tuple(higher_x,  lower_y, sub, HamInfo.Hx, x+1, y-1)},
+                                    {std::make_tuple(higher_x,        y, sub, HamInfo.Hz, x+1, y  , nn1),
+                                     std::make_tuple(       x, higher_y, sub, HamInfo.Hy, x  , y+1, nn2),
+                                     std::make_tuple( lower_x, higher_y, sub, HamInfo.Hx, x-1, y+1, nn3),
+                                     std::make_tuple( lower_x,        y, sub, HamInfo.Hz, x-1, y  , nn4),
+                                     std::make_tuple(       x,  lower_y, sub, HamInfo.Hy, x  , y-1, nn5),
+                                     std::make_tuple(higher_x,  lower_y, sub, HamInfo.Hx, x+1, y-1, nn6)},
                                      position
         };
         Cluster[flat_index] = some_vec;
@@ -556,7 +608,7 @@ void Triangular::PrintThermalObservables(std::ostream &out){
   out << "-------------------------------Thermal-averaged observables-----------------------------\n";
   out << "Energy cumulants: <E>, <E2> \n";
   out << EBar/ns << " " << E2Bar/ns2 << "\n";
-  out << "Magnetic order parameter: M(Q) = 1/N sqrt( sum_ij exp[-i Q.(Ri - Rj)] <Si^a Sj^a> )\n";
+  out << "Magnetic order parameter:\n";
   out << "             Quad             Octo\n";
   for(uint j=0; j <SSFPoints.size(); j++){
     whoa = SSfBar[j]/ns2;

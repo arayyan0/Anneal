@@ -10,7 +10,7 @@
 struct SiteInfo2D
 {
   //nn_1, nn_2, sub, bond-dep Hamiltonian, real_nn_1, real_nn_2 (real_sub = sub)
-  vector<std::tuple<uint, uint, uint, Matrix3LD, int, int>> NearestNeighbours;
+  vector<std::tuple<uint, uint, uint, Matrix3LD, int, int, uint>> NearestNeighbours;
   Vector2LD Position;
 };
 
@@ -23,6 +23,12 @@ class Honeycomb
     const Vector3LD hField;
     const uint L1, L2, NumSublattices;
     long double ClusterEnergy;
+    vector<Vector3LD> ClusterSSf;
+
+    long double EBar, E2Bar;
+    vector<Vector3LD> SSfBar;
+
+    vector<Vector2LD> SSFPoints;
 
     Honeycomb(const uint& hc_or_kek, const uint& type,
               const uint& num_sublattices, const uint& l1, const uint& l2,
@@ -31,6 +37,7 @@ class Honeycomb
     void PrintHamiltonianParameters(std::ostream &out);
     void CalculateClusterOP();
     void PrintOP(std::ostream &out);
+    void PrintThermalObservables(std::ostream &out);
 
   private:
     Hamiltonia HamInfo;
@@ -41,6 +48,7 @@ class Honeycomb
     Vector2LD Translation1, Translation2;
     LATTICE_DIR;
     RECIP_DIR;
+
 
     void CreateRhombicCluster();
     void CreateRectangularCluster();
