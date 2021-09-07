@@ -62,7 +62,7 @@ long double Lorentzian(const long double& r, const long double& l);
 
 // long double Gaussian(const long double& s, const long double& x, const long double& l);
 
-Vector3LD SphericalAnglesToCubic(const long double& theta, const long double& phi);
+void SphericalAnglesToCubic(const long double& theta, const long double& phi, Vector3LD& some_spin);
 
 
 #endif // COMMON_HPP

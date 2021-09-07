@@ -26,9 +26,9 @@ long double Lorentzian(const long double& r, const long double& l){
 //   return result;
 // }
 
-Vector3LD SphericalAnglesToCubic(const long double& theta, const long double& phi)
+void SphericalAnglesToCubic(const long double& theta, const long double& phi,
+                                 Vector3LD& some_spin)
 {
   long double s = sin(theta);
-  Vector3LD v(s*cos(phi), s*sin(phi), cos(theta));
-  return v;
+  some_spin <<  s*cos(phi), s*sin(phi), cos(theta);
 }
