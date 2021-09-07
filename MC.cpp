@@ -44,7 +44,8 @@ MPIRank(mpirank), MPISize(mpisize)
 
 void MonteCarlo::InitializeFMSpins(const long double& theta, const long double& phi)
 {
-  Vector3LD v = SphericalAnglesToCubic(theta, phi);
+  Vector3LD v;
+  SphericalAnglesToCubic(theta, phi, v);
   for (uint flat_index=0; flat_index<Lattice.NumSites; ++flat_index){
     Lattice.Cluster[flat_index]= v;
   }
@@ -60,10 +61,8 @@ void MonteCarlo::InitializeRandomSpins()
 void MonteCarlo::MolecularField(const uint& flat_index, Vector3LD& molec)
 {
   Vector3LD v = Vector3LD::Zero();
-  uint flat_index_nn;
   for (auto &j : Lattice.ClusterInfo[flat_index].NearestNeighbours){
-    BravaisIndicesToFlat(get<2>(j), get<0>(j), Lattice.NumSublattices, get<1>(j), Lattice.L1*Lattice.NumSublattices, flat_index_nn);
-    v += -Lattice.Cluster[flat_index_nn].transpose()*get<3>(j);
+    v += -Lattice.Cluster[get<6>(j)].transpose()*get<3>(j);
   }
   molec = v.transpose()+ Lattice.hField.transpose();
 }
@@ -271,10 +270,9 @@ void MonteCarlo::PrintSimulationData(std::ostream &out,
 
 void MonteCarlo::SpherePointPicker(Vector3LD& some_spin)
 {
-  long double u = UnitInterval(RNG);
-  long double v = UnitInterval(RNG);
-  long double theta = acos(2*u-1); long double phi = 2*pi*v;
-  some_spin =SphericalAnglesToCubic(theta,phi);
+  long double theta = acos(2*UnitInterval(RNG)-1);
+  long double phi = 2*pi*UnitInterval(RNG);
+  SphericalAnglesToCubic(theta,phi, some_spin);
 }
 
 void MonteCarlo::OverrelaxationSweep(){
