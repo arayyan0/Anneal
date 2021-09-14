@@ -2,11 +2,19 @@
 
 int main(int argc, char *argv[])
 {
-  //initiate MPI
-  MPI_Init(&argc, &argv);
+  uint simulation = 0; //0 for simulated annealing, 1 for finite T
+
   int mpisize, mpirank;
-  MPI_Comm_size(MPI_COMM_WORLD, &mpisize);
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpirank);
+  if (simulation == 0){
+    //initiate MPI
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpisize);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpirank);
+  } else if (simulation == 1){
+    //do not initiate MPI
+    mpisize = 1;
+    mpirank = 0;
+  }
 
   const uint hc_or_kek = 0; //Honeycomb or Kekule
   const uint cluster_type = strtol(argv[1], NULL, 10);
@@ -22,8 +30,6 @@ int main(int argc, char *argv[])
   Hamiltonia hams(phi, g, a, h_magnitude, h_direction);
 
   Honeycomb honey(hc_or_kek, cluster_type, num_sublattices, l1, l2, hams);
-
-  uint simulation = 0; //0 for simulated annealing, 1 for finite T (to be implemented)
 
   if (simulation == 0){
     const double cooling_rate = 0.9;
@@ -43,6 +49,7 @@ int main(int argc, char *argv[])
     mc.PerformSimulatedAnnealing(which, cooling_rate, initial_T, num_SA_steps,
                                                                  num_MC_sweeps,
                                                                  num_D_sweeps);
+    MPI_Finalize();
   } else if (simulation == 1){
     const long double final_T = strtod(argv[8], NULL);
     const uint num_overrelax_ratio = 5;
@@ -58,7 +65,6 @@ int main(int argc, char *argv[])
     const uint num_sweeps_measurement = 1*(1e4)*sampling_time;
     mc.PerformFiniteT(which, num_therm_sweeps, num_sweeps_measurement, sampling_time);
   }
-  MPI_Finalize();
 
   return 0;
 }
