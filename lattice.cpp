@@ -14,7 +14,7 @@ Honeycomb::Honeycomb(const uint& hc_or_kek, const uint& type,
 {
   SublatticeOffset.resize(NumSublattices);
 
-  Cluster.resize(NumSites);
+  Cluster = Eigen::Matrix<long double, 3, Eigen::Dynamic>::Zero(3, NumSites);
   ClusterInfo.resize(NumSites);
 
   if (HcOrKekule == 0){
@@ -83,7 +83,6 @@ void Honeycomb::CreateRhombicCluster()
         BravaisIndicesToFlat(0,        x, NumSublattices, higher_y, L1*NumSublattices, nn5);
         BravaisIndicesToFlat(0,        x, NumSublattices,        y, L1*NumSublattices, nn6);
 
-        Cluster[flat_index] = some_vec;
         if (flat_index%NumSublattices==0){
           ClusterInfo[flat_index+0] = {
                                       {std::make_tuple(lower_x,       y, 1, h1, x-1,   y, nn1),
@@ -166,7 +165,6 @@ void Honeycomb::CreateRectangularCluster()
         BravaisIndicesToFlat(0,       x, NumSublattices, higher_y, L1*NumSublattices, nn11);
         BravaisIndicesToFlat(2, lower_x, NumSublattices,        y, L1*NumSublattices, nn12);
 
-        Cluster[flat_index] = some_vec;
         if (flat_index%NumSublattices==0){
           ClusterInfo[flat_index+0] = {
                                       {std::make_tuple(lower_x,       y, 1, h1, x-1,   y,nn1),
@@ -252,7 +250,6 @@ void Honeycomb::CreateC3Cluster()
         BravaisIndicesToFlat(0,       x, NumSublattices, y, L1*NumSublattices, nn17);
         BravaisIndicesToFlat(4,       x, NumSublattices, y, L1*NumSublattices, nn18);
 
-        Cluster[flat_index] = some_vec;
         if (flat_index%NumSublattices==0){
           ClusterInfo[flat_index+0] = {
                                       {std::make_tuple(      x,       y, 1, HamInfo.Hx,   x,   y,nn1),
@@ -343,7 +340,8 @@ DefectLengthScale(defect_lengthscale)
 
   SublatticeOffset.resize(NumSublattices);
 
-  Cluster.resize(NumSites);
+  Cluster = Eigen::Matrix<long double, 3, Eigen::Dynamic>::Zero(3, NumSites);
+
   ClusterInfo.resize(NumSites);
   CreateRhombicCluster();
 
@@ -453,6 +451,7 @@ void Triangular::CreateRhombicCluster()
   SublatticeOffset[0] = (Translation1+Translation2)/3.0;
 
   Vector3LD some_vec;
+  some_vec << 0, 1, 0;
   int higher_x, higher_y, lower_x, lower_y;
   uint flat_index;
   Vector2LD position;
@@ -490,7 +489,7 @@ void Triangular::CreateRhombicCluster()
                                      std::make_tuple(higher_x,  lower_y, sub, HamInfo.Hx, x+1, y-1, nn6)},
                                      position
         };
-        Cluster[flat_index] = some_vec;
+
       }
     }
   }
@@ -523,7 +522,7 @@ void Triangular::AddDefectHamiltonia()
                                                 };
   for (auto& indices:Defects){
     rdefect = get<0>(indices)*Translation1+get<1>(indices)*Translation2+SublatticeOffset[get<2>(indices)]; //+
-    for (uint i=0;i<Cluster.size();i++){
+    for (uint i=0;i<NumSites;i++){
     // for (uint i=0;i<1;i++){
       rsite = ClusterInfo[i].Position;
       // cout << rsite.transpose() << endl;
@@ -554,24 +553,24 @@ void Triangular::AddDefectHamiltonia()
 
 void Triangular::CalculateClusterOP()
 {
-  Vector3LD SS_ij;
-  Vector2LD r_ij;
-
-  Vector3LDc SS_q;
-
-  vector<Vector3LD> clusterssf(SSFPoints.size(),Vector3LD::Zero());
-  for (uint q=0; q<SSFPoints.size(); q++){
-    SS_q = Vector3LDc::Zero();
-    for (uint i =0; i<NumSites;i++){
-      for (uint j =0; j<NumSites;j++){
-        SS_ij = Cluster[i].cwiseProduct(Cluster[j]);
-        r_ij = ClusterInfo[i].Position - ClusterInfo[j].Position;
-        SS_q += std::polar((long double)1.0,-SSFPoints[q].dot(r_ij))*SS_ij;
-      }
-    }
-    clusterssf[q]=SS_q.cwiseAbs();
-  }
-  ClusterSSf = clusterssf;
+  // Vector3LD SS_ij;
+  // Vector2LD r_ij;
+  //
+  // Vector3LDc SS_q;
+  //
+  // vector<Vector3LD> clusterssf(SSFPoints.size(),Vector3LD::Zero());
+  // for (uint q=0; q<SSFPoints.size(); q++){
+  //   SS_q = Vector3LDc::Zero();
+  //   for (uint i =0; i<NumSites;i++){
+  //     for (uint j =0; j<NumSites;j++){
+  //       SS_ij = Cluster[i].cwiseProduct(Cluster[j]);
+  //       r_ij = ClusterInfo[i].Position - ClusterInfo[j].Position;
+  //       SS_q += std::polar((long double)1.0,-SSFPoints[q].dot(r_ij))*SS_ij;
+  //     }
+  //   }
+  //   clusterssf[q]=SS_q.cwiseAbs();
+  // }
+  // ClusterSSf = clusterssf;
 }
 
 void Triangular::PrintLatticeParameters(std::ostream &out){

@@ -47,14 +47,16 @@ void MonteCarlo::InitializeFMSpins(const long double& theta, const long double& 
   Vector3LD v;
   SphericalAnglesToCubic(theta, phi, v);
   for (uint flat_index=0; flat_index<Lattice.NumSites; ++flat_index){
-    Lattice.Cluster[flat_index]= v;
+    Lattice.Cluster.col(flat_index) = v;
   }
 }
 
 void MonteCarlo::InitializeRandomSpins()
 {
+  Vector3LD v;
   for (uint flat_index=0; flat_index<Lattice.NumSites; ++flat_index){
-    SpherePointPicker(Lattice.Cluster[flat_index]);
+    SpherePointPicker(v);
+    Lattice.Cluster.col(flat_index) = v;
   }
 }
 
@@ -62,7 +64,7 @@ void MonteCarlo::MolecularField(const uint& flat_index, Vector3LD& molec)
 {
   Vector3LD v = Vector3LD::Zero();
   for (auto &j : Lattice.ClusterInfo[flat_index].NearestNeighbours){
-    v += -Lattice.Cluster[get<6>(j)].transpose()*get<3>(j);
+    v += -Lattice.Cluster.col(get<6>(j)).transpose()*get<3>(j);
   }
   molec = v.transpose()+ Lattice.hField.transpose();
 }
@@ -71,7 +73,7 @@ void MonteCarlo::CalculateLocalEnergy(const uint& flat_index, long double& energ
 {
   Vector3LD molec;
   MolecularField(flat_index, molec);
-  energy = -Lattice.Cluster[flat_index].dot(molec+ Lattice.hField);
+  energy = -Lattice.Cluster.col(flat_index).dot(molec+ Lattice.hField);
   // cout << energy<< endl;
 }
 
@@ -161,8 +163,8 @@ void MonteCarlo::PerformSimulatedAnnealing(std::ostream &out, const double& cool
       statistics.WriteStatisticsFile();
     }
     PrintConfiguration(out);
-    Lattice.CalculateClusterOP();
-    Lattice.PrintOP(out);
+    // Lattice.CalculateClusterOP();
+    // Lattice.PrintOP(out);
 
     // Vector3LD aaa = Vector3LD::Zero();
     // for (uint flat_index=0; flat_index<Lattice.NumSites; ++flat_index){
@@ -186,8 +188,8 @@ void MonteCarlo::PerformFiniteT(std::ostream &out, const uint& num_thermal_sweep
                sampling_time, num_D_sweeps);
   Lattice.PrintHamiltonianParameters(out);
 
-  InitializeFMSpins(pi/2.0,pi/2.0);
-  // InitializeRandomSpins();
+  // InitializeFMSpins(pi/2.0,pi/2.0);
+  InitializeRandomSpins();
   CalculateClusterEnergy();
 
   //thermalization
@@ -203,7 +205,7 @@ void MonteCarlo::PerformFiniteT(std::ostream &out, const uint& num_thermal_sweep
   //measurement sweeps
   long double ebar = 0;
   long double e2bar = 0;
-  vector<Vector3LD> ssfbar(Lattice.SSFPoints.size(), Vector3LD::Zero());
+  // vector<Vector3LD> ssfbar(Lattice.SSFPoints.size(), Vector3LD::Zero());
   uint n_samples = num_measuring_sweeps/sampling_time;
   for (uint sweep = 0; sweep < num_measuring_sweeps; sweep++){
     for (uint i=0;i<OverrelaxMCRatio;i++){
@@ -219,22 +221,22 @@ void MonteCarlo::PerformFiniteT(std::ostream &out, const uint& num_thermal_sweep
 
       Lattice.CalculateClusterOP();
 
-      for (uint kk=0; kk < Lattice.SSFPoints.size(); kk++){
-        ssfbar[kk] += Lattice.ClusterSSf[kk];
-      }
+      // for (uint kk=0; kk < Lattice.SSFPoints.size(); kk++){
+      //   ssfbar[kk] += Lattice.ClusterSSf[kk];
+      // }
 
     }
   }
   Lattice.EBar  = ebar/n_samples;
   Lattice.E2Bar = e2bar/n_samples;
-  for (uint jj=0; jj < Lattice.SSFPoints.size(); jj++){
-    Lattice.SSfBar.push_back(ssfbar[jj]/n_samples);
-  }
+  // for (uint jj=0; jj < Lattice.SSFPoints.size(); jj++){
+  //   Lattice.SSfBar.push_back(ssfbar[jj]/n_samples);
+  // }
 
   PrintConfiguration(out);
   Lattice.CalculateClusterOP();
-  Lattice.PrintOP(out);
-  Lattice.PrintThermalObservables(out);
+  // Lattice.PrintOP(out);
+  // Lattice.PrintThermalObservables(out);
 }
 
 void MonteCarlo::PrintConfiguration(std::ostream &out){
@@ -247,7 +249,8 @@ void MonteCarlo::PrintConfiguration(std::ostream &out){
     for (uint x=0; x<Lattice.L1; ++x){
       for (uint sub=0; sub<Lattice.NumSublattices;++sub){
         BravaisIndicesToFlat(sub, x, Lattice.NumSublattices, y, Lattice.L1*Lattice.NumSublattices, flat_index);
-        out << std::setprecision(14) << x << " " << y << " " << sub << " " << Lattice.Cluster[flat_index].transpose() << "\n";
+        // out << std::setprecision(14) << x << " " << y << " " << sub << " " << Lattice.Cluster[flat_index].transpose() << "\n";
+        out << std::setprecision(14) << x << " " << y << " " << sub << " " << Lattice.Cluster.col(flat_index).transpose() << "\n";
       }
     }
   }
@@ -276,40 +279,37 @@ void MonteCarlo::SpherePointPicker(Vector3LD& some_spin)
 }
 
 void MonteCarlo::OverrelaxationSweep(){
-  Vector3LD *chosen_site_ptr;
-  Vector3LD old_spin_vec,molec_field, spindiff;
+  Vector3LD v_before, molec_field;
   uint flat_index;
 
   uint flip=0;
   while (flip<Lattice.NumSites){
     flat_index = SiteDist(RNG);
-    chosen_site_ptr = &(Lattice.Cluster[flat_index]); //pointer to spin vector
-    old_spin_vec = *chosen_site_ptr;    //saving it to calculate the OP dynamically
+    v_before = Lattice.Cluster.col(flat_index); //pointer to spin vector
 
     MolecularField(flat_index, molec_field);
     molec_field.normalize();
     //overrelaxation step
-    *chosen_site_ptr = (-old_spin_vec + 2.0*molec_field.dot(old_spin_vec)*molec_field).normalized();
+    Lattice.Cluster.col(flat_index) = (-v_before + 2.0*molec_field.dot(v_before)*molec_field).normalized();
     flip++;
   }
 }
 
 void MonteCarlo::MetropolisSweep(const double& temperature, uint& single_sweep_accept)
 {
-  uint n1, n2, flat_index;
   long double old_local_energy, energydiff, new_local_energy;
-  Vector3LD *chosen_site_ptr;
-  Vector3LD spindiff,old_spin_at_chosen_site;
+  Vector3LD v_before, v_after;
+  uint flat_index;
 
   uint flip = 0;
   while (flip < Lattice.NumSites){
     flat_index = SiteDist(RNG);
-
+    v_before = Lattice.Cluster.col(flat_index);
     CalculateLocalEnergy(flat_index, old_local_energy);
 
-    chosen_site_ptr = &(Lattice.Cluster[flat_index]);
-    old_spin_at_chosen_site = *chosen_site_ptr;
-    SpherePointPicker(*chosen_site_ptr); //selection of angle, currently uniform update
+    SpherePointPicker(v_after); //selection of angle, currently uniform update
+    Lattice.Cluster.col(flat_index) = v_after;
+
     CalculateLocalEnergy(flat_index, new_local_energy);
     energydiff = new_local_energy-old_local_energy;
 
@@ -317,8 +317,9 @@ void MonteCarlo::MetropolisSweep(const double& temperature, uint& single_sweep_a
       ++single_sweep_accept;
       Lattice.ClusterEnergy+=energydiff;
     }else{
-      *chosen_site_ptr = old_spin_at_chosen_site;
+      Lattice.Cluster.col(flat_index) = v_before;
     }
+
     ++flip;
   }
 }
@@ -342,10 +343,8 @@ void MonteCarlo::ThermalizeConfiguration(const double& temp, const uint& max_swe
 void MonteCarlo::DeterministicSweeps(const uint& num_D_sweeps)
 {
   uint align;
-  uint uc_x, uc_y, flat_index;
-  Vector3LD *chosen_site_ptr;
+  uint flat_index;
 
-  Vector3LD old_spin_vec;
   Vector3LD molec_field;
 
   uint sweep = 0;
@@ -353,12 +352,9 @@ void MonteCarlo::DeterministicSweeps(const uint& num_D_sweeps)
     align = 0;
     while (align < Lattice.NumSites){
         flat_index = SiteDist(RNG);
-        chosen_site_ptr = &(Lattice.Cluster[flat_index]);
-
-        old_spin_vec = *chosen_site_ptr;
         MolecularField(flat_index, molec_field);
         molec_field.normalize();
-        *chosen_site_ptr = molec_field;
+        Lattice.Cluster.col(flat_index) = molec_field;
         align++;
     }
     sweep++;

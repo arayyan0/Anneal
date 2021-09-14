@@ -27,6 +27,7 @@ typedef Eigen::Matrix<long double, 2, 1> Vector2LD;
 typedef Eigen::Matrix<long double, 3, 1> Vector3LD;
 typedef Eigen::Matrix<std::complex<long double>, 3, 1> Vector3LDc;
 typedef Eigen::Matrix<long double, 3, 3> Matrix3LD;
+typedef Eigen::Matrix<long double, 3, Eigen::Dynamic> Matrix3XLD;
 
 typedef Eigen::Array<long double, Eigen::Dynamic, 1> ArrayXLD;
 typedef Eigen::Array<long double, Eigen::Dynamic, Eigen::Dynamic> ArrayXXLD;

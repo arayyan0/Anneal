@@ -18,7 +18,7 @@ class Honeycomb
 {
   public:
     const uint NumSites;
-    vector<Vector3LD> Cluster;
+    Matrix3XLD Cluster;
     vector<SiteInfo2D> ClusterInfo;
     const Vector3LD hField;
     const uint L1, L2, NumSublattices;
@@ -61,7 +61,7 @@ class Triangular
 {
   public:
     const uint NumSites;
-    vector<Vector3LD> Cluster;
+    Matrix3XLD Cluster;
     vector<SiteInfo2D> ClusterInfo;
     const Vector3LD hField;
     const uint L1, L2, NumSublattices;
