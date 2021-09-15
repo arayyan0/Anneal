@@ -9,59 +9,67 @@
 
 struct SiteInfo2D
 {
-  //nn_1, nn_2, sub, bond-dep Hamiltonian, real_nn_1, real_nn_2 (real_sub = sub)
-  vector<std::tuple<uint, uint, uint, Matrix3LD, int, int, uint>> NearestNeighbours;
-  Vector2LD Position;
+  //real_nn_1, real_nn_2 (real_sub = sub)
+  vector<std::tuple<int, int, uint>> NearestNeighbours;
 };
 
-class Honeycomb
-{
-  public:
-    const uint NumSites;
-    Matrix3XLD Cluster;
-    vector<SiteInfo2D> ClusterInfo;
-    const Vector3LD hField;
-    const uint L1, L2, NumSublattices;
-    long double ClusterEnergy;
-    vector<Vector3LD> ClusterSSf;
-
-    long double EBar, E2Bar;
-    vector<Vector3LD> SSfBar;
-
-    vector<Vector2LD> SSFPoints;
-
-    Honeycomb(const uint& hc_or_kek, const uint& type,
-              const uint& num_sublattices, const uint& l1, const uint& l2,
-              Hamiltonia& haminfo);
-    void PrintLatticeParameters(std::ostream &out);
-    void PrintHamiltonianParameters(std::ostream &out);
-    void CalculateClusterOP();
-    void PrintOP(std::ostream &out);
-    void PrintThermalObservables(std::ostream &out);
-
-  private:
-    Hamiltonia HamInfo;
-
-    const uint HcOrKekule, ClusterType, NumUnitCells;
-
-    vector<Vector2LD> SublatticeOffset;
-    Vector2LD Translation1, Translation2;
-    LATTICE_DIR;
-    RECIP_DIR;
-
-
-    void CreateRhombicCluster();
-    void CreateRectangularCluster();
-    void CreateC3Cluster();
-    void CreateKekuleCluster();
-
-};
+// class Honeycomb
+// {
+//   public:
+//     const uint NumSites;
+//     uint NumNeighbours;
+//     Matrix3XLD Cluster;
+//     Matrix2XLD Position;
+//     vector<SiteInfo2D> ClusterInfo;
+//     const Vector3LD hField;
+//     const uint L1, L2, NumSublattices;
+//     long double ClusterEnergy;
+//     vector<Vector3LD> ClusterSSf;
+//     vector<uint> FlatIndex;
+//     vector<Matrix3LD> Hamiltonians;
+//
+//     long double EBar, E2Bar;
+//     vector<Vector3LD> SSfBar;
+//
+//     vector<Vector2LD> SSFPoints;
+//
+//     Honeycomb(const uint& hc_or_kek, const uint& type,
+//               const uint& num_sublattices, const uint& l1, const uint& l2,
+//               Hamiltonia& haminfo);
+//     void PrintLatticeParameters(std::ostream &out);
+//     void PrintHamiltonianParameters(std::ostream &out);
+//     void CalculateClusterOP();
+//     void PrintOP(std::ostream &out);
+//     void PrintThermalObservables(std::ostream &out);
+//
+//   private:
+//     Hamiltonia HamInfo;
+//
+//     const uint HcOrKekule, ClusterType, NumUnitCells;
+//
+//     vector<Vector2LD> SublatticeOffset;
+//     Vector2LD Translation1, Translation2;
+//     LATTICE_DIR;
+//     RECIP_DIR;
+//
+//
+//     void CreateRhombicCluster();
+//     void CreateRectangularCluster();
+//     void CreateC3Cluster();
+//     void CreateKekuleCluster();
+//
+// };
 
 class Triangular
 {
   public:
     const uint NumSites;
+    uint NumNeighbours;
     Matrix3XLD Cluster;
+    Matrix2XLD Position;
+    vector<uint> FlatIndex;
+    vector<Matrix3LD> Hamiltonians;
+
     vector<SiteInfo2D> ClusterInfo;
     const Vector3LD hField;
     const uint L1, L2, NumSublattices;
@@ -73,6 +81,7 @@ class Triangular
     vector<Vector3LD> SSfBar;
 
     vector<Vector2LD> SSFPoints;
+    vector<VectorXLD> Phases;
 
     Triangular(const uint& l1, const uint& l2, const uint& num_sublattices,
                      const uint& num_defects,
@@ -94,11 +103,11 @@ class Triangular
     LATTICE_DIR;
     RECIP_DIR;
     SYM_DIR;
+    uint ClusterType;
 
     vector<std::string> SSFPointsLabel;
 
-    //nn_1, nn_2, sub
-    vector<std::tuple<uint,uint,uint>> Defects;
+    vector<uint> Defects;
     const long double DefectQuad, DefectOcto, DefectLengthScale;
     uint NumDefects;
 

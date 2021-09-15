@@ -24,7 +24,7 @@ class MonteCarlo
                const bool& recordstats, const int& mpirank, const int& mpisize);
     // Honeycomb Lattice;
     // MonteCarlo(Honeycomb& lattice, const double& final_T, const uint& num_overrelax_ratio,
-               // const bool& recordstats,  const int& mpirank, const int& mpisize);
+    //            const bool& recordstats,  const int& mpirank, const int& mpisize);
 
     void PerformSimulation(std::ostream &out);
     void PerformSimulatedAnnealing(std::ostream &out, const double& cooling_rate,
@@ -50,7 +50,7 @@ class MonteCarlo
     void InitializeRandomSpins();
     void InitializeFMSpins(const long double& theta, const long double& phi);
     void MolecularField(const uint& flat_index, Vector3LD& molec);
-    void CalculateLocalEnergy(const uint& flat_index, long double& energy);
+    void CalculateLocalEnergy(const uint& flat_index, long double& energy, Vector3LD& molec);
     void CalculateClusterEnergy();
     void PrintConfiguration(std::ostream &out);
     void SpherePointPicker(Vector3LD& some_spin);

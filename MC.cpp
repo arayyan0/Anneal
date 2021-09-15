@@ -62,16 +62,16 @@ void MonteCarlo::InitializeRandomSpins()
 
 void MonteCarlo::MolecularField(const uint& flat_index, Vector3LD& molec)
 {
-  Vector3LD v = Vector3LD::Zero();
-  for (auto &j : Lattice.ClusterInfo[flat_index].NearestNeighbours){
-    v += -Lattice.Cluster.col(get<6>(j)).transpose()*get<3>(j);
+  molec << 0, 0, 0;
+  for (uint i=0; i<Lattice.NumNeighbours; i++){
+    molec += - Lattice.Hamiltonians[Lattice.NumNeighbours*flat_index+i]
+             * Lattice.Cluster.col(Lattice.FlatIndex[Lattice.NumNeighbours*flat_index+i]);
   }
-  molec = v.transpose()+ Lattice.hField.transpose();
+  molec += Lattice.hField;
 }
 
-void MonteCarlo::CalculateLocalEnergy(const uint& flat_index, long double& energy)
+void MonteCarlo::CalculateLocalEnergy(const uint& flat_index, long double& energy, Vector3LD& molec)
 {
-  Vector3LD molec;
   MolecularField(flat_index, molec);
   energy = -Lattice.Cluster.col(flat_index).dot(molec+ Lattice.hField);
   // cout << energy<< endl;
@@ -82,11 +82,12 @@ void MonteCarlo::CalculateClusterEnergy()
   long double e=0;
   long double local_energy;
   uint flat_index;
+  Vector3LD molec;
 
   for (uint flat_index=0; flat_index<Lattice.NumSites; ++flat_index){
     // local_energy=0;
     //calculate energy
-    CalculateLocalEnergy(flat_index, local_energy);
+    CalculateLocalEnergy(flat_index, local_energy, molec);
     e += local_energy;
   }
   Lattice.ClusterEnergy = e/2.0;
@@ -298,19 +299,19 @@ void MonteCarlo::OverrelaxationSweep(){
 void MonteCarlo::MetropolisSweep(const double& temperature, uint& single_sweep_accept)
 {
   long double old_local_energy, energydiff, new_local_energy;
-  Vector3LD v_before, v_after;
+  Vector3LD v_before, v_after, molec;
   uint flat_index;
 
   uint flip = 0;
   while (flip < Lattice.NumSites){
     flat_index = SiteDist(RNG);
     v_before = Lattice.Cluster.col(flat_index);
-    CalculateLocalEnergy(flat_index, old_local_energy);
+    CalculateLocalEnergy(flat_index, old_local_energy,molec);
 
     SpherePointPicker(v_after); //selection of angle, currently uniform update
     Lattice.Cluster.col(flat_index) = v_after;
 
-    CalculateLocalEnergy(flat_index, new_local_energy);
+    CalculateLocalEnergy(flat_index, new_local_energy,molec);
     energydiff = new_local_energy-old_local_energy;
 
     if (UnitInterval(RNG) < std::min<long double>(exp(-energydiff/temperature),1.0)){
