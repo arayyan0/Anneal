@@ -14,10 +14,15 @@ public:
   const Vector3LD hField;
   std::string ParameterOutput;
 
+  //kga honeycomb
   Hamiltonia(const long double& phi, const long double& g, const long double& a,
              const long double& h_magnitude, const Vector3LD& h_direction);
+  //jtau triangular
   Hamiltonia(const long double& jtau, const long double& lambda,
              const long double& jquad, const long double& jocto,
+             const long double& h_magnitude, const Vector3LD& h_direction);
+  //jtau honeycomb
+  Hamiltonia(const long double& phi, const long double& theta,
              const long double& h_magnitude, const Vector3LD& h_direction);
 private:
   const long double hMagnitude;

@@ -106,6 +106,50 @@ Hamiltonia::Hamiltonia(const long double& jtau, const long double& lambda,
   ParameterOutput = paramout.str();
 }
 
+Hamiltonia::Hamiltonia(const long double& phi, const long double& theta,
+                       const long double& h_magnitude, const Vector3LD& h_direction):
+                       hMagnitude(h_magnitude),
+                       hDirection(h_direction),
+                       hField(h_magnitude*h_direction)
+{
+
+  Matrix3LD matrix;
+
+  double jtau, jquad, jocto;
+
+  jtau  = cos(theta);
+  jquad = sin(theta)*sin(phi);
+  jocto = sin(theta)*cos(phi);
+
+  matrix  <<   jquad,     0,     0,
+                   0, jocto,     0,
+                   0,     0, jquad;
+
+  long double pz = 0;
+  long double px = 2*pi/3.0;
+  long double py = 4*pi/3.0;
+
+  Hz = matrix + jtau*ReturnJTauHamiltonian(pz);
+  Hx = matrix + jtau*ReturnJTauHamiltonian(px);
+  Hy = matrix + jtau*ReturnJTauHamiltonian(py);
+
+  std::stringstream paramout;
+  paramout << std::fixed << std::setprecision(14);
+  paramout << "------------------------Hamiltonian Parameters------------------------\n";
+  paramout << "JTau\n";
+  paramout << jtau << "\n";
+  paramout << "JQuad\n";
+  paramout << jquad << "\n";
+  paramout << "JOcto\n";
+  paramout << jocto << "\n";
+  paramout << "hMagnitude\n";
+  paramout << hMagnitude << "\n";
+  paramout << "hDirection\n";
+  paramout << hDirection.transpose() << "\n";
+  ParameterOutput = paramout.str();
+}
+
+
 Matrix3LD Hamiltonia::ReturnJTauHamiltonian(const long double& angle)
 {
   Matrix3LD matrix;
