@@ -23,11 +23,14 @@ using std::cout; using std::endl; using std::vector; using std::get;
 
 typedef unsigned int uint;
 
-typedef Eigen::Matrix<long double, 2, 1> Vector2LD;
-typedef Eigen::Matrix<long double, 3, 1> Vector3LD;
+typedef Eigen::Matrix<long double,              2, 1> Vector2LD;
+typedef Eigen::Matrix<long double,              3, 1> Vector3LD;
+typedef Eigen::Matrix<long double, Eigen::Dynamic, 1> VectorXLD;
 typedef Eigen::Matrix<std::complex<long double>, 3, 1> Vector3LDc;
-typedef Eigen::Matrix<long double, 3, 3> Matrix3LD;
-typedef Eigen::Matrix<long double, 3, Eigen::Dynamic> Matrix3XLD;
+
+typedef Eigen::Matrix<long double,              3, 3> Matrix3LD;
+typedef Eigen::Matrix<long double,              2, Eigen::Dynamic> Matrix2XLD;
+typedef Eigen::Matrix<long double,              3, Eigen::Dynamic> Matrix3XLD;
 
 typedef Eigen::Array<long double, Eigen::Dynamic, 1> ArrayXLD;
 typedef Eigen::Array<long double, Eigen::Dynamic, Eigen::Dynamic> ArrayXXLD;
@@ -64,6 +67,8 @@ long double Lorentzian(const long double& r, const long double& l);
 // long double Gaussian(const long double& s, const long double& x, const long double& l);
 
 void SphericalAnglesToCubic(const long double& theta, const long double& phi, Vector3LD& some_spin);
+
+void PBCIndices(const uint& i, const uint& length, int& lower_i, int& higher_i);
 
 
 #endif // COMMON_HPP

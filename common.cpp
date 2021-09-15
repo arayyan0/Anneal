@@ -32,3 +32,10 @@ void SphericalAnglesToCubic(const long double& theta, const long double& phi,
   long double s = sin(theta);
   some_spin <<  s*cos(phi), s*sin(phi), cos(theta);
 }
+
+void PBCIndices(const uint& i, const uint& length, int& lower_i, int& higher_i){
+  higher_i = (i+1)%length;
+  lower_i = (i-1);
+  if (lower_i >= 0){lower_i = lower_i%length;}
+  else if (lower_i < 0){lower_i = length-1;}
+}
