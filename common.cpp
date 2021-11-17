@@ -4,27 +4,21 @@
 ///  @brief    useful functions for the simulated annealing algorithm
 #include "common.hpp"
 
-
-void BravaisIndicesToFlat(const uint& x, const uint&y, const uint & period1,
-                                         const uint&z, const uint & period2,
-                                         uint& flat_index)
+void ThreeDBravaisIndicesToFlat(const uint& w, const uint&x, const uint & periodx,
+                                               const uint&y, const uint & periody,
+                                               const uint&z, const uint & periodz,
+                                               uint& flat_index)
 {
-  flat_index = x + y*period1 + z*period2;
+  flat_index = w + x*periodx + y*periody + z*periodz;
 }
 
-long double Lorentzian(const long double& r, const long double& l){
+long double Lorentzian(const long double& r, const long double& l)
+{
   long double x = r - 0.5;
   long double lmax = 2*l;
   long double result = x<lmax ? 1 / ( 1.0 + pow(x/l,2) ) : 0;
   return result;
 }
-
-// long double Gaussian(const long double& s, const long double& x, const long double& l){
-//   long double cutoff=1;
-//   long double dist = (x-0.5)/l;
-//   long double result = dist<cutoff ? s*exp(-pow(dist,2)/2.0) : 0;
-//   return result;
-// }
 
 void SphericalAnglesToCubic(const long double& theta, const long double& phi,
                                  Vector3LD& some_spin)
@@ -38,4 +32,17 @@ void PBCIndices(const uint& i, const uint& length, int& lower_i, int& higher_i){
   lower_i = (i-1);
   if (lower_i >= 0){lower_i = lower_i%length;}
   else if (lower_i < 0){lower_i = length-1;}
+}
+
+bool EqualWithinEpsilon(const long double& a,
+                        const long double& b,
+                        const long double& eps)
+{
+  return abs(a - b) <= eps;
+}
+
+bool IsThisFloatAnIntegerWithinEpsilon(const long double& a,
+                                       const long double& eps)
+{
+  return EqualWithinEpsilon(a, round(a), eps);
 }
