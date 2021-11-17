@@ -1,7 +1,7 @@
 #include "MC.hpp"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
+
   uint simulation = 0; //0 for simulated annealing, 1 for finite T
 
   int mpisize, mpirank;
@@ -15,12 +15,16 @@ int main(int argc, char *argv[])
     mpisize = 1;
     mpirank = 0;
   }
+  const uint lattice_info = 1; //0 for tri, 1 for hc, 2 for fcc
 
-  const uint hc_or_kek = 0; //Honeycomb or Kekule
-  const uint cluster_type = strtol(argv[1], NULL, 10);
-  const uint num_sublattices = strtol(argv[2], NULL, 10);
-  const uint l1 = strtol(argv[3], NULL, 10);
-  const uint l2 = strtol(argv[4], NULL, 10);
+  const uint shape = strtol(argv[1], NULL, 10);
+  //tri/hc: 0 for primitive, 1 for conventional (rect), 2 for conventional (sqrt)
+  //   fcc: 0 for primitive, 1 for conventional
+
+  //linear dimensions of cluster in T1, T2, T3 directions
+  const uint    l1 = strtol(argv[2], NULL, 10);
+  const uint    l2 = strtol(argv[3], NULL, 10);
+  const uint    l3 = strtol(argv[4], NULL, 10);
 
   const long double phi = strtod(argv[5], NULL);
   const long double g   = strtod(argv[6], NULL);
@@ -29,7 +33,7 @@ int main(int argc, char *argv[])
   Vector3LD h_direction = Vector3LD(1,1,1).normalized();
   Hamiltonia hams(phi, g, a, h_magnitude, h_direction);
 
-  Honeycomb honey(hc_or_kek, cluster_type, num_sublattices, l1, l2, hams);
+  Lattice lat(lattice_info, shape, l1, l2, l3, hams);
 
   if (simulation == 0){
     const double cooling_rate = 0.9;
@@ -38,7 +42,7 @@ int main(int argc, char *argv[])
     const uint num_overrelax_ratio = 0;
 
     const bool printstats = false;
-    MonteCarlo mc(honey, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
+    MonteCarlo mc(lat, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
 
     std::ostream &which = std::cout;
     which << std::fixed << std::setprecision(14);
@@ -52,17 +56,17 @@ int main(int argc, char *argv[])
     MPI_Finalize();
   } else if (simulation == 1){
     const long double final_T = strtod(argv[8], NULL);
-    const uint num_overrelax_ratio = 5;
+    const uint num_overrelax_ratio = 0;
 
     const bool printstats = false;
-    MonteCarlo mc(honey, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
+    MonteCarlo mc(lat, final_T, num_overrelax_ratio, printstats, mpirank, mpisize);
 
     std::ostream &which = std::cout;
     which << std::fixed << std::setprecision(14);
 
-    const uint num_therm_sweeps = 5*1e4;
+    const uint num_therm_sweeps = 5*1e2;
     const uint sampling_time = 1e2;
-    const uint num_sweeps_measurement = 1*(1e4)*sampling_time;
+    const uint num_sweeps_measurement = 1*(1e2)*sampling_time;
     mc.PerformFiniteT(which, num_therm_sweeps, num_sweeps_measurement, sampling_time);
   }
 
