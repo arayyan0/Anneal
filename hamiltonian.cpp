@@ -11,7 +11,6 @@ Hamiltonia::Hamiltonia(const long double& phi, const long double& g, const long 
                        hDirection(h_direction),
                        hField(h_magnitude*h_direction)
 {
-
   const long double G0 = sin(phi*pi);
   const long double K0 = cos(phi*pi);
 
@@ -40,6 +39,7 @@ Hamiltonia::Hamiltonia(const long double& phi, const long double& g, const long 
   Hx = matrix1;
   Hy = matrix2;
   Hz = matrix3;
+  SpinBasis = Matrix3LD::Identity();
 
   std::stringstream paramout;
   paramout << std::fixed << std::setprecision(14);
@@ -90,6 +90,13 @@ Hamiltonia::Hamiltonia(const long double& jtau, const long double& lambda,
   Hx = matrix1/2.0 + matrix2 + ReturnJTauHamiltonian(px);
   Hy = matrix1/2.0 + matrix2 + ReturnJTauHamiltonian(py);
 
+  Matrix3LD mat_1, mat_2;
+  mat_1 << A_Dir, B_Dir, C_Dir;
+  mat_2 <<   0, 0, -1,
+            -1, 0,  0,
+             0, 1,  0;
+  SpinBasis = mat_1 * mat_2;
+
   std::stringstream paramout;
   paramout << std::fixed << std::setprecision(14);
   paramout << "------------------------Hamiltonian Parameters------------------------\n";
@@ -133,6 +140,13 @@ Hamiltonia::Hamiltonia(const long double& phi, const long double& theta,
   Hx = matrix + jtau*ReturnJTauHamiltonian(px);
   Hy = matrix + jtau*ReturnJTauHamiltonian(py);
 
+  Matrix3LD mat_1, mat_2;
+  mat_1 << A_Dir, B_Dir, C_Dir;
+  mat_2 <<   0, 0, -1,
+            -1, 0,  0,
+             0, 1,  0;
+  SpinBasis = mat_1 * mat_2;
+
   std::stringstream paramout;
   paramout << std::fixed << std::setprecision(14);
   paramout << "------------------------Hamiltonian Parameters------------------------\n";
@@ -152,11 +166,14 @@ Hamiltonia::Hamiltonia(const long double& phi, const long double& theta,
 
 Matrix3LD Hamiltonia::ReturnJTauHamiltonian(const long double& angle)
 {
-  Matrix3LD matrix;
+  Matrix3LD matrix1, matrix2;
   long double c = cos(angle);
   long double s = sin(angle);
-  matrix  <<  1-c, 0,  -s,
+  matrix1  << 1-c, 0,  -s,
                 0, 0,   0,
                -s, 0, 1+c;
-  return matrix/2.0;
+  matrix2  <<  0, s, 0,
+               s, 0, c,
+               0, c, 0;
+  return matrix1/2.0 + matrix2/sqrt(2.0);
 }
