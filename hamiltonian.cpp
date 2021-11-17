@@ -175,5 +175,5 @@ Matrix3LD Hamiltonia::ReturnJTauHamiltonian(const long double& angle)
   matrix2  <<  0, s, 0,
                s, 0, c,
                0, c, 0;
-  return matrix1/2.0 + matrix2/sqrt(2.0);
+  return matrix1/2.0 + 0.0*matrix2/sqrt(2.0);
 }
