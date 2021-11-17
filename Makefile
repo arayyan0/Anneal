@@ -5,7 +5,7 @@
 CXX = mpic++
 CXXFLAGS = -std=c++17 -O3 -c
 #DEBUGFLAGS = -pg -g
-SIM = multipole
+SIM = jtauhoney
 
 LATTICE = lattice
 
