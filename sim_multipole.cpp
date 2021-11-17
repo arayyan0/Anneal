@@ -15,7 +15,7 @@ int main(int argc, char *argv[]){
     mpisize = 1;
     mpirank = 0;
   }
-  const uint lattice_info = 1; //0 for tri, 1 for hc, 2 for fcc
+  const uint lattice_info = 0; //0 for tri, 1 for hc, 2 for fcc
 
   const uint shape = strtol(argv[1], NULL, 10);
   //tri/hc: 0 for primitive, 1 for conventional (rect), 2 for conventional (sqrt)
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
   lat.AddDefectHamiltonia(defect_quad,
                           defect_octo,
                           defect_lengthscale);
-  lat.CheckHamiltonians();
+  // lat.CheckHamiltonians();
 
   if (simulation == 0){
     const double cooling_rate = 0.9;
