@@ -16,19 +16,21 @@ public:
   std::string ParameterOutput;
 
   //kga honeycomb
-  Hamiltonia(const long double& phi, const long double& g, const long double& a,
-             const long double& h_magnitude, const Vector3LD& h_direction);
+  // Hamiltonia(const long double& phi, const long double& g, const long double& a,
+  //            const long double& h_magnitude, const Vector3LD& h_direction);
   //jtau triangular
   Hamiltonia(const long double& jtau, const long double& lambda,
              const long double& jquad, const long double& jocto,
              const long double& h_magnitude, const Vector3LD& h_direction);
   //jtau honeycomb
-  Hamiltonia(const long double& phi, const long double& theta,
-             const long double& h_magnitude, const Vector3LD& h_direction);
+  Hamiltonia(const long double& theta1, const long double& theta2,
+             const long double& phi, const long double& h_magnitude,
+             const Vector3LD& h_direction);
 private:
   const long double hMagnitude;
   const Vector3LD hDirection;
-  Matrix3LD ReturnJTauHamiltonian(const long double& angle);
+  Matrix3LD BondDependentQuadQuad(const long double& angle);
+  Matrix3LD BondDependentQuadOcto(const long double& angle);
 
   ABC_DIR;
 };
