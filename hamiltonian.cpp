@@ -101,7 +101,7 @@ Hamiltonia::Hamiltonia(Vector3LD& params, const uint entry,
   paramout << "------------------------Hamiltonian Parameters------------------------\n";
   paramout << "bond-dependent: JTau, JB\n";
   paramout << jtau << " " << jb << "\n";
-  paramout << "bond-independent: JQuad, JOcto, lambda\n";
+  paramout << "bond-independent: JQuad, JOcto\n";
   paramout << jquad << " " << jocto << "\n";
   paramout << "hMagnitude\n";
   paramout << hMagnitude << "\n";
