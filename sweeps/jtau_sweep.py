@@ -7,6 +7,7 @@ cluster_list = [1, 0, 6, 6, 1]
 # min, max, spacing
 entry = 0
 if entry == 0:
+    #jtau2 + jq2 + jo2 +jb2 = 1
     p1_val_list, p1_label = [0, 0.5, 0.025],    "t1"
     p2_val_list, p2_label = [0.5, 0.5, 0],      "t2"
     p3_val_list, p3_label = [0.75, 0.75, 0.01], "p"
@@ -18,7 +19,7 @@ elif entry == 1:
 
 h_val_list,      h_label      = [0.0, 0.0, 0], "h"
 
-# need to implement defect_list 
+# need to implement defect_list
 # defect_list = [0, 0, 1]
 
 params_list = np.array([p1_val_list, p2_val_list, p3_val_list, h_val_list])
