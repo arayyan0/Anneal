@@ -15,10 +15,10 @@ public:
   const Vector3LD hField;
   std::string ParameterOutput;
 
-  //kga honeycomb
-  // Hamiltonia(const long double& phi, const long double& g, const long double& a,
-  //            const long double& h_magnitude, const Vector3LD& h_direction);
-
+  // kg anisotropy
+  Hamiltonia(const long double& phi, const long double& g, const long double& a,
+             const long double& h_magnitude, const Vector3LD& h_direction);
+  // multipole hamiltonian
   Hamiltonia(Vector3LD& params, const uint entry,
              const long double& h_magnitude, const Vector3LD& h_direction);
 private:

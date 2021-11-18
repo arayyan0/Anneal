@@ -4,59 +4,59 @@
 ///  @brief    defining the spin model
 #include "hamiltonian.hpp"
 
-// Hamiltonia::Hamiltonia(const long double& phi, const long double& g, const long double& a,
-//                        const long double& h_magnitude, const Vector3LD& h_direction):
-//                        hMagnitude(h_magnitude),
-//                        hDirection(h_direction),
-//                        hField(h_magnitude*h_direction)
-// {
-//   const long double G0 = sin(phi*pi);
-//   const long double K0 = cos(phi*pi);
-//
-//   const long double gx = +G0*(2*(1-a)*(1-g));
-//   const long double gy = +G0*(2*(1-a)*g);
-//   const long double gz = +G0*(1+2*a);
-//
-//   const long double kx = -K0*(2*(1-a)*(1-g));
-//   const long double ky = -K0*(2*(1-a)*g);
-//   const long double kz = -K0*(1+2*a);
-//
-//   const long double gp = 0;
-//   const long double j1 = 0;
-//
-//   Matrix3LD matrix1, matrix2, matrix3;
-//   matrix1  <<  j1+kx,    gp,    gp,
-//                   gp,    j1,    gx,
-//                   gp,    gx,    j1;
-//   matrix2  <<     j1,    gp,    gy,
-//                   gp, j1+ky,    gp,
-//                   gy,    gp,    j1;
-//   matrix3  <<     j1,    gz,    gp,
-//                   gz,    j1,    gp,
-//                   gp,    gp, j1+kz;
-//
-//   Hx = matrix1;
-//   Hy = matrix2;
-//   Hz = matrix3;
-//   SpinBasis = Matrix3LD::Identity();
-//
-//   std::stringstream paramout;
-//   paramout << std::fixed << std::setprecision(14);
-//   paramout << "------------------------Hamiltonian Parameters------------------------\n";
-//   paramout << "Kx Ky Kz\n";
-//   paramout << kx << " " << ky << " " << kz << "\n";
-//   paramout << "Gx Gy Gz\n";
-//   paramout << gx << " " << gy << " " << gz << "\n";
-//   paramout << "Gp\n";
-//   paramout << gp << "\n";
-//   paramout << "J1\n";
-//   paramout << j1 << "\n";
-//   paramout << "hMagnitude\n";
-//   paramout << hMagnitude << "\n";
-//   paramout << "hDirection\n";
-//   paramout << hDirection.transpose() << "\n";
-//   ParameterOutput = paramout.str();
-// }
+Hamiltonia::Hamiltonia(const long double& phi, const long double& g, const long double& a,
+                       const long double& h_magnitude, const Vector3LD& h_direction):
+                       hMagnitude(h_magnitude),
+                       hDirection(h_direction),
+                       hField(h_magnitude*h_direction)
+{
+  const long double G0 = sin(phi*pi);
+  const long double K0 = cos(phi*pi);
+
+  const long double gx = +G0*(2*(1-a)*(1-g));
+  const long double gy = +G0*(2*(1-a)*g);
+  const long double gz = +G0*(1+2*a);
+
+  const long double kx = -K0*(2*(1-a)*(1-g));
+  const long double ky = -K0*(2*(1-a)*g);
+  const long double kz = -K0*(1+2*a);
+
+  const long double gp = 0;
+  const long double j1 = 0;
+
+  Matrix3LD matrix1, matrix2, matrix3;
+  matrix1  <<  j1+kx,    gp,    gp,
+                  gp,    j1,    gx,
+                  gp,    gx,    j1;
+  matrix2  <<     j1,    gp,    gy,
+                  gp, j1+ky,    gp,
+                  gy,    gp,    j1;
+  matrix3  <<     j1,    gz,    gp,
+                  gz,    j1,    gp,
+                  gp,    gp, j1+kz;
+
+  Hx = matrix1;
+  Hy = matrix2;
+  Hz = matrix3;
+  SpinBasis = Matrix3LD::Identity();
+
+  std::stringstream paramout;
+  paramout << std::fixed << std::setprecision(14);
+  paramout << "------------------------Hamiltonian Parameters------------------------\n";
+  paramout << "Kx Ky Kz\n";
+  paramout << kx << " " << ky << " " << kz << "\n";
+  paramout << "Gx Gy Gz\n";
+  paramout << gx << " " << gy << " " << gz << "\n";
+  paramout << "Gp\n";
+  paramout << gp << "\n";
+  paramout << "J1\n";
+  paramout << j1 << "\n";
+  paramout << "hMagnitude\n";
+  paramout << hMagnitude << "\n";
+  paramout << "hDirection\n";
+  paramout << hDirection.transpose() << "\n";
+  ParameterOutput = paramout.str();
+}
 
 Hamiltonia::Hamiltonia(Vector3LD& params, const uint entry,
                        const long double& h_magnitude, const Vector3LD& h_direction):
