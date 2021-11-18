@@ -58,88 +58,36 @@
 //   ParameterOutput = paramout.str();
 // }
 
-Hamiltonia::Hamiltonia(const long double& jtau, const long double& lambda,
-                       const long double& jquad, const long double& jocto,
+Hamiltonia::Hamiltonia(Vector3LD& params, const uint entry,
                        const long double& h_magnitude, const Vector3LD& h_direction):
                        hMagnitude(h_magnitude),
                        hDirection(h_direction),
                        hField(h_magnitude*h_direction)
 {
-
-  if (abs(jtau-1.0) > pow(10,-6) ){
-    std::cerr << "Ensure that J_Tau is equal to +1 or change units accordingly." << endl;
-    abort();
+  double jtau, jb, jquad, jocto;
+  if (entry == 0){
+    jtau  = cos(params(0)*pi);
+    jb    = sin(params(0)*pi)*cos(params(1)*pi);
+    jquad = sin(params(0)*pi)*sin(params(1)*pi)*cos(params(2)*pi);
+    jocto = sin(params(0)*pi)*sin(params(1)*pi)*sin(params(2)*pi);
+  } else if (entry == 1){
+    jtau  = 1;
+    jb    = params(0)*jtau;
+    jquad = params(1)*jtau;
+    jocto = params(2)*jtau;
   }
 
-  Matrix3LD matrix1, matrix2;
-  //bond-independent: lambda term + Ising in y direction
-  matrix1  <<  -lambda,      0,       0,
-                     0, lambda,       0,
-                     0,      0, -lambda;
-
-  matrix2  <<   jquad,     0,     0,
+  Matrix3LD matrix1;
+  matrix1  <<   jquad,     0,     0,
                     0, jocto,     0,
                     0,     0, jquad;
 
   long double pz = 0;
   long double px = 2*pi/3.0;
   long double py = 4*pi/3.0;
-
-  Hz = matrix1/2.0 + matrix2 + BondDependentQuadQuad(pz);
-  Hx = matrix1/2.0 + matrix2 + BondDependentQuadQuad(px);
-  Hy = matrix1/2.0 + matrix2 + BondDependentQuadQuad(py);
-
-  Matrix3LD mat_1, mat_2;
-  mat_1 << A_Dir, B_Dir, C_Dir;
-  mat_2 <<   0, 0, -1,
-            -1, 0,  0,
-             0, 1,  0;
-  SpinBasis = mat_1 * mat_2;
-
-  std::stringstream paramout;
-  paramout << std::fixed << std::setprecision(14);
-  paramout << "------------------------Hamiltonian Parameters------------------------\n";
-  paramout << "Bond-dependent JTau\n";
-  paramout << jtau << "\n";
-  paramout << "Lambda\n";
-  paramout << lambda << "\n";
-  paramout << "Quadropolar/octopolar interactions\n";
-  paramout << jquad << "/" << jocto << "\n";
-  paramout << "hMagnitude\n";
-  paramout << hMagnitude << "\n";
-  paramout << "hDirection\n";
-  paramout << hDirection.transpose() << "\n";
-  ParameterOutput = paramout.str();
-}
-
-Hamiltonia::Hamiltonia(const long double& theta1, const long double& theta2,
-                       const long double& phi, const long double& h_magnitude,
-                       const Vector3LD& h_direction):
-                       hMagnitude(h_magnitude),
-                       hDirection(h_direction),
-                       hField(h_magnitude*h_direction)
-{
-
-  Matrix3LD matrix;
-
-  double jtau, jb, jquad, jocto;
-
-  jtau  = cos(theta1*pi);
-  jb    = sin(theta1*pi)*cos(theta2*pi);
-  jquad = sin(theta1*pi)*sin(theta2*pi)*cos(phi*pi);
-  jocto = sin(theta1*pi)*sin(theta2*pi)*sin(phi*pi);
-
-  matrix  <<   jquad,     0,     0,
-                   0, jocto,     0,
-                   0,     0, jquad;
-
-  long double pz = 0;
-  long double px = 2*pi/3.0;
-  long double py = 4*pi/3.0;
-
-  Hz = matrix + jtau*BondDependentQuadQuad(pz) + jb*BondDependentQuadOcto(pz);
-  Hx = matrix + jtau*BondDependentQuadQuad(px) + jb*BondDependentQuadOcto(px);
-  Hy = matrix + jtau*BondDependentQuadQuad(py) + jb*BondDependentQuadOcto(py);
+  Hz = matrix1 + jtau*BondDependentQuadQuad(pz) + jb*BondDependentQuadOcto(pz);
+  Hx = matrix1 + jtau*BondDependentQuadQuad(px) + jb*BondDependentQuadOcto(px);
+  Hy = matrix1 + jtau*BondDependentQuadQuad(py) + jb*BondDependentQuadOcto(py);
 
   Matrix3LD mat_1, mat_2;
   mat_1 << A_Dir, B_Dir, C_Dir;
@@ -153,7 +101,7 @@ Hamiltonia::Hamiltonia(const long double& theta1, const long double& theta2,
   paramout << "------------------------Hamiltonian Parameters------------------------\n";
   paramout << "bond-dependent: JTau, JB\n";
   paramout << jtau << " " << jb << "\n";
-  paramout << "bond-independent: JQuad, JOcto\n";
+  paramout << "bond-independent: JQuad, JOcto, lambda\n";
   paramout << jquad << " " << jocto << "\n";
   paramout << "hMagnitude\n";
   paramout << hMagnitude << "\n";

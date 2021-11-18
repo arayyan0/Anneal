@@ -2,23 +2,34 @@ from sweep1_lib import SweepPhaseDiagramJobs
 import numpy as np
 
 # lattice, shape, l1, l2, l3
-cluster_list = [1, 0, 2, 2, 1]
+cluster_list = [1, 0, 6, 6, 1]
 
 # min, max, spacing
-theta1_val_list, theta1_label = [0, 0.5, 0.025], "t1"
-theta2_val_list, theta2_label = [0.5, 0.5, 0], "t2"
-phi_val_list,    phi_label    = [0.75, 0.75, 0.01], "p"
+entry = 0
+if entry == 0:
+    p1_val_list, p1_label = [0, 0.5, 0.025],    "t1"
+    p2_val_list, p2_label = [0.5, 0.5, 0],      "t2"
+    p3_val_list, p3_label = [0.75, 0.75, 0.01], "p"
+elif entry == 1:
+    #jtau =1, p1 = jb_unitless, p2 = jq_unitless, p3 = jo_unitless
+    p1_val_list, p1_label = [0, 0.0, 0.025],    "jb"
+    p2_val_list, p2_label = [0.0, 0.0, 0],      "jq"
+    p3_val_list, p3_label = [0.0, 0.0, 0.01],   "jo"
+
 h_val_list,      h_label      = [0.0, 0.0, 0], "h"
 
-params_list = np.array([theta1_val_list, theta2_val_list, phi_val_list, h_val_list])
-params_label_list = [theta1_label, theta2_label, phi_label, h_label]
+# need to implement defect_list 
+# defect_list = [0, 0, 1]
+
+params_list = np.array([p1_val_list, p2_val_list, p3_val_list, h_val_list])
+params_label_list = [p1_label, p2_label, p3_label, h_label]
 
 # Tf, MS_pow, DS_pow
 sa_list = [50, 3, 3]
 
 #ensure that num_anneal divides cpus_per_task
-cpus_per_task = 80
-num_anneal = 16
+cpus_per_task = 6
+num_anneal = 6
 
 run = 1
 
