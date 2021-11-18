@@ -6,11 +6,6 @@ CXX = mpic++
 CXXFLAGS = -std=c++17 -O3 -c
 #DEBUGFLAGS = -pg -g
 SIM = multipole
-<<<<<<< HEAD
-
-LATTICE = lattice
-=======
->>>>>>> 569b9a13e5a38ae3866330adf20f7d4a8729bcdc
 
 all: sim
 
