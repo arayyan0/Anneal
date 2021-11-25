@@ -8,7 +8,7 @@ cluster_list = [1, 0, 6, 6, 1]
 entry = 0
 if entry == 0:
     #jtau2 + jq2 + jo2 +jb2 = 1
-    p1_val_list, p1_label = [0, 0.5, 0.025],    "t1"
+    p1_val_list, p1_label = [0, 0.5, 0.01],     "t1"
     p2_val_list, p2_label = [0.5, 0.5, 0],      "t2"
     p3_val_list, p3_label = [0.75, 0.75, 0.01], "p"
 elif entry == 1:
@@ -26,13 +26,14 @@ params_list = np.array([p1_val_list, p2_val_list, p3_val_list, h_val_list])
 params_label_list = [p1_label, p2_label, p3_label, h_label]
 
 # Tf, MS_pow, DS_pow
-sa_list = [50, 3, 3]
+sa_list = [100, 4, 4]
 
 #ensure that num_anneal divides cpus_per_task
 cpus_per_task = 6
 num_anneal = 6
 
 run = 1
+versions = 1
 
 SweepPhaseDiagramJobs(cluster_list, params_list, params_label_list, sa_list,
-                      cpus_per_task, num_anneal, run)
+                      cpus_per_task, num_anneal, run, versions)

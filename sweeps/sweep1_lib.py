@@ -4,7 +4,7 @@ import os
 
 class SweepPhaseDiagramJobs:
     def __init__(self, cluster_list, params_list, params_label_list, sa_list,
-                 cpus_per_task, num_anneal, run):
+                 cpus_per_task, num_anneal, run, versions):
 
         self.Lattice, self.Shape, self.L1, self.L2, self.L3 = cluster_list
         self.Tf_Pow, self.MS_Pow, self.DS_Pow = sa_list
@@ -32,7 +32,7 @@ class SweepPhaseDiagramJobs:
         print("Writing .sh file...")
         print("Please ensure that you changed the number of nodes and time from the default!")
         self.WriteSHFile(cpus_per_task,num_anneal)
-        self.WriteLSTFile(num_anneal)
+        self.WriteLSTFile(num_anneal, versions)
 
     def WriteJobDescription(self):
         F = open(self.OutputPath+"/SA_param.lst", 'w+')
@@ -61,18 +61,21 @@ class SweepPhaseDiagramJobs:
                   f' < {self.JobTitle}.lst\n')
         F.close()
 
-    def WriteLSTFile(self, num_anneal):
+    def WriteLSTFile(self, num_anneal, versions):
         commandbegin = f"mpirun -np {num_anneal} --bind-to none ./sim "
         commandbegin = commandbegin + f"{self.Lattice} {self.Shape} {self.L1} {self.L2} {self.L3} "
         commandend = f"{self.Tf_Pow} {self.MS_Pow} {self.DS_Pow}"
         a = [list(param) for param in self.Params]
         product =   list(it.product(*a))
         File = open(f'{self.JobTitle}.lst','w+')
-        for p in product:
-            param_text_list = ''.join(map(str, [f'{p[i]:.3f} ' for i in range(len(self.Params))]))
-            param_label_list = ''.join(map(str, [f'{self.Labels[i]}_{p[i]:.3f}_' for i in range(len(self.Params))]))
-            File.write(commandbegin + \
-                       param_text_list + \
-                       commandend + ' > ' + f'{self.OutputPath}'+ \
-                       '/'+ param_label_list+'.out\n')
+        for v in range(1,versions+1):
+            if not os.path.exists(self.OutputPath+f'/v_{v}/'):
+                os.makedirs(self.OutputPath+f'/v_{v}/')
+            for p in product:
+                param_text_list = ''.join(map(str, [f'{p[i]:.3f} ' for i in range(len(self.Params))]))
+                param_label_list = ''.join(map(str, [f'{self.Labels[i]}_{p[i]:.3f}_' for i in range(len(self.Params))]))
+                File.write(commandbegin + \
+                           param_text_list + \
+                           commandend + ' > ' + f'{self.OutputPath}'+ f'/v_{v}' + \
+                           '/'+ param_label_list+'.out\n')
         File.close()
