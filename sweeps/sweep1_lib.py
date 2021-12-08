@@ -72,8 +72,8 @@ class SweepPhaseDiagramJobs:
             if not os.path.exists(self.OutputPath+f'/v_{v}/'):
                 os.makedirs(self.OutputPath+f'/v_{v}/')
             for p in product:
-                param_text_list = ''.join(map(str, [f'{p[i]:.3f} ' for i in range(len(self.Params))]))
-                param_label_list = ''.join(map(str, [f'{self.Labels[i]}_{p[i]:.3f}_' for i in range(len(self.Params))]))
+                param_text_list = ''.join(map(str, [f'{p[i]:.6f} ' for i in range(len(self.Params))]))
+                param_label_list = ''.join(map(str, [f'{self.Labels[i]}_{p[i]:.6f}_' for i in range(len(self.Params))]))
                 File.write(commandbegin + \
                            param_text_list + \
                            commandend + ' > ' + f'{self.OutputPath}'+ f'/v_{v}' + \
