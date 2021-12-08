@@ -26,26 +26,34 @@ int main(int argc, char *argv[]){
   const uint    l2 = strtol(argv[4], NULL, 10);
   const uint    l3 = strtol(argv[5], NULL, 10);
 
-  Vector3LD params;
-  const uint param_entry = 0;
+  const long double a            = strtod(argv[6], NULL);
+  const long double b            = strtod(argv[7], NULL);
+
+  Eigen::Array<long double, 5, 1> params;
+  long double jtau_unitless, jb_unitless, jquad_unitless, jocto_unitless, h_unitless;
+  uint param_entry = 0;
   if (param_entry == 0){
-    //jtau2 + jq2 + jo2 + jb2 = 1
-    const long double theta1           = strtod(argv[6], NULL);
-    const long double theta2           = strtod(argv[7], NULL);
-    const long double phi              = strtod(argv[8], NULL);
-    params << theta1, theta2, phi;
+    //scale = jtau2 + jq2 + jo2(=1), jb and h in units of scale
+    long double theta = a;
+    long double phi   = b;
+
+    jtau_unitless    = cos(theta*pi);
+    jb_unitless      = strtod(argv[8], NULL);
+    jquad_unitless   = sin(theta*pi)*cos(phi*pi);
+    jocto_unitless   = sin(theta*pi)*sin(phi*pi);
+    h_unitless       = strtod(argv[9], NULL);
   }
   else if (param_entry == 1){
-    //jtau=1, jb jquad and jocto in units of jtau, lambda=2
-    const long double jb_unitless      = strtod(argv[6], NULL);
-    const long double jquad_unitless   = strtod(argv[7], NULL);
-    const long double jocto_unitless   = strtod(argv[8], NULL);
-    params << jb_unitless, jquad_unitless, jocto_unitless;
+    //scale = abs(jtau)(=1), jb jquad, jocto and h in units of scale
+    jtau_unitless    = 1.0;
+    jb_unitless      = strtod(argv[8], NULL)/abs(jtau_unitless);
+    jquad_unitless   = a/abs(jtau_unitless);
+    jocto_unitless   = b/abs(jtau_unitless);
+    h_unitless       = strtod(argv[9], NULL)/abs(jtau_unitless);
   }
-
-  const long double h_magnitude      = strtod(argv[9], NULL);
+  params << jtau_unitless, jb_unitless, jquad_unitless, jocto_unitless, h_unitless;
   Vector3LD h_direction = Vector3LD(0,1,0).normalized();
-  Hamiltonia hams(params, param_entry, h_magnitude, h_direction);
+  Hamiltonia hams(params, h_direction);
   Lattice lat(lattice_info, shape, l1, l2, l3, hams);
 
   // need to implement defect input at some point as well as in jtau_sweep

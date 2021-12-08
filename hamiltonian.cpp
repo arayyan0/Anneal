@@ -58,24 +58,43 @@ Hamiltonia::Hamiltonia(const long double& phi, const long double& g, const long 
   ParameterOutput = paramout.str();
 }
 
-Hamiltonia::Hamiltonia(Vector3LD& params, const uint entry,
-                       const long double& h_magnitude, const Vector3LD& h_direction):
-                       hMagnitude(h_magnitude),
-                       hDirection(h_direction),
-                       hField(h_magnitude*h_direction)
+Hamiltonia::Hamiltonia(Eigen::Array<long double, 5, 1>& params, Vector3LD& h_direction)
 {
-  double jtau, jb, jquad, jocto;
-  if (entry == 0){
-    jtau  = cos(params(0)*pi);
-    jb    = sin(params(0)*pi)*cos(params(1)*pi);
-    jquad = sin(params(0)*pi)*sin(params(1)*pi)*cos(params(2)*pi);
-    jocto = sin(params(0)*pi)*sin(params(1)*pi)*sin(params(2)*pi);
-  } else if (entry == 1){
-    jtau  = 1;
-    jb    = params(0)*jtau;
-    jquad = params(1)*jtau;
-    jocto = params(2)*jtau;
-  }
+  long double jtau, jb, jquad, jocto, unit;
+  unit = 1;
+  jtau       = unit*params(0);
+  jb         = unit*params(1);
+  jquad      = unit*params(2);
+  jocto      = unit*params(3);
+  hMagnitude = unit*params(4);
+  hField = hMagnitude*h_direction;
+
+  ////manually fixing coefficients
+  // jtau = unit*cos(atan(1.0/2.0));
+  jb   = unit*sqrt(2.0/5.0);
+  // jquad= unit*0;
+  // jocto= unit*sin(atan(1.0/2.0));
+
+  ////pure J>0
+  // jtau =0.0;
+  // jb   =0.0;
+  // jquad=1.0/sqrt(2.0);
+  // jocto=1.0/sqrt(2.0);
+  ////pure K>0
+  // jtau =2.0/3.0;
+  // jb   =sqrt(2.0)/3.0;
+  // jquad=0;
+  // jocto=1.0/3.0;
+  //pure G>0
+  // jtau =4.0/3.0;
+  // jb   =-sqrt(2.0)/3.0;
+  // jquad=-1.0;
+  // jocto=2.0/3.0;
+  //pure Gp<0
+  // jtau =4.0/3.0;
+  // jb   =-sqrt(2.0)/3.0;
+  // jquad=0;
+  // jocto=2.0/3.0;
 
   Matrix3LD matrix1;
   matrix1  <<   jquad,     0,     0,
