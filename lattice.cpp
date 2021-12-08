@@ -53,9 +53,9 @@ void Lattice::SpecifyLattice(const uint& shape)
   permute_matrix_1 <<  0.0, 1.0, 0.0,
                       -1.0, 0.0, 0.0,
                        0.0, 0.0, 1.0,
-  permute_matrix_2 << -1.0, 0.0, 0.0,
+  permute_matrix_2 <<  0.0, 1.0, 0.0,
+                      -1.0, 0.0, 0.0,
                        0.0, 0.0, 1.0,
-                       0.0, 1.0, 0.0,
   xyztoabc << A_Dir, B_Dir, C_Dir;
   switch (WhichLattice){ //0 for triangular, 1 for honeycomb, 2 for FCC
     case 0: //triangular
@@ -69,7 +69,7 @@ void Lattice::SpecifyLattice(const uint& shape)
                     0, 0,  0,  0,  0,  0;
       NNBondType.resize(CoordinationNumber);
       NNBondType = {2, 1, 0, 2, 1, 0};
-      LocalOctahedra = permute_matrix_1 * xyztoabc.transpose();
+      LocalOctahedra = permute_matrix_2*xyztoabc.transpose();
       PrimitiveCell = tri_spatial_basis;
       switch (shape){ //0 for rhom (primitive), 1 for rect, 2 for sqrt
         case 0:
@@ -251,7 +251,6 @@ void Lattice::FindNearestNeighbours()
   long double eps = 1e-6;
 
   SiteInfo site_info;
-
   vector<Matrix3LD> hams = {HamInfo.Hx, HamInfo.Hy, HamInfo.Hz};
   // cout << hams[0]<< endl;
   for (uint j=0; j<NumSites; ++j){                      ///for eacb site j...
