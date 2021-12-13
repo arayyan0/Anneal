@@ -6,7 +6,8 @@ class SweepPhaseDiagramJobs:
     def __init__(self, cluster_list, params_list, params_label_list, sa_list,
                  cpus_per_task, num_anneal, run, versions):
 
-        self.Lattice, self.Shape, self.L1, self.L2, self.L3 = cluster_list
+        self.ClusterList = cluster_list
+
         self.Tf_Pow, self.MS_Pow, self.DS_Pow = sa_list
 
         self.JobTitle = f"jobrun_{run}"
@@ -24,7 +25,7 @@ class SweepPhaseDiagramJobs:
             else:
                 N_x = round(1+ (x_max-x_min)/dx)
                 self.Params.append(np.linspace(x_min, x_max, N_x))
-
+        print(self.ClusterList)
         for i in range(len(self.Labels)):
             print(f"{self.Labels[i]}:\n{self.Params[i]}")
 
@@ -39,9 +40,6 @@ class SweepPhaseDiagramJobs:
         for i in range(len(self.Labels)):
             F.write(f"{self.Labels[i]}-array: {self.Params[i]}\n")
         F.write("all files in this folder have the following global parameters.\n")
-        F.write(f"Lattice: {self.Lattice}\n")
-        F.write(f"Shape: {self.Shape}\n")
-        F.write(f"(L1, L2, L3) = ({self.L1}, {self.L2}, {self.L3})\n")
         F.write(f"Tf = {(0.9)**self.Tf_Pow:.20f}\n")
         F.write(f"Metropolis sweeps = {(10)**self.MS_Pow}\n")
         F.write(f"Deterministic sweeps = {(10)**self.DS_Pow}\n")
@@ -62,20 +60,24 @@ class SweepPhaseDiagramJobs:
         F.close()
 
     def WriteLSTFile(self, num_anneal, versions):
+        # for lat, shape, l1, l2, l3 in self.ClusterList:
+        File = open(f'{self.JobTitle}.lst','w+')
         commandbegin = f"mpirun -np {num_anneal} --bind-to none ./sim "
-        commandbegin = commandbegin + f"{self.Lattice} {self.Shape} {self.L1} {self.L2} {self.L3} "
         commandend = f"{self.Tf_Pow} {self.MS_Pow} {self.DS_Pow}"
         a = [list(param) for param in self.Params]
         product =   list(it.product(*a))
-        File = open(f'{self.JobTitle}.lst','w+')
         for v in range(1,versions+1):
             if not os.path.exists(self.OutputPath+f'/v_{v}/'):
                 os.makedirs(self.OutputPath+f'/v_{v}/')
-            for p in product:
-                param_text_list = ''.join(map(str, [f'{p[i]:.6f} ' for i in range(len(self.Params))]))
-                param_label_list = ''.join(map(str, [f'{self.Labels[i]}_{p[i]:.6f}_' for i in range(len(self.Params))]))
-                File.write(commandbegin + \
-                           param_text_list + \
-                           commandend + ' > ' + f'{self.OutputPath}'+ f'/v_{v}' + \
-                           '/'+ param_label_list+'.out\n')
+            for lat, shape, l1, l2, l3 in self.ClusterList:
+                if not os.path.exists(self.OutputPath+f'/v_{v}/lat_{lat}_s_{shape}_l1_{l1}_l2_{l2}_l3_{l3}'):
+                    os.makedirs(self.OutputPath+f'/v_{v}/lat_{lat}_s_{shape}_l1_{l1}_l2_{l2}_l3_{l3}/')
+                for p in product:
+                    param_text_list = ''.join(map(str, [f'{p[i]:.6f} ' for i in range(len(self.Params))]))
+                    param_label_list = ''.join(map(str, [f'{self.Labels[i]}_{p[i]:.6f}_' for i in range(len(self.Params))]))
+                    File.write(commandbegin + \
+                               f"{lat} {shape} {l1} {l2} {l3} " + \
+                               param_text_list + \
+                               commandend + ' > ' + f'{self.OutputPath}'+ f'/v_{v}/lat_{lat}_s_{shape}_l1_{l1}_l2_{l2}_l3_{l3}' + \
+                               '/'+ param_label_list+'.out\n')
         File.close()
