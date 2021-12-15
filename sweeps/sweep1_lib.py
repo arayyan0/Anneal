@@ -67,17 +67,15 @@ class SweepPhaseDiagramJobs:
         a = [list(param) for param in self.Params]
         product =   list(it.product(*a))
         for v in range(1,versions+1):
-            if not os.path.exists(self.OutputPath+f'/v_{v}/'):
-                os.makedirs(self.OutputPath+f'/v_{v}/')
             for lat, shape, l1, l2, l3 in self.ClusterList:
-                if not os.path.exists(self.OutputPath+f'/v_{v}/lat_{lat}_s_{shape}_l1_{l1}_l2_{l2}_l3_{l3}'):
-                    os.makedirs(self.OutputPath+f'/v_{v}/lat_{lat}_s_{shape}_l1_{l1}_l2_{l2}_l3_{l3}/')
+                if not os.path.exists(self.OutputPath+f'/lat_{lat}_s_{shape}_l1_{l1}_l2_{l2}_l3_{l3}/v_{v}'):
+                    os.makedirs(self.OutputPath+f'/lat_{lat}_s_{shape}_l1_{l1}_l2_{l2}_l3_{l3}/v_{v}/')
                 for p in product:
                     param_text_list = ''.join(map(str, [f'{p[i]:.6f} ' for i in range(len(self.Params))]))
                     param_label_list = ''.join(map(str, [f'{self.Labels[i]}_{p[i]:.6f}_' for i in range(len(self.Params))]))
                     File.write(commandbegin + \
                                f"{lat} {shape} {l1} {l2} {l3} " + \
                                param_text_list + \
-                               commandend + ' > ' + f'{self.OutputPath}'+ f'/v_{v}/lat_{lat}_s_{shape}_l1_{l1}_l2_{l2}_l3_{l3}' + \
+                               commandend + ' > ' + f'{self.OutputPath}'+ f'/lat_{lat}_s_{shape}_l1_{l1}_l2_{l2}_l3_{l3}/v_{v}' + \
                                '/'+ param_label_list+'.out\n')
         File.close()
