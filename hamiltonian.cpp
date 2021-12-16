@@ -71,7 +71,7 @@ Hamiltonia::Hamiltonia(Eigen::Array<long double, 5, 1>& params, Vector3LD& h_dir
 
   ////manually fixing coefficients
   // jtau = unit*cos(atan(1.0/2.0));
-  // jb   = 0*unit*sqrt(2.0/5.0);
+   jb   = 1*unit*sqrt(2.0/5.0);
   // jquad= unit*0;
   // jocto= unit*sin(atan(1.0/2.0));
 
