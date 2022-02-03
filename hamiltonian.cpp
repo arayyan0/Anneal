@@ -67,13 +67,13 @@ Hamiltonia::Hamiltonia(Eigen::Array<long double, 5, 1>& params, Vector3LD& h_dir
   jquad      = unit*params(2);
   jocto      = unit*params(3);
   hMagnitude = unit*params(4);
-  hField = hMagnitude*h_direction;
-
+  hDirection = h_direction;
+  hField = hMagnitude*hDirection;
   ////manually fixing coefficients
-  // jtau = unit*cos(atan(1.0/2.0));
-   jb   = 1*unit*sqrt(2.0/5.0);
-  // jquad= unit*0;
-  // jocto= unit*sin(atan(1.0/2.0));
+   //jtau = unit*cos(atan(1.0/2.0));
+   //jb   = unit*unit*sqrt(2.0/5.0);
+   //jquad= unit*0;
+   //jocto= unit*sin(atan(1.0/2.0));
 
   ////pure J>0
   // jtau =0.0;

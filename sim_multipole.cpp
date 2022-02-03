@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
   uint param_entry = 0;
   if (param_entry == 0){
     //scale = jtau2 + jq2 + jo2(=1), jb and h in units of scale
-    long double theta = a;
+    long double theta = atan(1.0/2.0)/pi; //CAUTION HERE!
     long double phi   = b;
 
     jtau_unitless    = cos(theta*pi);
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
     h_unitless       = strtod(argv[9], NULL)/abs(jtau_unitless);
   }
   params << jtau_unitless, jb_unitless, jquad_unitless, jocto_unitless, h_unitless;
-  Vector3LD h_direction = Vector3LD(0,1,0).normalized();
+  Vector3LD h_direction = Vector3LD(0.0,1.0,0.0).normalized();
   Hamiltonia hams(params, h_direction);
   Lattice lat(lattice_info, shape, l1, l2, l3, hams);
 
