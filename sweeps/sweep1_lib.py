@@ -4,7 +4,7 @@ import os
 
 class SweepPhaseDiagramJobs:
     def __init__(self, cluster_list, params_list, params_label_list, sa_list,
-                 cpus_per_task, num_anneal, run, versions):
+                 cpus_per_task, num_anneal, run, versions, node):
 
         self.ClusterList = cluster_list
 
@@ -32,7 +32,7 @@ class SweepPhaseDiagramJobs:
         self.WriteJobDescription()
         print("Writing .sh file...")
         print("Please ensure that you changed the number of nodes and time from the default!")
-        self.WriteSHFile(cpus_per_task,num_anneal)
+        self.WriteSHFile(cpus_per_task,num_anneal,node)
         self.WriteLSTFile(num_anneal, versions)
 
     def WriteJobDescription(self):
@@ -45,17 +45,19 @@ class SweepPhaseDiagramJobs:
         F.write(f"Deterministic sweeps = {(10)**self.DS_Pow}\n")
         F.close()
 
-    def WriteSHFile(self,cpus_per_task,num_anneal):
+    def WriteSHFile(self,cpus_per_task,num_anneal,node):
         F = open(f'{self.JobTitle}.sh','w+')
         F.write(f'#!/bin/bash'+'\n'+'\n')
-        F.write(f'#SBATCH --nodes=1'+'\n')
+        F.write(f'#SBATCH --nodes={node}'+'\n')
         F.write(f'#SBATCH --ntasks-per-node={cpus_per_task}'+'\n')
         F.write(f'#SBATCH --time=00:30:00'+'\n')
         F.write(f'#SBATCH --job-name={self.JobTitle}'+'\n'+'\n')
         F.write(f'cd $SLURM_SUBMIT_DIR'+'\n'+'\n')
         F.write(f'module purge'+'\n')
         F.write(f'module load gcc openmpi gnu-parallel'+'\n')
-        F.write(f'parallel --jobs {int(cpus_per_task/num_anneal)} --joblog {self.OutputPath}/{self.JobTitle}.out'+
+        #F.write(f'parallel --jobs {int(node*cpus_per_task/num_anneal)} --joblog {self.OutputPath}/{self.JobTitle}.out'+
+        #          f' < {self.JobTitle}.lst\n')
+        F.write(f'parallel --joblog {self.OutputPath}/{self.JobTitle}.out --wd $PWD'+
                   f' < {self.JobTitle}.lst\n')
         F.close()
 
