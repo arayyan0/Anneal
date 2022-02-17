@@ -34,7 +34,8 @@ int main(int argc, char *argv[]){
   uint param_entry = 0;
   if (param_entry == 0){
     //scale = jtau2 + jq2 + jo2(=1), jb and h in units of scale
-    long double theta = atan(1.0/2.0)/pi; //CAUTION HERE!
+    long double theta = a;
+    //long double theta = atan(1.0/2.0)/pi; //CAUTION HERE!
     long double phi   = b;
 
     jtau_unitless    = cos(theta*pi);
